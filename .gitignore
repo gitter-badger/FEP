@@ -1,3 +1,9 @@
 run.sh
 build.sh
+sync.sh
 
+UserStore
+
+#archives
+*.tar*
+*.zip
