@@ -14,12 +14,7 @@ int main(int argc, char** argv)
   gmi_register_null();
   gmi_model* g = gmi_load(".null");
   apf::Mesh2* m = apf::makeEmptyMdsMesh(g, 2, false);
-  /*Create a uniform 2D quadirlateral mesh of 4 elements by 6 elements on a
-    square of edge length 8.0, with lower left vertex placed at 0,0
-    provide a list that gives the coordinates for each vertex. Provide
-    a list of the vertex numbers for each element. Provide a copy of an
-    image of the mesh
-   */
+  //begin my code
   int x_elms = 4;
   int y_elms = 6;
   int total_elms = (x_elms+1) * (y_elms+1);
@@ -27,7 +22,8 @@ int main(int argc, char** argv)
   double y_size = 8.0;
   //create an empty numbering
   apf::Numbering* numbers = apf::createNumbering(
-       m,"my_numbers", m->getShape(), 1);
+      m,"my_numbers", m->getShape(), 1);
+  int node_number = 7;
   //create an array to hold all our vertices
   apf::MeshEntity** vertices = new apf::MeshEntity*[total_elms];
   for(int counter = 0; counter < total_elms; counter++) {
@@ -38,12 +34,16 @@ int main(int argc, char** argv)
 
   //rather than test for that zero,zero element every time
   //just instantiate it manually once
-  apf::Vector3* temp_vec = new apf::Vector3(0,0,0);
+  apf::Vector3* temp_vec = new apf::Vector3();
+  double xyz[3] = {0,0,0};
+  temp_vec->fromArray(xyz);
   int vert_index = 0; // use this to place verts in right spot
   m->setPoint(vertices[vert_index],0,*(temp_vec));
+  //numbering each node in order of creation
+  apf::number(numbers,vertices[vert_index],0,0,node_number++);
+
   std::cout << vert_index << ": " << *(temp_vec) << std::endl;
-  //now we can reuse by using Vector3::fromArray(const double* abc) 
-  double xyz[3] = {0,0,0};
+  
   for(int y_c = 1; y_c <= y_elms; y_c++) {
     //for the first column of x we make element to left
     xyz[0] = 0;
@@ -54,6 +54,8 @@ int main(int argc, char** argv)
     //print the location of each vertex
     std::cout << vert_index << ": " << *(temp_vec) << std::endl;
     m->setPoint(vertices[vert_index],0,*(temp_vec));
+    apf::number(numbers,vertices[vert_index],0,0,node_number++);
+
     for(int x_c = 1; x_c <= x_elms; x_c++) {
       xyz[0] = static_cast<double>(x_c) * x_size /
 	  static_cast<double>(x_elms);
@@ -63,6 +65,7 @@ int main(int argc, char** argv)
 	temp_vec->fromArray(xyz);
 	vert_index = x_c;
 	m->setPoint(vertices[vert_index],0,*(temp_vec));
+	apf::number(numbers,vertices[vert_index],0,0,node_number++);
 	std::cout << vert_index << ": " << *(temp_vec) << std::endl;
       } //now create the actual row
       xyz[1] = static_cast<double>(y_c) * y_size / 
@@ -70,6 +73,7 @@ int main(int argc, char** argv)
       temp_vec->fromArray(xyz);
       vert_index = y_c*(x_elms+1) + x_c;
       m->setPoint(vertices[vert_index],0,*(temp_vec));
+      apf::number(numbers,vertices[vert_index],0,0,node_number++);
       //print the location of the vertex
       std::cout << vert_index << ": " << *(temp_vec) << std::endl;
       //create the quad element
@@ -77,12 +81,6 @@ int main(int argc, char** argv)
       quad_verts[1] = vertices[(vert_index - 1)];
       quad_verts[2] = vertices[(vert_index - x_elms - 2)];
       quad_verts[3] = vertices[(vert_index - x_elms - 1)];
-      //quad_verts[4] = vertices[vert_index];
-      apf::Vector3 point;
-      for(int p = 0; p < 4; p++) {
-	m->getPoint(quad_verts[p], 0, point);
-	std::cout << point  << std::endl;
-      }
       apf::buildElement(m, 0, apf::Mesh::QUAD, quad_verts);
       std::cout << "quad created" << std::endl;
     }
