@@ -6,7 +6,7 @@
 #include <apfNumbering.h>
 
 #include <stdio.h>
-
+  
 int main(int argc, char** argv)
 {
   MPI_Init(&argc,&argv);
@@ -40,9 +40,8 @@ int main(int argc, char** argv)
   int vert_index = 0; // use this to place verts in right spot
   m->setPoint(vertices[vert_index],0,*(temp_vec));
   //numbering each node in order of creation
-  apf::number(numbers,vertices[vert_index],0,0,node_number++);
-
-  std::cout << vert_index << ": " << *(temp_vec) << std::endl;
+  apf::number(numbers,vertices[vert_index],0,0, ++node_number);
+  std::cout << node_number << ": " << *(temp_vec) << std::endl;
   
   for(int y_c = 1; y_c <= y_elms; y_c++) {
     //for the first column of x we make element to left
@@ -52,9 +51,9 @@ int main(int argc, char** argv)
     temp_vec->fromArray(xyz); //load the values
     vert_index = (x_elms+1) * y_c;
     //print the location of each vertex
-    std::cout << vert_index << ": " << *(temp_vec) << std::endl;
     m->setPoint(vertices[vert_index],0,*(temp_vec));
-    apf::number(numbers,vertices[vert_index],0,0,node_number++);
+    apf::number(numbers,vertices[vert_index],0,0, ++node_number);
+    std::cout << node_number << ": " << *(temp_vec) << std::endl;
 
     for(int x_c = 1; x_c <= x_elms; x_c++) {
       xyz[0] = static_cast<double>(x_c) * x_size /
@@ -65,31 +64,47 @@ int main(int argc, char** argv)
 	temp_vec->fromArray(xyz);
 	vert_index = x_c;
 	m->setPoint(vertices[vert_index],0,*(temp_vec));
-	apf::number(numbers,vertices[vert_index],0,0,node_number++);
-	std::cout << vert_index << ": " << *(temp_vec) << std::endl;
+	apf::number(numbers,vertices[vert_index],0,0,++node_number);
+	std::cout << node_number << ": " << *(temp_vec) << std::endl;
       } //now create the actual row
       xyz[1] = static_cast<double>(y_c) * y_size / 
 	static_cast<double>(y_elms);
       temp_vec->fromArray(xyz);
       vert_index = y_c*(x_elms+1) + x_c;
       m->setPoint(vertices[vert_index],0,*(temp_vec));
-      apf::number(numbers,vertices[vert_index],0,0,node_number++);
+      apf::number(numbers,vertices[vert_index],0,0,++node_number);
       //print the location of the vertex
-      std::cout << vert_index << ": " << *(temp_vec) << std::endl;
+      std::cout << node_number << ": " << *(temp_vec) << std::endl;
       //create the quad element
       quad_verts[0] = vertices[vert_index];
       quad_verts[1] = vertices[(vert_index - 1)];
       quad_verts[2] = vertices[(vert_index - x_elms - 2)];
       quad_verts[3] = vertices[(vert_index - x_elms - 1)];
       apf::buildElement(m, 0, apf::Mesh::QUAD, quad_verts);
-      std::cout << "quad created" << std::endl;
     }
   }
-  //apf::deriveMdsModel(m);//this makes CAD model for classification
+  apf::deriveMdsModel(m);//this makes CAD model for classification
   //accept the changes
-  //m->acceptChanges();
-  //m->verify();
-
+  m->acceptChanges();
+  m->verify();
+  
+  //now look for getting all elements
+  apf::MeshIterator* it = m->begin(2);
+  apf::MeshEntity* e;
+  apf::Downward down;
+  int numVertices;
+  apf::Vector3 point;
+  int count = 1;
+  while((e = m->iterate(it))) {
+    numVertices = m->getDownward(e, 0, down);
+    std::cout << count++ << ": ";
+    for(int index = 0; index < numVertices; index++) {
+      int vertex_id = apf::getNumber(numbers, down[index],0 ,0);
+      std::cout << vertex_id << ' ';
+      }
+    std::cout << std::endl;
+  }
+  m->end(it);
   //provided: after this should not change
   apf::writeVtkFiles("outQuad", m);
   m->destroyNative();
