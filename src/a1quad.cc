@@ -23,7 +23,7 @@ int main(int argc, char** argv)
   //create an empty numbering
   apf::Numbering* numbers = apf::createNumbering(
       m,"my_numbers", m->getShape(), 1);
-  int node_number = 7;
+  int node_number = 0;
   //create an array to hold all our vertices
   apf::MeshEntity** vertices = new apf::MeshEntity*[total_elms];
   for(int counter = 0; counter < total_elms; counter++) {
@@ -89,15 +89,17 @@ int main(int argc, char** argv)
   m->verify();
   
   //now look for getting all elements
+  apf::Numbering* num_elms = numberOwnedDimension(m, "num_elms", 2);
   apf::MeshIterator* it = m->begin(2);
   apf::MeshEntity* e;
   apf::Downward down;
   int numVertices;
   apf::Vector3 point;
-  int count = 1;
+  int elm_num;
   while((e = m->iterate(it))) {
     numVertices = m->getDownward(e, 0, down);
-    std::cout << count++ << ": ";
+    elm_num = apf::getNumber(num_elms, e, 0, 0);
+    std::cout << elm_num << ": ";
     for(int index = 0; index < numVertices; index++) {
       int vertex_id = apf::getNumber(numbers, down[index],0 ,0);
       std::cout << vertex_id << ' ';
