@@ -97,6 +97,7 @@ int main(int argc, char** argv)
   apf::Vector3 point;
   int elm_num;
   while((e = m->iterate(it))) {
+    /*get the vertices on this face element*/
     numVertices = m->getDownward(e, 0, down);
     elm_num = apf::getNumber(num_elms, e, 0, 0);
     std::cout << elm_num << ": ";
