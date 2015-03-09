@@ -3,14 +3,18 @@
 #include <stdlib>
 
 class MeshWrapper {
-  MeshWrapper::MeshWrapper(apf::MeshEntity* mE, int val) 
+  MeshWrapper(apf::MeshEntity* mE, int val) 
     {this->me = mE; this->dof = val;}
-  MeshWrapper::~MeshWrapper();
+  ~MeshWrapper();
   operator< (const &lhs, const &rhs) {return (lhs.dof < rhs.dof);}
 
   apf::MeshEntity *me;
   int dof;
 };
+do
+{
+  /* code */
+} while (/* condition */);
 
 /*Pseudo Code*/
 Renumber {
@@ -32,17 +36,18 @@ Renumber {
     while(apf::getNumber(nodeNums, current_entity, 0, 0) != -1){
       current_entity = q.pop();
     }
-
     /*check if the current entity is */
-    if(apf::FieldShave::hasNodesIn(1)) {
-      if(mesh->getType(current_entity == apf::Mesh::EDGE)) {
+    if(apf::FieldShape::hasNodesIn(1)) {
+      if(mesh->getType(current_entity) == apf::Mesh::EDGE) {
         /*get the other edge that is unlabeled, because one will always
         be labeled in this scheme*/
         apf::Downward down;
         int num_down_verts = mesh->getDownward(current_entity, 0, down);
         /*add all unlabeled node to the queue, this should only be one*/
         for(int i = 0; i < num_down_verts; ++i) {
-          if(apf::getNumber(nodeNums, down[i], 0 ,0) != -1) {
+          if(apf::isNumbered(nodeNums, down[i], 0, 0) ) {
+            /*pass*/
+          } else {
             q.push_back(down[i]);
 
             std::cout << "added unlabeled node from edge: " << /
@@ -73,7 +78,7 @@ Renumber {
         wrapped.push_back(MeshWrapper(other_vert, ))
 
       }
-      /**sort the vector/
+      /*sort the vector*/
     }
 
   }
