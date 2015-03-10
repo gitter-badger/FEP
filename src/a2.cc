@@ -6,10 +6,24 @@
 #include <apfNumbering.h>
 #include <apfShape.h>
 
+#include <queue>
+#include <set>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
+
 bool hasNode(apf::Mesh2* m, apf::MeshEntity* e)
 {
   return m->getShape()->countNodesOn(m->getType(e)) > 0;
 }
+
+struct sortVertsFunctor {
+  apf::Mesh2* m;
+  bool operator()(const apf::MeshEntity *lhs, const apf::MeshEntity *rhs) {
+    return false;
+  }
+};
 
 int main(int argc, char** argv)
 {
@@ -21,9 +35,163 @@ int main(int argc, char** argv)
   PCU_Comm_Init();
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1], argv[2]);
-  //
-  // insert reordering (numbering) code here
-  //
+  //create a before numbering
+  apf::Numbering* elmNums = apf::numberOwnedDimension(m, "elms", 2);
+  apf::Numbering* all_node_nums = apf::createNumbering(m, "allNodes", m->getShape(), 1);
+  //quickly number all of the nodes
+  int temp_label = 1;
+  apf::MeshIterator* t_it = m->begin(0);
+  apf::MeshEntity* e;
+  while(e = m->iterate(t_it)) {
+    apf::number(all_node_nums, e, 0, 0, temp_label++);
+  }
+  t_it = m->begin(1);
+  while(e = m->iterate(t_it)) {
+    apf::number(all_node_nums, e, 0, 0, temp_label++);
+  }
+  std::cout << temp_label << std::endl;
+  m->acceptChanges();
+  m->verify();
+  apf::writeVtkFiles("pre_number", m);
+  //clean up the previous numbering
+  apf::destroyNumbering(elmNums);
+  apf::destroyNumbering(all_node_nums);
+  
+
+  //find mesh vertex classified on a model vertex with minimal order
+  int min_order = 400;
+  apf::MeshEntity* start_vert;
+  apf::MeshIterator* it = m->begin(0);
+  while(e = m->iterate(it)){
+    apf::ModelEntity* model_ent = m->toModel(e);
+    int dim = m->getModelType(model_ent);
+    if(dim != 0) {
+      continue;
+    }
+    //I cannot figure out how to get the adjacency of the model_entity
+    //so instead I will use the mesh adjacency number
+    //the logic being that if the mesh vert is a model vert, than some
+    //of those edges will be on a model edge, and we measure this number
+    apf::Adjacent adj;
+    m->getAdjacent(e, 1, adj);
+    int accum = 0;
+    for(int ii = 0; ii < adj.getSize(); ++ii) {
+      apf::ModelEntity* possible_edge = m->toModel(adj[ii]);
+      dim = m->getModelType(possible_edge);
+      accum = (dim == 1) ? accum + 1 : accum;
+    }
+    //this keeps the first lowest order is sees
+    min_order = (accum < min_order) ? accum : min_order;
+    start_vert = e; 
+  }
+
+
+  //begin the node relabeling by creating an empty ordering
+  apf::Numbering* nodeNums = apf::createNumbering(m, "nodeNums", m->getShape(),1);
+  apf::Numbering* faceNums = apf::createNumbering(m, "faceNums", apf::getConstant(m->getDimension()), 1);
+
+  std::queue<apf::MeshEntity*> q;
+  q.push(start_vert);
+  std::set<apf::MeshEntity*> in_q;
+  in_q.insert(start_vert);
+  std::set<apf::MeshEntity*>::iterator set_it;
+  std::vector<apf::MeshEntity*> ent_list;
+
+  std::cout << q.size() << std::endl;
+  int node_label = m->count(0) + m->count(1);
+  int face_label = m->count(2);
+  while( q.size() > 0) {
+    apf::MeshEntity* current_entity = q.front();
+    q.pop();
+    set_it = in_q.find(current_entity);
+    if(set_it != in_q.end()) {
+      in_q.erase(set_it);
+      std::cout << "erased element from set" << std::endl;
+    }
+    //assuming that there is only one dof per entity
+    if(!apf::isNumbered(nodeNums, current_entity,0,0)) {
+      apf::number(nodeNums, current_entity, 0, 0, node_label);
+      std::cout << "labeled entity as: " << node_label << std::endl;
+      --node_label;
+    }
+
+    //now we want to add any unlabled adjacent mesh entities to the queue
+    //additions to queue will only be handled  by looking at adjacencies from
+    //vertices
+    if(apf::getDimension(m, current_entity) == 0) {
+
+      apf::MeshEntity* vert = current_entity;
+      apf::Adjacent edge_adj;
+      m->getAdjacent(vert, 1, edge_adj);
+      int edge_adj_size = edge_adj.getSize();
+      for(int ii = 0; ii < edge_adj_size; ++ii) {
+	apf::MeshEntity* curr_edge = edge_adj[ii];
+	//get the face adjacency for this edge and see if it is labeled
+	apf::Adjacent face_adj;
+	m->getAdjacent(edge_adj[ii], 2, face_adj);
+	int face_adj_size = face_adj.getSize();
+	for(int jj = 0; jj < face_adj_size; ++jj) {
+	  if(!apf::isNumbered(faceNums, face_adj[jj], 0, 0)) {
+	    apf::number(faceNums, face_adj[jj], 0 ,0, face_label);
+	    std::cout << "labeled face: " << face_label << std::cout;
+	    --face_label;
+	  }
+	  //check if the face has a node to label, then queue it if exists
+	  if(hasNode(m, face_adj[jj])) { // we will never have a dof on a face in this case
+	    //queue the face node
+	    std::cout << "trying to queue a face node" << std::endl;
+	  }
+	}
+	//get the other end of the edge
+	apf::MeshEntity* other_vert = apf::getEdgeVertOppositeVert(m, edge_adj[ii], vert);
+	//if(node = edge->getNode())
+	if(hasNode(m, curr_edge)) {
+	  //check that the other_vert is labeled or in queue and edge node not labeled
+	  set_it = in_q.find(other_vert);
+	  bool is_in_q = (set_it != in_q.end());
+	  if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_in_q ) &&
+	      !apf::isNumbered(nodeNums, curr_edge, 0, 0) ) {
+	    apf::number(nodeNums, curr_edge, 0 , 0, node_label);
+	    std::cout << "labeled enclosed edge: " << node_label << std::endl;
+	    --node_label;
+	  } else {
+	    //we enqueue this edge
+	    std::cout << "queueing an edge" << std::endl;
+	    q.push(curr_edge);
+	    in_q.insert(curr_edge);
+	    //add the other vertex to the list
+	    ent_list.push_back(other_vert);  
+	  }
+	} else {
+
+	}
+      }// finished loop over all edges coming into vertex
+      //add all of the elements in the list to the queue
+      if(ent_list.size() > 0) {
+	//use the functor to create a closure over the mesh for ranking the vector
+	struct sortVertsFunctor functor;
+	functor.m = m;
+	std::sort(ent_list.begin(), ent_list.end(), functor);
+	//add each element of the vector to the queue
+	std::cout << "before size: " << q.size() << std::endl;
+	std::cout << "adding: " << ent_list.size() << std::endl;
+	for(std::vector<apf::MeshEntity*>::iterator it = ent_list.begin();
+	    it != ent_list.end(); ++it) {
+	  q.push(*it);
+	  in_q.insert(*it);
+	}
+	std::cout << "after size: " << q.size() << std::endl;
+	ent_list.clear();
+      }
+    } else {
+      std::cout << "not a vertex" << std::endl;
+    } // end of vertex checking
+
+  } //end of while loop
+ 
+  //write out the finished mesh
+  m->acceptChanges();
+  m->verify();
   apf::writeVtkFiles("number", m);
   m->destroyNative();
   apf::destroyMesh(m);
