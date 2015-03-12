@@ -47,23 +47,31 @@ int main(int argc, char** argv)
   int temp_label = 1;
   apf::MeshIterator* t_it = m->begin(0);
   apf::MeshEntity* e;
+  //find the total number of nodes here
+  signed int node_label = 0;
   while(e = m->iterate(t_it)) {
-    apf::number(all_node_nums, e, 0, 0, temp_label++);
+    if(hasNode(m, e)) {
+      apf::number(all_node_nums, e, 0, 0, temp_label++);
+      ++node_label;
+    }
   }
   t_it = m->begin(1);
   while(e = m->iterate(t_it)) {
-    apf::number(all_node_nums, e, 0, 0, temp_label++);
+    if(hasNode(m, e)) {
+      apf::number(all_node_nums, e, 0, 0, temp_label++);
+      ++node_label;
+    }
   }
-  std::cout << temp_label << std::endl;
+  std::cout << node_label << std::endl;
   m->acceptChanges();
   m->verify();
   apf::writeVtkFiles("pre_number", m);
   //clean up the previous numbering
   apf::destroyNumbering(elmNums);
   apf::destroyNumbering(all_node_nums);
-  
-
   //find mesh vertex classified on a model vertex with minimal order
+  //400 taken from wiki, which says that the worst case simmetrix meshes
+  //have around 300 edges per vert, so we go with 400
   int min_order = 400;
   apf::MeshEntity* start_vert;
   apf::MeshIterator* it = m->begin(0);
@@ -85,11 +93,13 @@ int main(int argc, char** argv)
       dim = m->getModelType(possible_edge);
       accum = (dim == 1) ? accum + 1 : accum;
     }
-    //this keeps the first lowest order is sees
-    min_order = (accum < min_order) ? accum : min_order;
-    start_vert = e; 
+    //this keeps the last lowest order is sees
+    if(accum < min_order) {
+      std::cout << m->getModelType(model_ent) << std::endl;
+      min_order =  accum;
+      start_vert = e; 
+    }
   }
-
 
   //begin the node relabeling by creating an empty ordering
   apf::Numbering* nodeNums = apf::createNumbering(m, "nodeNums", m->getShape(),1);
@@ -103,7 +113,6 @@ int main(int argc, char** argv)
   std::vector<apf::MeshEntity*> ent_list;
 
   std::cout << q.size() << std::endl;
-  signed int node_label = m->count(0) + m->count(1);
   signed int face_label = m->count(2);
   //we stop at zero because we labeled every node
   //everything left in the queue will already have been labeled
@@ -119,8 +128,10 @@ int main(int argc, char** argv)
     //assuming that there is only one dof per entity
     if(!apf::isNumbered(nodeNums, current_entity,0,0)) {
       apf::number(nodeNums, current_entity, 0, 0, node_label);
-      std::cout << "labeled entity as: " << node_label << std::endl;
+      //std::cout << "labeled entity as: " << node_label << std::endl;
       --node_label;
+    } else {
+      continue;
     }
 
     //now we want to add any unlabled adjacent mesh entities to the queue
@@ -152,6 +163,7 @@ int main(int argc, char** argv)
 	apf::MeshEntity* other_vert = apf::getEdgeVertOppositeVert(m, curr_edge, vert);
 	if(hasNode(m, curr_edge)) {
 	  //check that the other_vert is labeled or in queue and edge node not labeled
+	  std::cout << "nodes on edges" << std::endl;
 	  set_it = in_q.find(other_vert);
 	  bool is_in_q = (set_it != in_q.end());
 	  if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_in_q ) &&
@@ -163,7 +175,6 @@ int main(int argc, char** argv)
 	    set_it = in_q.find(curr_edge);
 	    if(!apf::isNumbered(nodeNums, curr_edge, 0, 0) && set_it == in_q.end()) {
 	      q.push(curr_edge);
-	      std::cout << q.size() << std::endl;
 	      in_q.insert(curr_edge);
 	    }
 	    //add the other vertex to the list
@@ -188,16 +199,17 @@ int main(int argc, char** argv)
 	  //check that it is not already in queue
 	  set_it = in_q.find(*it);
 	  if(set_it == in_q.end()) {
+	    std::cout << "adding to queue" << std::endl;
 	    q.push(*it);
 	    in_q.insert(*it);
 	  } else {
-	    std::cout << "already in queue" << std::endl;
+	    //std::cout << "already in queue" << std::endl;
 	  }
 	}
 	ent_list.clear();
       }
     } else {
-      std::cout << "not a vertex" << std::endl;
+      //std::cout << "not a vertex" << std::endl;
     } // end of vertex checking
     if(q.size() > 500 ) {
       std::cout << "bad termination" << std::endl;
