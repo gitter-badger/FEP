@@ -103,10 +103,13 @@ int main(int argc, char** argv)
   std::vector<apf::MeshEntity*> ent_list;
 
   std::cout << q.size() << std::endl;
-  int node_label = m->count(0) + m->count(1);
-  int face_label = m->count(2);
+  signed int node_label = m->count(0) + m->count(1);
+  signed int face_label = m->count(2);
+  //we stop at zero because we labeled every node
+  //everything left in the queue will already have been labeled
   while( q.size() > 0 && node_label != 0) {
-    apf::MeshEntity* current_entity = q.front();
+    apf::MeshEntity* current_entity;
+    current_entity = q.front();
     q.pop();
     set_it = in_q.find(current_entity);
     if(set_it != in_q.end()) {
@@ -124,12 +127,10 @@ int main(int argc, char** argv)
     //additions to queue will only be handled  by looking at adjacencies from
     //vertices
     if(apf::getDimension(m, current_entity) == 0) {
-      //std::cout << "\tfound a vertex" << std::endl;
       apf::MeshEntity* vert = current_entity;
       apf::Adjacent edge_adj;
       m->getAdjacent(vert, 1, edge_adj);
       int edge_adj_size = edge_adj.getSize();
-      //std::cout << "\t" << edge_adj_size << std::endl;
       for(int ii = 0; ii < edge_adj_size; ++ii) {
 	apf::MeshEntity* curr_edge = edge_adj[ii];
 	//get the face adjacency for this edge and see if it is labeled
@@ -139,19 +140,16 @@ int main(int argc, char** argv)
 	for(int jj = 0; jj < face_adj_size; ++jj) {
 	  if(!apf::isNumbered(faceNums, face_adj[jj], 0, 0)) {
 	    apf::number(faceNums, face_adj[jj], 0 ,0, face_label);
-	    //std::cout << "labeled face: " << face_label << std::endl;
 	    --face_label;
 	  }
 	  //check if the face has a node to label, then queue it if exists
 	  if(hasNode(m, face_adj[jj])) { // we will never have a dof on a face in this case
 	    //queue the face node
-	    //std::cout << "trying to queue a face node" << std::endl;
+	    std::cout << "trying to queue a face node" << std::endl;
 	  }
 	}
 	//get the other end of the edge
 	apf::MeshEntity* other_vert = apf::getEdgeVertOppositeVert(m, curr_edge, vert);
-	//std::cout << "got other end edge: " << other_vert <<std::endl;
-	//if(node = edge->getNode())
 	if(hasNode(m, curr_edge)) {
 	  //check that the other_vert is labeled or in queue and edge node not labeled
 	  set_it = in_q.find(other_vert);
@@ -159,22 +157,21 @@ int main(int argc, char** argv)
 	  if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_in_q ) &&
 	      !apf::isNumbered(nodeNums, curr_edge, 0, 0) ) {
 	    apf::number(nodeNums, curr_edge, 0 , 0, node_label);
-	    //std::cout << "labeled enclosed edge: " << node_label << std::endl;
 	    --node_label;
 	  } else {
-	    //we enqueue this edge
-	    //std::cout << "queueing an edge: " << q.size() << "  " << curr_edge << std::endl;
-	    q.push(curr_edge);
-	    std::cout << q.size() << std::endl;
-	    in_q.insert(curr_edge);
+	    //check that this edge is not labeled or in queue
+	    set_it = in_q.find(curr_edge);
+	    if(!apf::isNumbered(nodeNums, curr_edge, 0, 0) && set_it == in_q.end()) {
+	      q.push(curr_edge);
+	      std::cout << q.size() << std::endl;
+	      in_q.insert(curr_edge);
+	    }
 	    //add the other vertex to the list
-	    //std::cout << "adding other vertex" << other_vert << std::endl;
 	    ent_list.push_back(other_vert);
 	  }
 	} else {
 	  if(!apf::isNumbered(nodeNums, other_vert, 0, 0)) {
 	    ent_list.push_back(other_vert);
-	    //std::cout << "adding a vert to the list" << std::endl;
 	  }
 	}
       }// finished loop over all edges coming into vertex
@@ -186,33 +183,10 @@ int main(int argc, char** argv)
 	std::sort(ent_list.begin(), ent_list.end(), functor);
 	//add each element of the vector to the queue
 	//print out the ent vector and the queue
-	/*
-	std::cout << "vector: ";
-	for(std::vector<apf::MeshEntity*>::iterator ut = ent_list.begin(); 
-	    ut != ent_list.end(); ++ut){
-	  std::cout << *ut << " ";
-	}
-	
-	std::cout << std::endl << "queue ";
-	for(std::queue<apf::MeshEntity*>::iterator qt = q.begin();
-	    qt != q.end(); ++qt) {
-	  std::cout << *qt << " ";
-	}
-	
-	std::cout << std::endl << "set";
-	for(std::set<apf::MeshEntity*>::iterator st = in_q.begin();
-	    st != in_q.end(); ++st) {
-	  std::cout << *st << " ";
-	}
-	std::cout << std::endl;
-	*/
 	for(std::vector<apf::MeshEntity*>::iterator it = ent_list.begin();
 	    it != ent_list.end(); ++it) {
 	  //check that it is not already in queue
-	  std::cout << "AA: " << *it << std::endl;
 	  set_it = in_q.find(*it);
-	  //std::cout << "#########################" << std::endl;
-	  std::cout << (bool)(set_it == in_q.end()) << std::endl;
 	  if(set_it == in_q.end()) {
 	    q.push(*it);
 	    in_q.insert(*it);
@@ -220,20 +194,22 @@ int main(int argc, char** argv)
 	    std::cout << "already in queue" << std::endl;
 	  }
 	}
-	//std::cout << "after size: " << q.size() << std::endl;
 	ent_list.clear();
       }
     } else {
       std::cout << "not a vertex" << std::endl;
     } // end of vertex checking
-
-    //std::cout << "QUEUE SIZE: " << q.size() << std::endl;
     if(q.size() > 500 ) {
       std::cout << "bad termination" << std::endl;
       break;
     }
   } //end of while loop
-  std::cout << "finished!" << std::endl;
+
+  //make sure that we did not leave an unlabeled node in the queue
+  while(!q.empty()) {
+    assert(apf::isNumbered(nodeNums, q.front(), 0, 0) == 1);
+    q.pop();
+  }
   //write out the finished mesh
   m->acceptChanges();
   m->verify();
