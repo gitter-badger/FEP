@@ -81,22 +81,11 @@ int main(int argc, char** argv)
     if(dim != 0) {
       continue;
     }
-    //I cannot figure out how to get the adjacency of the model_entity
-    //so instead I will use the mesh adjacency number
-    //the logic being that if the mesh vert is a model vert, than some
-    //of those edges will be on a model edge, and we measure this number
     apf::Adjacent adj;
     m->getAdjacent(e, 1, adj);
-    int accum = 0;
-    for(int ii = 0; ii < adj.getSize(); ++ii) {
-      apf::ModelEntity* possible_edge = m->toModel(adj[ii]);
-      dim = m->getModelType(possible_edge);
-      accum = (dim == 1) ? accum + 1 : accum;
-    }
-    //this keeps the last lowest order is sees
-    if(accum < min_order) {
-      std::cout << m->getModelType(model_ent) << std::endl;
-      min_order =  accum;
+    //this keeps the first lowest order is sees
+    if(adj.getSize() < min_order) {
+      min_order =  adj.getSize();
       start_vert = e; 
     }
   }
@@ -112,7 +101,6 @@ int main(int argc, char** argv)
   std::set<apf::MeshEntity*>::iterator set_it;
   std::vector<apf::MeshEntity*> ent_list;
 
-  std::cout << q.size() << std::endl;
   signed int face_label = m->count(2);
   //we stop at zero because we labeled every node
   //everything left in the queue will already have been labeled
@@ -123,7 +111,7 @@ int main(int argc, char** argv)
     set_it = in_q.find(current_entity);
     if(set_it != in_q.end()) {
       in_q.erase(set_it);
-      std::cout << "erased element from set" << std::endl;
+      //std::cout << "erased element from set" << std::endl;
     }
     //assuming that there is only one dof per entity
     if(!apf::isNumbered(nodeNums, current_entity,0,0)) {
@@ -163,7 +151,6 @@ int main(int argc, char** argv)
 	apf::MeshEntity* other_vert = apf::getEdgeVertOppositeVert(m, curr_edge, vert);
 	if(hasNode(m, curr_edge)) {
 	  //check that the other_vert is labeled or in queue and edge node not labeled
-	  std::cout << "nodes on edges" << std::endl;
 	  set_it = in_q.find(other_vert);
 	  bool is_in_q = (set_it != in_q.end());
 	  if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_in_q ) &&
@@ -199,7 +186,6 @@ int main(int argc, char** argv)
 	  //check that it is not already in queue
 	  set_it = in_q.find(*it);
 	  if(set_it == in_q.end()) {
-	    std::cout << "adding to queue" << std::endl;
 	    q.push(*it);
 	    in_q.insert(*it);
 	  } else {
