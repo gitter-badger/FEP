@@ -7,3 +7,17 @@ UserStore
 #archives
 *.tar*
 *.zip
+
+#ignore archive files
+*.tar.*
+*.zip
+
+#ignore log files
+*.log
+*.aux
+
+#ignore documents
+*.pdf
+*.docx
+*.doc
+*.odt
