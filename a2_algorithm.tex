@@ -7,8 +7,17 @@
 \begin{algorithm}
 \caption{Reverse-Cuthill-McGee Redordering}\label{RCM}
 \begin{algorithmic}
-\Procedure{RCM}{$a,b$}\Comment{this is a comment}
-	\State $r\gets a\bmod b$
+\Procedure{RCM}{$mesh$}\Comment{this is a comment}
+	\State $node_label \gets num_nodes + 1$
+	\State $face_label \gets num_faces + 1$
+	\State $min_order \gets INT_MAX$
+	\While{$vertex \gets mesh.getNextVertex()$}\Comment{find a good starting node}
+		\If{}
+
+		\EndIf
+
+	\EndWhile
+
 
 
 \EndProcedure
