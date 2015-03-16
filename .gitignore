@@ -21,3 +21,6 @@ UserStore
 *.docx
 *.doc
 *.odt
+
+#ignore large image files
+*.ps
