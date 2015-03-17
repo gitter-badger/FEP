@@ -10,7 +10,8 @@
 \geometry{tmargin = 1in}
 
 \begin{document}
-        
+      
+  
 \begin{algorithm}[ht]
 \caption{Reverse-Cuthill-McGee Redordering}\label{RCM}
 \begin{algorithmic}
@@ -100,7 +101,7 @@
 \State
 \Procedure{enqueueList}{queue, list}
     \For{item \textbf{in} list}
-        \If{item \textbf{is not in} queue}
+        \If{item \textbf{not in} queue}
             \State queue.enqueue(item)
         \EndIf
     \EndFor
@@ -112,42 +113,42 @@
 \FloatBarrier
 
 \begin{figure}[ht]
-\caption{Original labeling of entities by memory address order}
+\caption{Original labeling of entities on a 2D linear mesh by entity memory address order.}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{pre_b}}
 \centering
 \end{figure}
 
 \begin{figure}[h]
-\caption{Reordering with Reverse Cuthill-McGee}
+\caption{Reordering a linear mes with Reverse Cuthill-McGee}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{post_b}}
 \centering
 \end{figure}
 
 \begin{figure}[ht]
-\caption{Original labeling of entities by memory address order}
+\caption{Original labeling of entities on a 2D linear mesh by entity memory address order}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{pre_c}}
 \centering
 \end{figure}
 
 \begin{figure}[h]
-\caption{Reordering with Reverse Cuthill-McGee}
+\caption{Reordering a linear mesh with Reverse Cuthill-McGee}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{post_c}}
 \centering
 \end{figure}
 
 \begin{figure}[ht]
-\caption{Original labeling of entities by memory address order}
+\caption{Original labeling of entities on a 2D qudratic mesh by entity memory address order}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{pre_a}}
 \centering
 \end{figure}
 
 \begin{figure}[h]
-\caption{Reordering with Reverse Cuthill-McGee}
+\caption{Reordering of qudratic mesh with Reverse Cuthill-McGee}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{post_a}}
 \centering
