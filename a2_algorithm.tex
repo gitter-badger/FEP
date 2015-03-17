@@ -6,6 +6,8 @@
 \usepackage{amssymb}
 \usepackage{adjustbox}
 \usepackage{placeins}
+\usepackage{geometry}
+\geometry{tmargin = 1in}
 
 \begin{document}
         
@@ -31,11 +33,22 @@
             \State \Comment{ label neighboring faces and specific edge nodes}
             \State MeshEntity current\_vertex $\gets$ entity \Comment{relabel for clarity}
 
-            \For{$ii = 1$ to vertex.numEdges()}
-                MeshEntity edge $\gets$ vertex.edge()
-                \For{}
-                    \State
+            \For{$ii = 1$ \textbf{to} vertex.numEdges()}
+                MeshEntity edge $\gets$ vertex.edge(ii)
+                \For{$jj = 1$ \textbf{to} edge.numFaces()}
+                    \State MeshEntity face $\gets$ edge.face(jj)
+                    \If{\textbf{not} face.isLabeled()}
+                        \State face.setLabel(face\_label)
+                        \State face\_label $\gets$ face\_label$ - 1$
+                    \EndIf
+                    \If{face.hasNode()}
+                        \If{\textbf{not} face.getNode().isLabeled()}
+                            \State q.enqueue(face)
+                        \EndIf
+
+                    \EndIf
                 \EndFor
+
                 \State MeshEntity other\_vertex $\gets$ edge.getOtherVertex()
                 \If{edge.hasNode()}
                     \If{ other\_vertex.isLabeled() \textbf{or} queue.inQueue(other\_vertex) \textbf{and not} edge.isLabeled() }
@@ -52,14 +65,6 @@
                 \EndIf
             \EndFor
 
-            \State \Call{enqueueList}{q, list}
-            \State list.clear()
-
-        \EndIf
-
-    \EndWhile
-\EndProcedure
-
 \algstore{myalg}
 \end{algorithmic}
 \end{algorithm}
@@ -68,6 +73,14 @@
 \begin{algorithmic}
 \algrestore{myalg}
 
+            \State \Call{enqueueList}{q, list}
+            \State list.clear()
+
+        \EndIf
+
+    \EndWhile
+\EndProcedure
+\State
 \Procedure{getStartNode}{$mesh$}[t]
     \State\Comment{for $M^{0}_{i} \in [M^{0}]$ \textbf{and}\  $M^{0}_{i} \sqsubset G^{0}$ find min $M^{0}_{i}\{M^{1}\}$}
     \State min\_order $\gets$ INTMAX
