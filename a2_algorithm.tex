@@ -9,8 +9,29 @@
 \usepackage{geometry}
 \geometry{tmargin = 1in}
 
+% Alter some LaTeX defaults for better treatment of figures:
+    % See p.105 of "TeX Unbound" for suggested values.
+    % See pp. 199-200 of Lamport's "LaTeX" book for details.
+    %   General parameters, for ALL pages:
+    \renewcommand{\topfraction}{0.9}    % max fraction of floats at top
+    \renewcommand{\bottomfraction}{0.8} % max fraction of floats at bottom
+    %   Parameters for TEXT pages (not float pages):
+    \setcounter{topnumber}{2}
+    \setcounter{bottomnumber}{2}
+    \setcounter{totalnumber}{4}     % 2 may work better
+    \setcounter{dbltopnumber}{2}    % for 2-column pages
+    \renewcommand{\dbltopfraction}{0.9} % fit big float above 2-col. text
+    \renewcommand{\textfraction}{0.07}  % allow minimal text w. figs
+    %   Parameters for FLOAT pages (not text pages):
+    \renewcommand{\floatpagefraction}{0.7}  % require fuller float pages
+    % N.B.: floatpagefraction MUST be less than topfraction !!
+    \renewcommand{\dblfloatpagefraction}{0.7}   % require fuller float pages
+
 \begin{document}
-      
+\title{Assignment 2: Finite Elements Programming}
+\date{March 17, 2015}   
+\author{Isaiah Bell} 
+\maketitle
   
 \begin{algorithm}[ht]
 \caption{Reverse-Cuthill-McGee Redordering}\label{RCM}
@@ -110,45 +131,53 @@
 \end{algorithmic}
 \end{algorithm}
 
+Note that the renumbering for nodes and faces begins with one, not zero. The preliminary numbering by memeory address order of each node and face starts from zero. This can easily be changed by decrementing the label counters before labeling, rather that after labeling as implemented in the algorithm below.
+
 \FloatBarrier
+\restoregeometry
+
+%\newgeometry{top = .75in, bottom = 1in}
 
 \begin{figure}[ht]
-\caption{Original labeling of entities on a 2D linear mesh by entity memory address order.}
+\caption{On mesh B: original labeling of entities on a 2D linear mesh by entity memory address order.}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{pre_b}}
 \centering
 \end{figure}
 
 \begin{figure}[h]
-\caption{Reordering a linear mes with Reverse Cuthill-McGee}
+\caption{Reordering of the linear mesh B with Reverse Cuthill-McGee}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{post_b}}
 \centering
 \end{figure}
 
+%\restoregeometry
+%\newgeometry{top = 1in}
+
 \begin{figure}[ht]
-\caption{Original labeling of entities on a 2D linear mesh by entity memory address order}
+\caption{On mesh C: original labeling of entities on a 2D linear mesh by entity memory address order}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{pre_c}}
 \centering
 \end{figure}
 
 \begin{figure}[h]
-\caption{Reordering a linear mesh with Reverse Cuthill-McGee}
+\caption{Reordering of the linear mesh C with Reverse Cuthill-McGee}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{post_c}}
 \centering
 \end{figure}
 
 \begin{figure}[ht]
-\caption{Original labeling of entities on a 2D qudratic mesh by entity memory address order}
+\caption{On mesh A: original labeling of entities on a 2D qudratic mesh by entity memory address order}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{pre_a}}
 \centering
 \end{figure}
 
 \begin{figure}[h]
-\caption{Reordering of qudratic mesh with Reverse Cuthill-McGee}
+\caption{Reordering of the qudratic mesh A with Reverse Cuthill-McGee}
 \adjustbox{trim= {0.2\width} {0} {0.2\width} {0}, clip}
 {\includegraphics[width = 15cm ]{post_a}}
 \centering
