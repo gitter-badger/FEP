@@ -56,7 +56,7 @@
             \State MeshEntity current\_vertex $\gets$ entity \Comment{relabel for clarity}
 
             \For{$ii = 1$ \textbf{to} vertex.numEdges()}
-                MeshEntity edge $\gets$ vertex.edge(ii)
+                \State MeshEntity edge $\gets$ vertex.edge(ii)
                 \For{$jj = 1$ \textbf{to} edge.numFaces()}
                     \State MeshEntity face $\gets$ edge.face(jj)
                     \If{\textbf{not} face.isLabeled()}
@@ -117,7 +117,7 @@
             \EndIf
         \EndIf
     \EndWhile
-    \State\Return best\_entity
+    \State\Return best\_vertex
 \EndProcedure
 \State
 \Procedure{enqueueList}{queue, list}
@@ -131,7 +131,7 @@
 \end{algorithmic}
 \end{algorithm}
 
-Note that the renumbering for nodes and faces begins with one, not zero. The preliminary numbering by memeory address order of each node and face starts from zero. This can easily be changed by decrementing the label counters before labeling, rather that after labeling as implemented in the algorithm below.
+Note that the renumbering for nodes and faces begins with one, not zero. The preliminary numbering by memeory address order of each node and face starts from zero. This can easily be changed by decrementing the label counters before labeling, rather that after labeling as implemented in the algorithm below. The reordering algorithm is the same algorthim found in AdjReorder.pdf from the course notes. 
 
 \FloatBarrier
 \restoregeometry
