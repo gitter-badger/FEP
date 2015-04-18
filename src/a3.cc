@@ -16,20 +16,28 @@ int main(int argc, char** argv)
   PCU_Comm_Init();
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh("cube.dmg", "parallelMesh.smb");
-  
-  //test the idea of multi process
-  if(PCU_Comm_Self()==0) {
-    std::cout << "there are " << PCU_Comm_Peers() << "total processes"
-	      << std::endl;    
-  }
-  std::cout << "hello from process " << PCU_Comm_Self() << std::endl;
-  int i = PCU_Comm_Self() + 1;
-  PCU_Add_Ints(&i, 1);
-  int b[2] = {i+1, i+4};
-  PCU_Add_Ints(b,2);
-  std::cout << i << b[0] << b[1] << std::endl;
-  
 
+  char* message;
+  apf::MeshIterator* it = m->begin(0);
+  apf::MeshEntity* e;
+  apf::Adjacent up;
+
+  if(PCU_Comm_Self() == 0) {
+    std::cout << "number of peers" << PCU_Comm_Peers() << std::endl;
+    it = m->begin(0);
+    apf::Copies remotes;
+    while(e = m->iterate(it)) {
+      m->getRemotes(e, remotes);
+      for(apf::Copies::iterator it = remotes.begin(); it != remotes.end(); ++it) {
+	std::cout << "shared with:" << it->second << std::endl; 
+      }
+    }
+  }
+  
+  apf::Numbering* vert_nums = apf::numberOwnedDimension(m, "verts", 0);
+  
+ 
+  apf::writeVtkFiles("part",m); 
   m->destroyNative();
   apf::destroyMesh(m);
   PCU_Comm_Free();
