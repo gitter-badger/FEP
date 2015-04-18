@@ -142,7 +142,7 @@ int main(int argc, char** argv)
 	    --face_label;
 	  }
 	  //check if the face has a node to label, then queue it if exists
-	  if(hasNode(m, face_adj[jj])) { // we will never have a dof on a face in this case
+	  if(hasNode(m, face_adj[jj])) { // we will never have a dof on a face
 	    //queue the face node
 	    std::cout << "trying to queue a face node" << std::endl;
 	  }
