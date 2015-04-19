@@ -40,13 +40,9 @@ int main(int argc, char** argv)
   int TRANSFER_TAG_SIZE = sizeof(int) *INT_TAG_LENGTH;
 
   PCU_Comm_Begin();
-  std::cout << "here" << std::endl;
   while(vert = m->iterate(it)) {
-    std::cout << "vert: " << vert << " " << current_partition <<  std::endl;
     for(int dim = 1; dim < 4; ++dim) {
-      std::cout << "dimension " << dim << current_partition << std::endl;
       m->getAdjacent(vert, dim, up);
-      std::cout << "got adjacent " << current_partition << std::endl; 
       int owned_dim_count = 0;
       for(int ii = 0; ii < up.getSize(); ++ii) {
 	//only count adjacencies on the local part
@@ -59,45 +55,47 @@ int main(int argc, char** argv)
       int index = dim - 1;
       efr_adj[index] = owned_dim_count;
     }
-    std::cout << "===loop" << current_partition << "===" << std::endl;
     //now add the data to the tag
     m->setIntTag(vert, local_adj_tag, efr_adj);
-    std::cout << "tag set " << current_partition << "bool " << m->isOwned(vert) <<  std::endl;
     //now send the taged data to the other partitions
     //only send the data that other partitions want
     if( ! m->isOwned(vert)) {
-      std::cout << "not owned " << current_partition << std::endl;
-      //send the vertex first
-      int target_process = m->getOwner(vert);
-      std::cout << sizeof(apf::MeshEntity*) << " " << target_process  << current_partition << std::endl;
-      int rc = PCU_Comm_Write(target_process, (void*)(&vert), sizeof(apf::MeshEntity*));
-      std::cout << "sent pointer" << current_partition << std::endl;
-      PCU_Comm_Write(target_process, reinterpret_cast<void*>(&efr_adj), TRANSFER_TAG_SIZE );
-      std::cout << "sent data" << current_partition << std::endl;
+
+      apf::Copies remotes;
+      m->getRemotes(vert, remotes);
+      for(apf::Copies::iterator cit = remotes.begin(); cit != remotes.end(); ++cit) {
+	//send the vertex first
+	int target_process = cit->first;
+	apf::MeshEntity* over_there_vert = cit->second;
+	//std::cout << vert << " " << over_there_vert << " from " << current_partition << std::endl;
+	//std::cout << &over_there_vert << std::endl;
+	//std::cout << over_there_vert << std::endl;
+	int rc = PCU_Comm_Pack(target_process, &over_there_vert, sizeof(apf::MeshEntity*));
+	//std::cout << rc << std::endl;
+	PCU_Comm_Pack(target_process, efr_adj, TRANSFER_TAG_SIZE );
+	//printf("E %d F %d R %d \n", efr_adj[0], efr_adj[1], efr_adj[2]);
+      }
     }
   }
-  std::cout << "boop from: " << current_partition << std::endl; 
   //we are done with local adjacencies
   PCU_Comm_Send();
-  std::cout << "done sending" << std::endl;
+  //std::cout << "done sending " << current_partition << std::endl;
   while(PCU_Comm_Receive()) {
-    void* data;
-    PCU_Comm_Unpack(data, sizeof(apf::MeshEntity*));
-    apf::MeshEntity* target_vert =  reinterpret_cast<apf::MeshEntity*>(data);
+    apf::MeshEntity* target_vert;
+    PCU_Comm_Unpack(&target_vert, sizeof(apf::MeshEntity*));
     //parts should send adjacency to correct part number
     assert(m->isOwned(target_vert));
-
-    PCU_Comm_Unpack(data,TRANSFER_TAG_SIZE );
     int foreign_adj[INT_TAG_LENGTH];
-    memcpy(reinterpret_cast<void*>(foreign_adj), data, TRANSFER_TAG_SIZE );
+    PCU_Comm_Unpack(foreign_adj ,TRANSFER_TAG_SIZE );
     //get the current adj tag and add
     int temp_tag[INT_TAG_LENGTH];
-    m->getIntTag(target_vert, local_adj_tag, temp_tag);
+    m->getIntTag(target_vert, local_adj_tag, temp_tag);    
     //sum the current adjacencies and the local adjacencies
     for(int jj = 0; jj < INT_TAG_LENGTH; ++jj) {
       temp_tag[jj] += foreign_adj[jj];
     } 
     m->setIntTag(target_vert, local_adj_tag, temp_tag);
+ 
   }
   
   //now report the adjacencies for each vertex in the local part
@@ -106,7 +104,7 @@ int main(int argc, char** argv)
     if(m->isOwned(vert)) {
       int temp_tag[INT_TAG_LENGTH];
       m->getIntTag(vert, local_adj_tag, temp_tag);
-      printf("L: %d ZVert num: %d, E: %d F: %d R: %d", current_partition, \
+      printf("L: %d Vert num: %d, E: %d F: %d R: %d\n", current_partition, \
 	     apf::getNumber(vert_nums, vert, 0, 0), temp_tag[0], temp_tag[1], temp_tag[2]);
     }
   }
