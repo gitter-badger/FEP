@@ -24,3 +24,9 @@ UserStore
 
 #ignore large image files
 *.ps
+*.eps
+
+#ignore tex files
+*.aux
+*.lol
+*.log

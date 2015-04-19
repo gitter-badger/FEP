@@ -1,0 +1,186 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{amssymb}
+\usepackage{adjustbox}
+\usepackage{placeins}
+\usepackage{geometry}
+\usepackage{epstopdf}
+\geometry{tmargin = 1in}
+
+% Alter some LaTeX defaults for better treatment of figures:
+    % See p.105 of "TeX Unbound" for suggested values.
+    % See pp. 199-200 of Lamport's "LaTeX" book for details.
+    %   General parameters, for ALL pages:
+    \renewcommand{\topfraction}{0.9}    % max fraction of floats at top
+    \renewcommand{\bottomfraction}{0.8} % max fraction of floats at bottom
+    %   Parameters for TEXT pages (not float pages):
+    \setcounter{topnumber}{2}
+    \setcounter{bottomnumber}{2}
+    \setcounter{totalnumber}{4}     % 2 may work better
+    \setcounter{dbltopnumber}{2}    % for 2-column pages
+    \renewcommand{\dbltopfraction}{0.9} % fit big float above 2-col. text
+    \renewcommand{\textfraction}{0.07}  % allow minimal text w. figs
+    %   Parameters for FLOAT pages (not text pages):
+    \renewcommand{\floatpagefraction}{0.7}  % require fuller float pages
+    % N.B.: floatpagefraction MUST be less than topfraction !!
+    \renewcommand{\dblfloatpagefraction}{0.7}   % require fuller float pages
+
+\usepackage{listings}
+\lstset{
+  language              = C++
+}
+
+
+
+\begin{document}
+\title{Assignment 2: Finite Elements Programming}
+\date{March 17, 2015}   
+\author{Isaiah Bell} 
+\maketitle
+  
+\begin{algorithm}
+\caption{Reverse-Cuthill-McGee Redordering}\label{RCM}
+\begin{algorithmic}
+\Procedure{RCM}{$mesh$}
+    \State node\_label $\gets$ num\_nodes$ + 1$
+    \State face\_label $\gets$ num\_faces$ + 1$
+    \State Queue q
+    \State MeshEntity start\_entity $\gets$ \Call{getStartNode}{mesh}
+    \State q.enqueue(start\_entity)
+    \While{q.size() $> 0$}
+        \State MeshEntity entity = q.dequeue()
+        \State Node node = entity.getNode()
+
+        \If{\textbf{not} node.isLabeled}
+            \State node.setLabel(label\_node)
+            \State label\_node $\gets$ label\_node$ - 1$
+        \EndIf
+
+        \If{entity \textbf{is} MESH\_VERTEX }
+            \State \Comment{ label neighboring faces and specific edge nodes}
+            \State MeshEntity current\_vertex $\gets$ entity \Comment{relabel for clarity}
+
+            \For{$ii = 1$ \textbf{to} vertex.numEdges()}
+                \State MeshEntity edge $\gets$ vertex.edge(ii)
+                \For{$jj = 1$ \textbf{to} edge.numFaces()}
+                    \State MeshEntity face $\gets$ edge.face(jj)
+                    \If{\textbf{not} face.isLabeled()}
+                        \State face.setLabel(face\_label)
+                        \State face\_label $\gets$ face\_label$ - 1$
+                    \EndIf
+                    \If{face.hasNode()}
+                        \If{\textbf{not} face.getNode().isLabeled()}
+                            \State q.enqueue(face)
+                        \EndIf
+
+                    \EndIf
+                \EndFor
+
+                \State MeshEntity other\_vertex $\gets$ edge.getOtherVertex()
+                \If{edge.hasNode()}
+                    \If{ other\_vertex.isLabeled() \textbf{or} queue.inQueue(other\_vertex) \textbf{and not} edge.isLabeled() }
+                        \State edge.getNode().labelNode(node\_label)
+                        \State node\_label $\gets$ node\_label$ - 1$
+                    \Else
+                        \State q.enqueue(edge)
+                        \State list.push\_back(other\_vertex)
+                    \EndIf
+                \Else
+                    \If{\textbf{not} other\_vertex.isLabeled()}
+                        \State list.push\_back(other\_vertex)
+                    \EndIf
+                \EndIf
+            \EndFor
+
+\algstore{myalg}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\begin{algorithmic}
+\algrestore{myalg}
+
+            \State \Call{enqueueList}{q, list}
+            \State list.clear()
+
+        \EndIf
+
+    \EndWhile
+\EndProcedure
+\State
+
+\Procedure{MigrateRegions}{$mesh$}[t]
+    \State partition\_face\_count
+    \State MeshEntity
+    \State MeshEntity entity
+    \While{vertex $\gets$ mesh.getNextVertex()}
+        \If{mesh.getModelType(vertex) == MODEL\_VERTEX}
+            \State adjacency\_size $\gets$ mesh.getAdjacent()
+            \If{adjaceny\_size $<$ min\_order}
+                \State min\_order $\gets$ adjaceny\_size
+                \State best\_vertex $\gets$ entity
+            \EndIf
+        \EndIf
+    \EndWhile
+    \State\Return best\_vertex
+\EndProcedure
+\State
+\Procedure{enqueueList}{queue, list}
+    \For{item \textbf{in} list}
+        \If{item \textbf{not in} queue}
+            \State queue.enqueue(item)
+        \EndIf
+    \EndFor
+\EndProcedure
+
+\end{algorithmic}
+\end{algorithm}
+
+\FloatBarrier
+\restoregeometry
+
+%\newgeometry{top = .75in, bottom = 1in}
+
+\subsection{Part 3}
+The partition face splits the mesh along region boundaries, therefore each region is fully owned by a partition and there are no shadow copies of the region under the current meshing scheme. For each mesh partition we iterate over all faces and see if any of the faces are owned by a different mesh partition. A mesh face can only be shared by two regions, so only one partition will have region that sees this face as a shadow copy, and the other partition will have a region that owns the face. Because each face on the boundary can only belong to one region in that partition, collecting the upward adjacency of the face obtains the desired region pointer for a migration plan. To obtain the total number of faces along the partition model face we add the number of shadow copy faces for every partition. As seen below, there are eight total mesh faces on the partition model face before migration and only five total mesh faces on the partition model face after migration. Standard output is collected for clarity below.
+\begin{lstlisting}[frame = single]
+    Partition 1 reports 0 partition faces before migration
+    Partition 0 reports 8 partition faces before migration
+    Partition 0 reports 0 partition faces after migration
+    Partition 1 reports 5 partition faces after migration
+\end{lstlisting}
+
+
+
+\FloatBarrier
+\begin{figure}
+    \makebox[\textwidth][c]{\adjustbox{trim= {0.15\width} {0} {0.15\width} {0}, clip}{\includegraphics[width = \textwidth ]{part1_pre_migr}}};
+    \caption{Partition 1 surface before region migration}
+\centering
+
+\end{figure}
+\begin{figure}
+    \makebox[\textwidth][c]{\adjustbox{trim= {0.15\width} {0} {0.15\width} {0}, clip}{\includegraphics[width = \textwidth ]{part1_post_migr}}};
+    \caption{Partition 1 surface after region migration}
+\centering
+
+\end{figure}
+\begin{figure}
+    \makebox[\textwidth][c]{\adjustbox{trim= {0.15\width} {0} {0.15\width} {0}, clip}{\includegraphics[width = \textwidth ]{all_post_migr}}};
+    \caption{Shrink filter visualization of global mesh after region migration. Blue regions belong to Partition 0 and red regions belong to Partition 1}
+\centering
+
+\end{figure}
+
+\FloatBarrier
+
+\lstset{linewidth = 16cm, xrightmargin = 0cm}
+\lstlistoflistings
+\lstinputlisting[caption = {Main Program}]{src/a3.cc}
+
+
+
+\end{document}
