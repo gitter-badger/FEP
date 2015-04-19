@@ -33,116 +33,164 @@
   language              = C++
 }
 
-
+\renewcommand{\algorithmicforall}{\textbf{for each}}
 
 \begin{document}
-\title{Assignment 2: Finite Elements Programming}
-\date{March 17, 2015}   
+\title{Assignment 3: Finite Elements Programming}
+%\date{}   
 \author{Isaiah Bell} 
 \maketitle
   
+\section{Pseudo Code}
+
 \begin{algorithm}
-\caption{Reverse-Cuthill-McGee Redordering}\label{RCM}
 \begin{algorithmic}
-\Procedure{RCM}{$mesh$}
-    \State node\_label $\gets$ num\_nodes$ + 1$
-    \State face\_label $\gets$ num\_faces$ + 1$
-    \State Queue q
-    \State MeshEntity start\_entity $\gets$ \Call{getStartNode}{mesh}
-    \State q.enqueue(start\_entity)
-    \While{q.size() $> 0$}
-        \State MeshEntity entity = q.dequeue()
-        \State Node node = entity.getNode()
 
-        \If{\textbf{not} node.isLabeled}
-            \State node.setLabel(label\_node)
-            \State label\_node $\gets$ label\_node$ - 1$
-        \EndIf
-
-        \If{entity \textbf{is} MESH\_VERTEX }
-            \State \Comment{ label neighboring faces and specific edge nodes}
-            \State MeshEntity current\_vertex $\gets$ entity \Comment{relabel for clarity}
-
-            \For{$ii = 1$ \textbf{to} vertex.numEdges()}
-                \State MeshEntity edge $\gets$ vertex.edge(ii)
-                \For{$jj = 1$ \textbf{to} edge.numFaces()}
-                    \State MeshEntity face $\gets$ edge.face(jj)
-                    \If{\textbf{not} face.isLabeled()}
-                        \State face.setLabel(face\_label)
-                        \State face\_label $\gets$ face\_label$ - 1$
-                    \EndIf
-                    \If{face.hasNode()}
-                        \If{\textbf{not} face.getNode().isLabeled()}
-                            \State q.enqueue(face)
-                        \EndIf
-
-                    \EndIf
-                \EndFor
-
-                \State MeshEntity other\_vertex $\gets$ edge.getOtherVertex()
-                \If{edge.hasNode()}
-                    \If{ other\_vertex.isLabeled() \textbf{or} queue.inQueue(other\_vertex) \textbf{and not} edge.isLabeled() }
-                        \State edge.getNode().labelNode(node\_label)
-                        \State node\_label $\gets$ node\_label$ - 1$
-                    \Else
-                        \State q.enqueue(edge)
-                        \State list.push\_back(other\_vertex)
-                    \EndIf
-                \Else
-                    \If{\textbf{not} other\_vertex.isLabeled()}
-                        \State list.push\_back(other\_vertex)
-                    \EndIf
+\Procedure{MigrateRegions}{mesh}
+    \State partition\_face\_count $\gets 0$ \Comment{only for displaying number of faces on partition model face}
+    \State MigrationPlan plan = new MigrationPlan(mesh)
+    \ForAll{face \textbf{in} mesh}
+        \If{ \textbf{not} mesh.isOwned(face)}
+            \State Adjacent adj = mesh.getAdjacent(face, dimension = 3)
+            \State assert(adj.getSize() == 1)
+            \State partition\_face\_count += 1
+            \If{PCU\_Comm\_Self() == 0} \Comment{only migrate entities from zeroth process}
+                \State MeshEntity region = adj.getFirstElement()
+                \If{\textbf{not} plan.has(region)} \Comment {only mark region for migration once}
+                    \State target\_process = mesh.getOwner(face)
+                    \State plan.addEntityToMigrate(region, target\_process) \Comment{mark region for migration}
                 \EndIf
-            \EndFor
+            \EndIf
+        \EndIf
+    \EndFor
+    \State print("number of faces before: \%d on part \%d", partition\_face\_count, PCU\_Comm\_Self() )
+    \State return\_code = mesh.migrate(plan)
+    \State partition\_face\_count $\gets 0$ 
+    \ForAll{face \textbf{in} mesh}
+        \If{ \textbf{not} mesh.isOwned(face)}
+            \State Adjacent adj = mesh.getAdjacent(face, dimension = 3)
+            \State assert(adj.getSize() == 1)
+            \State partition\_face\_count += 1
+        \EndIf
+    \EndFor
+    \State print("number of faces after: \%d on part \%d", partition\_face\_count, PCU\_Comm\_Self() )
+    \State \Return return\_code
+\EndProcedure
 
-\algstore{myalg}
 \end{algorithmic}
 \end{algorithm}
 
 \begin{algorithm}
 \begin{algorithmic}
-\algrestore{myalg}
 
-            \State \Call{enqueueList}{q, list}
-            \State list.clear()
-
+\Procedure{GetGlobalAdjacency}{mesh}
+    \State MeshTag tag = createIntArrayTag(mesh) \Comment{store adjacency information on each mesh entity}
+    \State Numbering vert\_nums = mesh.numberOwnedDimension(0) \Comment{only needed for printing}
+    \State PCU\_Comm\_Begin()
+    \State MeshEntity* vertex
+    \ForAll{vertex \textbf{in} mesh}
+        \For{dimension = 1; dimension $<$ 4; ++dimension}
+            \State Adjacent adj = mesh.getAdjacent(vertex, dimension)
+            \State owned\_adj\_count = 0
+            \ForAll{MeshEntity* entity \textbf{in} adj}
+                \If{mesh.isOwned(entity)}
+                    \State owned\_adj\_count += 1 \Comment{only count adjacencies owned by local part}
+                \EndIf
+            \EndFor
+            \State index = dimension - 1 \Comment{index is offset by one}
+            \State mesh.setIntArrayTag(tag, vertex, index, owned\_adj\_count) \Comment{store adj info on entity}
+        \EndFor
+        \If{\textbf{not} mesh.isOwned(vertex)}
+            \State Copies remotes = mesh.getRemotes(vertex) \Comment{look up the original owner}
+            \ForAll{pair \textbf{in} remotes}
+                \State target\_process = pair.first()
+                \If{target\_process \textbf{is not} mesh.getOwner(vertex)}
+                    \State \textbf{continue} \Comment{only sent adj info to owner of vertex}
+                \EndIf
+                \State data[3] = getIntArrayTag(mesh, vertex)
+                \State remote\_vertex = pair.second)()
+                \State PCU\_Comm\_Pack(target\_process, remote\_vertex, sizeof(remote\_vertex))
+                \State PCU\_Comm\_Pack(target\_process, data, sizeof(data))
+            \EndFor
         \EndIf
+    \EndFor
+    \State PCU\_Comm\_Send() \Comment{do all communication between threads}
+    \While{PCU\_Comm\_Receive()} \Comment{read all incoming data until none is left}
+        \State MeshEntity* target\_vert = PCU\_Comm\_Unpack(sizeof(MeshEntity*))
+        \State assert(mesh.isOwned(target\_vert)) \Comment{adj info should only be sent to owner of entity}
+        \State target\_data[3] = PCU\_Comm\_Unpack(sizeof(target\_data) * 3)
+        \State temp\_tag\_data[3] = getIntArrayTag(mesh, target\_vert)
+        \State temp\_tag\_data = elementWiseSum(target\_data, temp\_tag\_data)
+        \State mesh.setIntArrayTag(tag, target\_vert, temp\_tag\_data) \Comment{update adj info on vertex}
 
     \EndWhile
-\EndProcedure
-\State
 
-\Procedure{MigrateRegions}{$mesh$}[t]
-    \State partition\_face\_count
-    \State MeshEntity
-    \State MeshEntity entity
-    \While{vertex $\gets$ mesh.getNextVertex()}
-        \If{mesh.getModelType(vertex) == MODEL\_VERTEX}
-            \State adjacency\_size $\gets$ mesh.getAdjacent()
-            \If{adjaceny\_size $<$ min\_order}
-                \State min\_order $\gets$ adjaceny\_size
-                \State best\_vertex $\gets$ entity
-            \EndIf
-        \EndIf
-    \EndWhile
-    \State\Return best\_vertex
-\EndProcedure
-\State
-\Procedure{enqueueList}{queue, list}
-    \For{item \textbf{in} list}
-        \If{item \textbf{not in} queue}
-            \State queue.enqueue(item)
-        \EndIf
+    \ForAll{vertex \textbf{in} mesh}
+        \State print(vert\_nums.getNumber(vertex), PCU\_Comm\_Self())
+        \State print(mesh.getIntArrayTag(mesh, vertex))
+
     \EndFor
 \EndProcedure
 
 \end{algorithmic}
 \end{algorithm}
 
+
+
 \FloatBarrier
 \restoregeometry
 
 %\newgeometry{top = .75in, bottom = 1in}
+\subsection{Part 1 and 2}
+The adjacencies for part 1 and 2 are computed together so that we only iterate over the mesh vertices once to build the adjacency information for all parts. Then we do direct lookup in constant time for each shadow copy to get the total adjacency information for the entire mesh. Finally we iterate over the all of the local owned mesh vertices to report the total adjacency information. The vertex manipulation and collecting adjacency information part of the algorithm is $O(n)$ where $n$ is the number of local mesh vertices including shadow copies. The updating of the global adjacency information for each of the local owned vertices is $O(nm)$ where $n$ is the number of owned vertices per partition that have shadow copies and $m$ is the respective number of shadow copies of a single vertex on all other partitions. In this scheme, there are only one shadow copy of a vertex per partition, making the overall order of the algorithm depend strongly on the quality of the partitioning scheme.
+
+Output for adjacency information is collected by mesh partition for readability from raw parallel output which is unordered. Here we report the upward adjacencies for each mesh vertex. Each mesh vertex is described by the partition number it is owned by, and a local numbering on that partition. The number of edge, face and region adjacencies listed respectively are for the global mesh.
+\pagebreak
+\begin{lstlisting}[frame = single]
+    mesh entity counts: v 40 e 123 f 132 r 48
+
+    L: 0 Vert num: 0,   E: 4    F: 5    R: 2
+    L: 0 Vert num: 1,   E: 6    F: 10   R: 5
+    L: 0 Vert num: 2,   E: 4    F: 5    R: 2
+    L: 0 Vert num: 3,   E: 6    F: 10   R: 5
+    L: 0 Vert num: 4,   E: 4    F: 5    R: 2
+    L: 0 Vert num: 5,   E: 10   F: 19   R: 10
+    L: 0 Vert num: 6,   E: 10   F: 19   R: 10
+    L: 0 Vert num: 7,   E: 6    F: 10   R: 5
+    L: 0 Vert num: 8,   E: 6    F: 10   R: 5
+    L: 0 Vert num: 9,   E: 13   F: 28   R: 16
+    L: 0 Vert num: 10,  E: 4    F: 5    R: 2
+
+    L: 1 Vert num: 0,   E: 6    F: 10   R: 5
+    L: 1 Vert num: 1,   E: 10   F: 19   R: 10
+    L: 1 Vert num: 2,   E: 5    F: 8    R: 4
+    L: 1 Vert num: 3,   E: 6    F: 10   R: 5
+    L: 1 Vert num: 4,   E: 5    F: 8    R: 4
+    L: 1 Vert num: 5,   E: 10   F: 19   R: 10
+    L: 1 Vert num: 6,   E: 5    F: 8    R: 4
+    L: 1 Vert num: 7,   E: 5    F: 8    R: 4
+    L: 1 Vert num: 8,   E: 5    F: 8    R: 4
+    L: 1 Vert num: 9,   E: 5    F: 8    R: 4
+    L: 1 Vert num: 10,  E: 5    F: 8    R: 4
+    L: 1 Vert num: 11,  E: 18   F: 48   R: 32
+    L: 1 Vert num: 12,  E: 6    F: 10   R: 5
+    L: 1 Vert num: 13,  E: 6    F: 10   R: 5
+    L: 1 Vert num: 14,  E: 5    F: 8    R: 4
+    L: 1 Vert num: 15,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 16,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 17,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 18,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 19,  E: 10   F: 24   R: 16
+    L: 1 Vert num: 20,  E: 5    F: 8    R: 4
+    L: 1 Vert num: 21,  E: 5    F: 8    R: 4
+    L: 1 Vert num: 22,  E: 5    F: 8    R: 4
+    L: 1 Vert num: 23,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 24,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 25,  E: 9    F: 16   R: 8
+    L: 1 Vert num: 26,  E: 5    F: 8    R: 4
+    L: 1 Vert num: 27,  E: 4    F: 5    R: 2
+    L: 1 Vert num: 28,  E: 4    F: 5    R: 2
+\end{lstlisting}
 
 \subsection{Part 3}
 The partition face splits the mesh along region boundaries, therefore each region is fully owned by a partition and there are no shadow copies of the region under the current meshing scheme. For each mesh partition we iterate over all faces and see if any of the faces are owned by a different mesh partition. A mesh face can only be shared by two regions, so only one partition will have region that sees this face as a shadow copy, and the other partition will have a region that owns the face. Because each face on the boundary can only belong to one region in that partition, collecting the upward adjacency of the face obtains the desired region pointer for a migration plan. To obtain the total number of faces along the partition model face we add the number of shadow copy faces for every partition. As seen below, there are eight total mesh faces on the partition model face before migration and only five total mesh faces on the partition model face after migration. Standard output is collected for clarity below.
