@@ -5,6 +5,7 @@
 #include <PCU.h>
 #include <apfNumbering.h>
 #include <apfShape.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>
@@ -31,11 +32,11 @@ int main(int argc, char** argv)
   //use tag size to record  with number of bytes in our tag
   int TRANSFER_TAG_SIZE = sizeof(int) * INT_TAG_LENGTH;
   PCU_Comm_Begin();
-  while(vert = m->iterate(it)) {
+  while((vert = m->iterate(it))) {
     for(int dim = 1; dim < 4; ++dim) {
       m->getAdjacent(vert, dim, up);
       int owned_dim_count = 0;
-      for(int ii = 0; ii < up.getSize(); ++ii) {
+      for(unsigned int ii = 0; ii < up.getSize(); ++ii) {
   //only count adjacencies on the local part
   //this avoid double counting
   if(m->isOwned(up[ii])) {
@@ -86,7 +87,7 @@ int main(int argc, char** argv)
   }
   //now report the adjacencies for each vertex in the local part
   it = m->begin(0);
-  while(vert = m->iterate(it)) {
+  while((vert = m->iterate(it))) {
     if(m->isOwned(vert)) {
       int temp_tag[INT_TAG_LENGTH];
       m->getIntTag(vert, local_adj_tag, temp_tag);
@@ -103,7 +104,7 @@ int main(int argc, char** argv)
   apf::Adjacent up_r;
   //count the number of faces on the partition model face
   int partition_face_cnt = 0;
-  while(e = m->iterate(it)) {
+  while((e = m->iterate(it))) {
     //we assume that there are no shadow regions
     //otherwise the adjacencies would not make much sense
     if( ! m->isOwned(e)) {
@@ -126,7 +127,7 @@ int main(int argc, char** argv)
   it = m->begin(2);
   //count the number of faces on the partition model face
   int aftr_partition_face_cnt = 0;
-  while(e = m->iterate(it)) {
+  while((e = m->iterate(it))) {
     //we assume that there are no shadow regions
     //otherwise the adjacencies would not make much sense
     if( ! m->isOwned(e)) {
