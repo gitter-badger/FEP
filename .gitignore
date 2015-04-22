@@ -30,3 +30,12 @@ UserStore
 *.aux
 *.lol
 *.log
+
+
+#ignore mesh files
+*.dmg
+*.smb
+
+#ignore object files
+*/src/obj/*
+*/bin/*
