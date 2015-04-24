@@ -49,14 +49,14 @@ int main(int argc, char** argv)
   apf::MeshEntity* e;
   //find the total number of nodes here
   signed int node_label = 0;
-  while(e = m->iterate(t_it)) {
+  while((e = m->iterate(t_it))) {
     if(hasNode(m, e)) {
       apf::number(all_node_nums, e, 0, 0, temp_label++);
       ++node_label;
     }
   }
   t_it = m->begin(1);
-  while(e = m->iterate(t_it)) {
+  while((e = m->iterate(t_it))) {
     if(hasNode(m, e)) {
       apf::number(all_node_nums, e, 0, 0, temp_label++);
       ++node_label;
@@ -72,10 +72,10 @@ int main(int argc, char** argv)
   //find mesh vertex classified on a model vertex with minimal order
   //400 taken from wiki, which says that the worst case simmetrix meshes
   //have around 300 edges per vert, so we go with 400
-  int min_order = 400;
+  unsigned int min_order = 400;
   apf::MeshEntity* start_vert;
   apf::MeshIterator* it = m->begin(0);
-  while(e = m->iterate(it)){
+  while((e = m->iterate(it))){
     apf::ModelEntity* model_ent = m->toModel(e);
     int dim = m->getModelType(model_ent);
     if(dim != 0) {

@@ -8,14 +8,18 @@ apf = /home/shivaebola/Documents/GitHub/core/apf/
 gmi = /home/shivaebola/Documents/GitHub/core/gmi/
 mds = /home/shivaebola/Documents/GitHub/core/mds/
 pcu = /home/shivaebola/Documents/GitHub/core/pcu/
+
+GTEST_DIR = 
+
 export CPLUS_INCLUDE_PATH = $(apf):$(gmi):$(mds):$(pcu)
 
 Lapf = ~/Documents/GitHub/core/build/apf
 Lgmi = ~/Documents/GitHub/core/build/gmi
 Lmds = ~/Documents/GitHub/core/build/mds
 Lpcu = ~/Documents/GitHub/core/build/pcu
+Lgtest = ~/Documents/GitHub/googletest/make/gtest_main
 
-export LD_LIBRARY_PATH = "$(Lapf):$(Lgmi):$(Lmds):$(Lpcu)"
+LD_LIBRARY_PATH += "$(Lapf):$(Lgmi):$(Lmds):$(Lpcu)"
 
 #--verbose adds a lot of information to output and expands on include search path
 CFLAGS = -Wall -g -I $(IDIR) --pedantic-errors -lmds -lapf -lgmi -lpcu  
