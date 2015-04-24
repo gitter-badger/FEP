@@ -18,9 +18,6 @@ Lpcu = ~/Documents/GitHub/core/build/pcu
 export LD_LIBRARY_PATH = "$(Lapf):$(Lgmi):$(Lmds):$(Lpcu)"
 
 #--verbose adds a lot of information to output and expands on include search path
-#-L$(Lgmi)/libgmi  -L$(Lapf)/libapf  -L$(Lpcu)/libpcu  -L$(Lmds)/libmds
-
-
 CFLAGS = -Wall -g -I $(IDIR) --pedantic-errors -lmds -lapf -lgmi -lpcu  
 CC = mpicxx
 #LIBS =  $(Lapf)/libapf.a $(Lgmi)/libgmi.a $(Lmds)/libmds.a $(Lpcu)/libpcu.a
@@ -33,8 +30,6 @@ DEPS = $(patsubst %, $(IDIR)/%, $(_DEPS))
 #this is so that whenever something changes the server is recompiled
 _OBJ = 
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
-
-#`pkg-config --cflags --libs libmds`
 
 all: ./bin/a4
 
