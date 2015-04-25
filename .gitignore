@@ -39,6 +39,7 @@ UserStore
 #ignore object files
 */src/obj/*
 */bin/*
+*/lib/*
 
 #ignore paraview files
 *.pvtu
