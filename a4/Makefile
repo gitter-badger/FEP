@@ -26,7 +26,7 @@ TESTS = sample1_unittest
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
-                $(GTEST_DIR)/include/gtest/internal/*.h
+				$(GTEST_DIR)/include/gtest/internal/*.h
 
 # House-keeping build targets.
 
@@ -47,11 +47,11 @@ GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 # compiles fast and for ordinary users its source rarely changes.
 $(ODIR)/gtest-all.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc -o $@
+			$(GTEST_DIR)/src/gtest-all.cc -o $@
 
 $(ODIR)/gtest_main.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc -o $@
+			$(GTEST_DIR)/src/gtest_main.cc -o $@
 
 $(LDIR)/gtest.a : $(ODIR)/gtest-all.o
 	$(AR) $(ARFLAGS) $@ $^
@@ -64,11 +64,16 @@ $(LDIR)/gtest_main.a : $(ODIR)/gtest-all.o $(ODIR)/gtest_main.o
 # function.
 
 $(ODIR)/sample1.o : $(SDIR)/sample1.cc $(IDIR)/sample1.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(IDIR) -c $< -o $@
 
 $(ODIR)/sample1_unittest.o : $(SDIR)/sample1_unittest.cc \
-                     $(IDIR)/sample1.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) -c $< -o $@
+					 $(IDIR)/sample1.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(IDIR) -c $< -o $@
 
-$(BDIR)/sample1_unittest : $(ODIR)/sample1.o $(ODIR)/sample1_unittest.o $(LDIR)/gtest_main.a
+$(ODIR)/SimpleRectMeshTest.o : $(SDIR)/SimpleRectMeshTest.cc \
+					  $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(IDIR) -c $< -o $@
+
+$(BDIR)/sample1_unittest : $(ODIR)/sample1.o $(ODIR)/sample1_unittest.o \
+						   $(ODIR)/SimpleRectMeshTest.o $(LDIR)/gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@

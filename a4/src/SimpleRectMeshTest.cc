@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 class RectMeshTest : public testing::Test
 {
@@ -9,7 +9,7 @@ protected:
 	uint32_t y_uints = 10;
 
 	virtual void SetUp() {
-		printf("virtual void setup is called")
+		printf("virtual void setup is called");
 
 	}
 
@@ -23,5 +23,5 @@ TEST_F(RectMeshTest, FirstTest) {
 }
 
 TEST_F(RectMeshTest, SecondTest) {
-	EXPECT_EQ(14, timesSeven(2))
+	EXPECT_EQ(14, timesSeven(2));
 }
