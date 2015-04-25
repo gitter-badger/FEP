@@ -1,16 +1,24 @@
+#include <stdint.h>
 
 #include <gtest/gtest.h>
-#include <stdint.h>
+
+#include <apf.h>
+#include <apfMesh2.h>
+
+#include "MeshBuilder.h"
+
 
 class RectMeshTest : public testing::Test
 {
 protected:
-	uint32_t x_units = 10;
-	uint32_t y_uints = 10;
+	static const uint32_t x_units = 10;
+	static const uint32_t y_uints = 10;
 
 	virtual void SetUp() {
-		printf("virtual void setup is called");
-
+		printf("virtual void setup is called\n");
+		apf::Mesh2* mesh;
+		MeshBuilder mb = MeshBuilder();
+		mb.build2DRectQuadMesh(mesh, 4, 5, 0, 0, 10, 20);
 	}
 
 	static int timesSeven(int n) {
@@ -19,7 +27,7 @@ protected:
 };
 
 TEST_F(RectMeshTest, FirstTest) {
-	EXPECT_EQ(7, timesSeven(1));
+	EXPECT_EQ(7, timesSeven(3));
 }
 
 TEST_F(RectMeshTest, SecondTest) {

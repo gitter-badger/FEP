@@ -4,6 +4,13 @@ IDIR = ./inc
 LDIR = ./lib
 ODIR = ./src/obj
 
+PUMI_DIR = ~/Documents/GitHub/core
+PUMI_INC = -I $(PUMI_DIR)/apf -I $(PUMI_DIR)/gmi -I $(PUMI_DIR)/mds \
+			-I $(PUMI_DIR)/pcu
+
+LIBS = -L $(PUMI_DIR)/build/apf -L $(PUMI_DIR)/build/gmi -L \
+		$(PUMI_DIR)/build/mds -L $(PUMI_DIR)/build/pcu -L $(LDIR)
+
 # Points to the root of Google Test, relative to where this file is.
 # Remember to tweak this if you move this file.
 GTEST_DIR =  ~/Documents/GitHub/googletest
@@ -18,6 +25,8 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include -isystem $(GTEST_DIR)
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra -pthread
+
+MPIFLAGS += -Wall -g -I $(IDIR) --pedantic-errors
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
@@ -63,17 +72,14 @@ $(LDIR)/gtest_main.a : $(ODIR)/gtest-all.o $(ODIR)/gtest_main.o
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-$(ODIR)/sample1.o : $(SDIR)/sample1.cc $(IDIR)/sample1.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(IDIR) -c $< -o $@
-
-$(ODIR)/sample1_unittest.o : $(SDIR)/sample1_unittest.cc \
-					 $(IDIR)/sample1.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(IDIR) -c $< -o $@
+$(ODIR)/MeshBuilder.o : $(SDIR)/MeshBuilder.cc $(IDIR)/MeshBuilder.h \
+					  $(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/SimpleRectMeshTest.o : $(SDIR)/SimpleRectMeshTest.cc \
 					  $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(IDIR) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(BDIR)/sample1_unittest : $(ODIR)/sample1.o $(ODIR)/sample1_unittest.o \
+$(BDIR)/sample1_unittest : $(ODIR)/MeshBuilder.o \
 						   $(ODIR)/SimpleRectMeshTest.o $(LDIR)/gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) -lmds -lapf -lgmi -lpcu -lpthread $^ -o $@
