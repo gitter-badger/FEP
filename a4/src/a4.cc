@@ -8,10 +8,17 @@
 
 #include <gtest/gtest.h>
 
-int main(int argc, char const *argv[])
+int main(int argc, char** argv)
 {
+	MPI_Init(&argc,&argv);
+  	PCU_Comm_Init();
+  	::testing::InitGoogleTest(&argc, argv);
 	printf("Begin the studpid\n");
 	int rc = RUN_ALL_TESTS();
 	printf("%d\n",rc );
+
+
+	PCU_Comm_Free();
+  	MPI_Finalize();
 	return 0;
 }

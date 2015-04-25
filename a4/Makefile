@@ -24,13 +24,13 @@ USER_DIR = $(GTEST_DIR)/samples
 CPPFLAGS += -isystem $(GTEST_DIR)/include -isystem $(GTEST_DIR)
 
 # Flags passed to the C++ compiler.
-CXXFLAGS += -g -Wall -Wextra -pthread
+CXXFLAGS += -g -Wall -Wextra -pthread --pedantic-errors
 
 MPIFLAGS += -Wall -g -I $(IDIR) --pedantic-errors
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = sample1_unittest
+TESTS = $(BDIR)/a4
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -39,7 +39,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 # House-keeping build targets.
 
-all : $(BDIR)/sample1_unittest
+all : $(TESTS)
 
 clean :
 	rm -f $(TESTS) $(LDIR)/gtest.a $(LDIR)/gtest_main.a $(ODIR)/*.o
@@ -80,6 +80,9 @@ $(ODIR)/SimpleRectMeshTest.o : $(SDIR)/SimpleRectMeshTest.cc \
 					  $(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(BDIR)/sample1_unittest : $(ODIR)/MeshBuilder.o \
-						   $(ODIR)/SimpleRectMeshTest.o $(LDIR)/gtest_main.a
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) -lmds -lapf -lgmi -lpcu -lpthread $^ -o $@
+$(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
+$(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o \
+						   $(ODIR)/SimpleRectMeshTest.o $(LDIR)/gtest.a
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
