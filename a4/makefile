@@ -4,35 +4,37 @@ IDIR = ./inc
 LDIR = ./lib
 ODIR = ./src/obj
 
-apf = /home/shivaebola/Documents/GitHub/core/apf/
-gmi = /home/shivaebola/Documents/GitHub/core/gmi/
-mds = /home/shivaebola/Documents/GitHub/core/mds/
-pcu = /home/shivaebola/Documents/GitHub/core/pcu/
 
-GTEST_DIR = 
+GTEST_DIR = ~/Documents/GitHub/googletest
 
-export CPLUS_INCLUDE_PATH = $(apf):$(gmi):$(mds):$(pcu)
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+                $(GTEST_DIR)/include/gtest/internal/*.h
 
-Lapf = ~/Documents/GitHub/core/build/apf
-Lgmi = ~/Documents/GitHub/core/build/gmi
-Lmds = ~/Documents/GitHub/core/build/mds
-Lpcu = ~/Documents/GitHub/core/build/pcu
-Lgtest = ~/Documents/GitHub/googletest/make/gtest_main
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
-LD_LIBRARY_PATH += "$(Lapf):$(Lgmi):$(Lmds):$(Lpcu)"
+CPP_FLAGS += -isystem $(GTEST_DIR)/include
+
+PUMI_DIR = ~/Documents/GitHub/core
+PUMI_INC = -I $(PUMI_DIR)/apf -I $(PUMI_DIR)/gmi -I $(PUMI_DIR)/mds \
+			-I $(PUMI_DIR)/pcu
 
 #--verbose adds a lot of information to output and expands on include search path
-CFLAGS = -Wall -g -I $(IDIR) --pedantic-errors -lmds -lapf -lgmi -lpcu  
+CXXFLAGS = -Wall -g -I $(IDIR) $(PUMI_INC) --pedantic-errors -lmds -lapf -lgmi -lpcu
+
+
 CC = mpicxx
-#LIBS =  $(Lapf)/libapf.a $(Lgmi)/libgmi.a $(Lmds)/libmds.a $(Lpcu)/libpcu.a
+
+LIBS = -L $(PUMI_DIR)/build/apf -L $(PUMI_DIR)/build/gmi -L \
+		$(PUMI_DIR)/build/mds -L $(PUMI_DIR)/build/pcu
+
 
 #use DEPS to require a rebuild whenever a header file changes
-_DEPS = 
+_DEPS = TestMeshBuilder.h
 DEPS = $(patsubst %, $(IDIR)/%, $(_DEPS))
 
 #hold all the objects other than server
 #this is so that whenever something changes the server is recompiled
-_OBJ = 
+_OBJ = TestMeshBuilder.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 all: ./bin/a4
@@ -41,6 +43,9 @@ $(BDIR)/a4 : ./src/obj/a4.o $(OBJ)
 	$(CC) $< -o $@ $(LIBS) $(CFLAGS) 
 
 $(ODIR)/a4.o : ./src/a4.cc 
+	$(CC) -c $(CFLAGS) $< -o $@ 
+
+$(ODIR)/TestMeshBuilder.o : ./src/TestMeshBuilder.cc 
 	$(CC) -c $(CFLAGS) $< -o $@ 
 
 #prevent anything from happening to a file named clean
