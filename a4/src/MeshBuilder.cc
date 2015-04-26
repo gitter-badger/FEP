@@ -48,7 +48,6 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	mesh->setPoint(vertices[vert_index],0,*(temp_vec));
 	//numbering each node in order of creation
 	apf::number(numbers,vertices[vert_index],0,0, ++node_number);
-	//std::cout << node_number << ": " << *(temp_vec) << std::endl;
 	
 	for(uint32_t y_c = 1; y_c <= y_elms; ++y_c) {
 		//for the first column of x we make element to left
@@ -60,7 +59,6 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 		//print the location of each vertex
 		mesh->setPoint(vertices[vert_index],0,*(temp_vec));
 		apf::number(numbers,vertices[vert_index],0,0, ++node_number);
-		//std::cout << node_number << ": " << *(temp_vec) << std::endl;
 
 		for(uint32_t x_c = 1; x_c <= x_elms; x_c++) {
 			xyz[0] = (static_cast<double>(x_c) * x_size / 
@@ -72,7 +70,6 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 				vert_index = x_c;
 				mesh->setPoint(vertices[vert_index],0,*(temp_vec));
 				apf::number(numbers,vertices[vert_index],0,0,++node_number);
-				//std::cout << node_number << ": " << *(temp_vec) << std::endl;
 			} //now create the actual row
 			xyz[1] = (static_cast<double>(y_c) * y_size / 
 					  static_cast<double>(y_elms)) + y0;
@@ -81,7 +78,6 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 			mesh->setPoint(vertices[vert_index],0,*(temp_vec));
 			apf::number(numbers,vertices[vert_index],0,0,++node_number);
 			//print the location of the vertex
-			//std::cout << node_number << ": " << *(temp_vec) << std::endl;
 			//create the quad element
 			quad_verts[0] = vertices[vert_index];
 			quad_verts[1] = vertices[(vert_index - 1)];
