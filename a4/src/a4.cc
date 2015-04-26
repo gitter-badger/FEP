@@ -17,8 +17,6 @@ int main(int argc, char** argv)
 	if(rc != 0){
 		printf("Google Test returned: %d", rc);
 	}
-
-
 	PCU_Comm_Free();
   	MPI_Finalize();
 	return 0;

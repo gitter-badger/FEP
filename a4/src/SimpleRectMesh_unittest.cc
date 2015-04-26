@@ -13,7 +13,6 @@
 class RectMeshTest : public testing::Test
 {
 protected:
-	int five;
 	apf::Mesh2* mesh;
 	MeshBuilder* mesh_builder;
 
