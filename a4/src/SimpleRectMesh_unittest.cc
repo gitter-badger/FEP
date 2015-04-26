@@ -20,7 +20,6 @@ protected:
 		/*use mesh builder to abstract mesh creations*/
 		mesh_builder = new MeshBuilder();
 		mesh = NULL;
-		mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0, 0, 2, 1);
 	}
 
 	virtual void TearDown() {
@@ -30,19 +29,19 @@ protected:
 		}	
 		delete mesh_builder;
 	}
-	/*Helper method*/
-	static int timesSeven(int n) {
-		return n * 7;
-	}
+
 };
 
-TEST_F(RectMeshTest, FirstTest) {
-	EXPECT_EQ(7, timesSeven(1));
+TEST_F(RectMeshTest, Rectangle) {
+	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0, 0, 2, 1);
 	apf::writeVtkFiles("outQuad", mesh);
 	apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::writeVtkFiles("second", mesh);
+	apf::writeVtkFiles("secondQuad", mesh);
 }
 
-TEST_F(RectMeshTest, SecondTest) {
-	EXPECT_EQ(14, timesSeven(2));
+TEST_F(RectMeshTest, Triangle) {
+	mesh_builder->build2DRectTriMesh(mesh, 2, 1, 0, 0, 2, 1);
+	apf::writeVtkFiles("outTri", mesh);
+	apf::changeMeshShape(mesh, apf::getSerendipity());
+	apf::writeVtkFiles("secondTri", mesh);
 }
