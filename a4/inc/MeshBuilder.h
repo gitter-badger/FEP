@@ -11,10 +11,14 @@ public:
 	MeshBuilder();
 	~MeshBuilder();
 
-	void build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t xunits, 
-		uint32_t yunits, uint32_t x0, uint32_t y0, uint32_t xf, uint32_t vf);
+	void build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms, 
+		uint32_t y_elms, double x0, double y0, double xf, double yf);
+	void build2DJaggedQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms, 
+		uint32_t y_elms, double x0, double y0, double xf, double yf);
+
 	void build2DTriQuadMesh(const apf::Mesh2* mesh, uint32_t xunits, 
-		uint32_t yunits, uint32_t x0, uint32_t y0, uint32_t xf, uint32_t vf);
+		uint32_t yunits, double x0, double y0, double xf, double yf);
+	void AdjReorder(apf::Mesh2* & mesh);
 
 private:
 

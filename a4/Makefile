@@ -39,7 +39,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 # House-keeping build targets.
 
-all : $(TESTS)
+all : $(TESTS) .PHONY
 
 clean :
 	rm -f $(TESTS) $(LDIR)/gtest.a $(LDIR)/gtest_main.a $(ODIR)/*.o
@@ -71,6 +71,11 @@ $(LDIR)/gtest_main.a : $(ODIR)/gtest-all.o $(ODIR)/gtest_main.o
 # Builds a sample test.  A test should link with either gtest.a or
 # gtest_main.a, depending on whether it defines its own main()
 # function.
+.PHONY : PumiBuild
+
+PumiBuild :
+	$(MAKE) -C $(PUMI_DIR)/build
+
 
 $(ODIR)/MeshBuilder.o : $(SDIR)/MeshBuilder.cc $(IDIR)/MeshBuilder.h \
 					  $(GTEST_HEADERS)
