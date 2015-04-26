@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-double computeTetVolume(const apf::Vector3 vec[4]);
+double computeTetVolume(const apf::Vector3 vec[]);
 
 int main(int argc, char** argv)
 {
