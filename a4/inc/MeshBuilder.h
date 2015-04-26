@@ -18,6 +18,7 @@ public:
 
 	void build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms, 
 		uint32_t y_elms, double x0, double y0, double xf, double yf);
+	
 	void AdjReorder(apf::Mesh2* & mesh);
 
 private:

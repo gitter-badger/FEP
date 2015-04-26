@@ -19,6 +19,12 @@ MeshBuilder::~MeshBuilder() {
 void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms, 
 	uint32_t y_elms, double x0, double y0, double xf, double yf)
 {
+	/*there is nothing to be done for a zero size mesh so return*/
+	/*there is nothing to be done for a zero size mesh so return*/
+	if ((x_elms == 0) || (y_elms == 0)) {
+		mesh = NULL;
+		return;
+	}
 	gmi_register_null();
   	gmi_model* g = gmi_load(".null");
   	mesh = apf::makeEmptyMdsMesh(g, 2, false);
@@ -102,7 +108,12 @@ void build2DJaggedQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms, 
 	uint32_t y_elms, double x0, double y0, double xf, double yf) 
 {
-		gmi_register_null();
+	/*there is nothing to be done for a zero size mesh so return*/
+	if ((x_elms == 0) || (y_elms == 0)) {
+		mesh = NULL;
+		return;
+	}
+	gmi_register_null();
   	gmi_model* g = gmi_load(".null");
   	mesh = apf::makeEmptyMdsMesh(g, 2, false);
 

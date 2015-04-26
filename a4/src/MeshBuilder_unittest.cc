@@ -49,8 +49,13 @@ TEST_F(MeshBuilderTest, PositiveNegative) {
 	printf("Rest of test not implemented\n");
 }
 
-TEST_F(MeshBuilderTest, NegativePositive){
+TEST_F(MeshBuilderTest, NegativePositive) {
 		/*create a mesh that starts in third and ends in first quadrant*/
 	mesh_builder->build2DRectQuadMesh(mesh, 10, 10, -1, -1, 20, 30);
 	printf("Rest of test not implemented\n");
+}
+
+TEST_F(MeshBuilderTest, ZeroSize) {
+	mesh_builder->build2DRectTriMesh(mesh, 0, 0, -1, -1, 20, 30);
+	//EXPECT_TRUE( mesh == NULL );
 }
