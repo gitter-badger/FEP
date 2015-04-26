@@ -1,0 +1,81 @@
+BDIR = ./bin
+SDIR = ./src
+IDIR = ./inc
+LDIR = ./lib
+ODIR = ./src/obj
+
+
+GTEST_DIR = ~/Documents/GitHub/googletest
+
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+                $(GTEST_DIR)/include/gtest/internal/*.h
+
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+
+CPP_FLAGS += -isystem $(GTEST_DIR)/include -std=c++0x
+
+PUMI_DIR = ~/Documents/GitHub/core
+PUMI_INC = -I $(PUMI_DIR)/apf -I $(PUMI_DIR)/gmi -I $(PUMI_DIR)/mds \
+			-I $(PUMI_DIR)/pcu
+
+#--verbose adds a lot of information to output and expands on include search path
+CXXFLAGS = -Wall -g -I $(IDIR) --pedantic-errors 
+
+
+CC = mpicxx
+
+LIBS = -L $(PUMI_DIR)/build/apf -L $(PUMI_DIR)/build/gmi -L \
+		$(PUMI_DIR)/build/mds -L $(PUMI_DIR)/build/pcu -L $(LDIR)
+
+
+#use DEPS to require a rebuild whenever a header file changes
+_DEPS = SimpleRectTest.h MeshBuilder.h 
+DEPS = $(patsubst %, $(IDIR)/%, $(_DEPS))
+
+#hold all the objects other than server
+#this is so that whenever something changes the server is recompiled
+_OBJ = MeshBuilder.o 
+OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
+
+all: ./bin/a4
+
+$(BDIR)/a4 : ./src/obj/a4.o $(OBJ) $(LDIR)/gtest.a
+	$(CC) $< -o $@ $(LIBS) $(CXXFLAGS) -lmds -lapf -lgmi -lpcu
+
+$(ODIR)/a4.o : ./src/a4.cc 
+	$(CC) $(CPP_FLAGS) $(CXXFLAGS) $(PUMI_INC) -c  $< -o $@ 
+
+#regular mesh code
+$(ODIR)/MeshBuilder.o : ./src/MeshBuilder.cc 
+	$(CC) $(CXXFLAGS) $(PUMI_INC) -c  $< -o $@ 
+
+#unit tests
+
+#$(ODIR)/SimpleRectTest.o : ./src/SimpleRectTest.cc
+#	$(CC) $(CPPFLAGS) $(CXXFLAGS) - c $< -o $@
+
+
+# For simplicity and to avoid depending on Google Test's
+# implementation details, the dependencies specified below are
+# conservative and not optimized.  This is fine as Google Test
+# compiles fast and for ordinary users its source rarely changes.
+$(ODIR)/gtest-all.o : $(GTEST_SRCS_)
+	g++ $(CPPFLAGS) --verbose -I $(GTEST_DIR)/include -I $(GTEST_DIR) $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest-all.cc
+
+$(ODIR)/gtest_main.o : $(GTEST_SRCS_)
+	g++ $(CPPFLAGS) -I $(GTEST_DIR)/include $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest_main.cc
+
+$(LDIR)/gtest.a : $(ODIR)/gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+$(LDIR)/gtest_main.a : $(ODIR)/gtest-all.o $(ODIR)/gtest_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+
+#prevent anything from happening to a file named clean
+.FAKE : clean
+
+clean:
+	$(RM) $(BDIR)/server $(ODIR)/*.o $(LDIR)/gtest.a $(LDIR)/gtest_main.a
