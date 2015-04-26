@@ -13,9 +13,10 @@ int main(int argc, char** argv)
 	MPI_Init(&argc,&argv);
   	PCU_Comm_Init();
   	::testing::InitGoogleTest(&argc, argv);
-	printf("Begin the studpid\n");
 	int rc = RUN_ALL_TESTS();
-	printf("%d\n",rc );
+	if(rc != 0){
+		printf("Google Test returned: %d", rc);
+	}
 
 
 	PCU_Comm_Free();

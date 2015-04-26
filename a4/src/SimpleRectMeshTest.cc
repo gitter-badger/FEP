@@ -20,22 +20,16 @@ protected:
 	virtual void SetUp() {
 		/*use mesh builder to abstract mesh creations*/
 		mesh_builder = new MeshBuilder();
-		printf("virtual void setup is called\n");
 		mesh = NULL;
-		
-		printf("%x\n", (long) mesh );
-		mesh_builder->build2DRectQuadMesh(mesh, 40, 50, 10, 10, -10, -20);
-		five = 6;
-		printf("%x\n", (long) mesh );
+		mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0, 0, 2, 1);
 	}
 
 	virtual void TearDown() {
 		if(mesh != NULL) {
 			mesh->destroyNative();
 			apf::destroyMesh(mesh);
-			printf("Tear down called\n");
 		}	
-		//delete mesh_builder;
+		delete mesh_builder;
 	}
 	/*Helper method*/
 	static int timesSeven(int n) {
@@ -44,7 +38,6 @@ protected:
 };
 
 TEST_F(RectMeshTest, FirstTest) {
-	printf("%d\n", five );
 	EXPECT_EQ(7, timesSeven(1));
 	apf::writeVtkFiles("outQuad", mesh);
 	apf::changeMeshShape(mesh, apf::getSerendipity());
