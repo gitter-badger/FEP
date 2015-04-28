@@ -6,6 +6,7 @@
 
 #include <apf.h>
 #include <apfMesh2.h>
+#include <apfMesh.h>
 #include <apfMDS.h>
 #include <apfShape.h>
 #include <apfField.h>
@@ -47,8 +48,19 @@ TEST_F(RectMeshTest, Rectangle) {
 	//apf::Field * master_f = createFieldOn(mesh, "foo", apf::VECTOR); 
 	apf::Field* master_f = createFieldOn(mesh, "foo", apf::SCALAR);
 	apf::FieldShape* fs = mesh->getShape();
+
 	apf::Numbering* nodes_numbers = apf::numberOwnedNodes(mesh, "fatman", fs);
 
+	apf::Numbering* all_node_nums = apf::createNumbering(mesh, "allNodes", mesh->getShape(), 1);
+	
+
+	std::cout << "outside" << std::endl;
+	int dofs = apf::tempAdjReorder(all_node_nums, mesh, fs, 1);
+	
+	//apf::MeshTag* other_nodes = apf::reorder(mesh, "batman");
+
+	apf::writeVtkFiles("secondQuad", mesh);
+	
 	while((e = mesh->iterate(it))) {
 		//apf::MeshElement* mesh_elm = apf::getMeshElement()
 		//apf::Element* element_ptr = apf::createElement(master_f, e );
@@ -93,6 +105,7 @@ TEST_F(RectMeshTest, Rectangle) {
 		std::cout << apf::countElementNodes(fs, mesh->getType(e)) << std::endl;
 		//std::cout << master_f->countComponents() << std::endl;
 	}
+
 }
 
 TEST_F(RectMeshTest, Triangle) {

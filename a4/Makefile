@@ -4,6 +4,8 @@ IDIR = ./inc
 LDIR = ./lib
 ODIR = ./src/obj
 
+export OMPI_CXX=clang++
+
 PUMI_DIR = ~/Documents/GitHub/core
 PUMI_INC = -I $(PUMI_DIR)/apf -I $(PUMI_DIR)/gmi -I $(PUMI_DIR)/mds \
 			-I $(PUMI_DIR)/pcu
