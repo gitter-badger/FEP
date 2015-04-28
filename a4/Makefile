@@ -79,6 +79,10 @@ PumiBuild :
 	$(MAKE) -C $(PUMI_DIR)/build
 
 
+$(ODIR)/MeshAdjReorder.o : $(SDIR)/MeshAdjReorder.cc \
+					  $(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
 $(ODIR)/MeshBuilder_unittest.o : $(SDIR)/MeshBuilder_unittest.cc \
 					  $(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
@@ -97,5 +101,6 @@ $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS) .PHONY
 
 
 $(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
-						   $(ODIR)/SimpleRectMesh_unittest.o $(LDIR)/gtest.a
+						   $(ODIR)/SimpleRectMesh_unittest.o $(LDIR)/gtest.a \
+						   $(ODIR)/MeshAdjReorder.o
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@

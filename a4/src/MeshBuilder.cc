@@ -94,6 +94,8 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	}
 	apf::deriveMdsModel(mesh);//this makes CAD model for classification
 	//accept the changes
+	//destroy the numbering of the mesh
+	apf::destroyNumbering(numbers);
 	mesh->acceptChanges();
 	mesh->verify();
 	delete[] vertices;
