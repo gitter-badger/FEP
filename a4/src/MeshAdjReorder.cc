@@ -20,6 +20,33 @@ bool hasNode(apf::Mesh* m, apf::MeshEntity* e)
     return m->getShape()->countNodesOn(m->getType(e)) > 0;
 }
 
+apf::MeshEntity* getGoodStartingElement(apf::Mesh* m, int dim) {
+    // unsigned int min_order = 400;
+    apf::MeshEntity* start;
+    apf::MeshIterator* it = m->begin(dim);
+    // while((e = m->iterate(it))){
+    //     apf::ModelEntity* model_ent = m->toModel(e);
+    //     assert(model_ent != NULL);
+    //     int dim = m->getModelType(model_ent);
+    //     if(dim != 0) {
+    //         std::cout << "continue" << std::endl;
+    //         continue;
+    //     }
+    //     apf::Adjacent adj;
+    //     m->getAdjacent(e, 1, adj);
+    //     //this keeps the first lowest order is sees
+    //     std::cout << adj.getSize() << std::endl;
+    //     if(adj.getSize() < min_order) {
+    //         min_order =  adj.getSize();
+    //         start= e; 
+    //     }
+    // }
+
+    //return the first vertex
+    start = m->iterate(it);
+    return start;
+}
+
 struct sortVertsFunctor {
     apf::Mesh* m;
     bool operator()(apf::MeshEntity *lhs, apf::MeshEntity *rhs) {
@@ -61,43 +88,17 @@ void adjReorder(apf::Mesh* m,
             }
         }
     }
-    //std::cout << node_label << std::endl;
-    //std::cout << "Mesh: " << m << std::endl;
-    //std::cout << "Shape: " << shape << std::endl;
 
   // deduct any fixed entities from the locally-owned total
     
-    unsigned int min_order = 400;
+
     apf::MeshEntity* start_vert = NULL;
-    it = m->begin(0);
-    while((e = m->iterate(it))){
-        std::cout << "inside" << std::endl;
-        apf::ModelEntity* model_ent = m->toModel(e);
-        int dim = m->getModelType(model_ent);
-        std::cout << dim << std::endl;
-        if(dim != 0) {
-            std::cout << "continue" << std::endl;
-            continue;
-        }
-        apf::Adjacent adj;
-        m->getAdjacent(e, 1, adj);
-        //this keeps the first lowest order is sees
-        std::cout << adj.getSize() << std::endl;
-        if(adj.getSize() < min_order) {
-            min_order =  adj.getSize();
-            start_vert = e; 
-            std::cout << "start" << start_vert << std::endl;
-        }
-    }
-    //begin the node relabeling by creating an empty ordering
-    //std::cout << "start_vert: " << start_vert << std::endl;
-    //std::cout << "Mesh: " << m << std::endl;
-    //std::cout << "Shape: " << shape << std::endl;
-    //return;
+    start_vert = getGoodStartingElement(m, 0);
+
     std::queue<apf::MeshEntity*> q;
+    std::set<apf::MeshEntity*> s;
     q.push(start_vert);
-    std::set<apf::MeshEntity*> in_q;
-    in_q.insert(start_vert);
+    s.insert(start_vert);
     std::set<apf::MeshEntity*>::iterator set_it;
     std::vector<apf::MeshEntity*> ent_list;
 
@@ -105,25 +106,16 @@ void adjReorder(apf::Mesh* m,
     //we stop at zero because we labeled every node
     //everything left in the queue will already have been labeled
     while( q.size() > 0 && node_label != 0) {
-        //std::cout << "Mesh: " << m << std::endl;
-        //std::cout << "Shape: " << shape << std::endl;
         apf::MeshEntity* current_entity;
         current_entity = q.front();
         q.pop();
-        set_it = in_q.find(current_entity);
-        if(set_it != in_q.end()) {
-            in_q.erase(set_it);
-            //std::cout << "erased element from set" << std::endl;
+        set_it = s.find(current_entity);
+        if(set_it != s.end()) {
+            s.erase(set_it);
         }
-        //std::cout << "inside" << std::endl;
-
         //assuming that there is only one dof per entity
         if(!apf::isNumbered(nodeNums, current_entity,0,0)) {
-            //std::cout << "nodeNUms " << nodeNums << std::endl;
-            std::cout << "entity " << current_entity << std::endl;
-            //std::cout << node_label << std::endl;
             apf::number(nodeNums, current_entity, 0, 0, node_label);
-            //std::cout << "labeled entity as: " << node_label << std::endl;
             --node_label;
         } else {
             continue;
@@ -149,8 +141,9 @@ void adjReorder(apf::Mesh* m,
             --face_label;
             }
             //check if the face has a node to label, then queue it if exists
-            if(hasNode(m, face_adj[jj])) { // we will never have a dof on a face
+            if(hasNode(m, face_adj[jj])) { // only for lagrange elements
             //queue the face node
+            ent_list.push_back(face_adj[jj]);
             //std::cout << "trying to queue a face node" << std::endl;
             }
         }
@@ -158,18 +151,18 @@ void adjReorder(apf::Mesh* m,
         apf::MeshEntity* other_vert = apf::getEdgeVertOppositeVert(m, curr_edge, vert);
         if(hasNode(m, curr_edge)) {
             //check that the other_vert is labeled or in queue and edge node not labeled
-            set_it = in_q.find(other_vert);
-            bool is_in_q = (set_it != in_q.end());
-            if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_in_q ) &&
+            set_it = s.find(other_vert);
+            bool is_s = (set_it != s.end());
+            if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_s ) &&
                 !apf::isNumbered(nodeNums, curr_edge, 0, 0) ) {
             apf::number(nodeNums, curr_edge, 0 , 0, node_label);
             --node_label;
             } else {
             //check that this edge is not labeled or in queue
-            set_it = in_q.find(curr_edge);
-            if(!apf::isNumbered(nodeNums, curr_edge, 0, 0) && set_it == in_q.end()) {
+            set_it = s.find(curr_edge);
+            if(!apf::isNumbered(nodeNums, curr_edge, 0, 0) && set_it == s.end()) {
                 q.push(curr_edge);
-                in_q.insert(curr_edge);
+                s.insert(curr_edge);
             }
             //add the other vertex to the list
             ent_list.push_back(other_vert);
@@ -191,21 +184,21 @@ void adjReorder(apf::Mesh* m,
         for(std::vector<apf::MeshEntity*>::iterator it = ent_list.begin();
             it != ent_list.end(); ++it) {
             //check that it is not already in queue
-            set_it = in_q.find(*it);
-            if(set_it == in_q.end()) {
+            set_it = s.find(*it);
+            if(set_it == s.end()) {
             q.push(*it);
-            in_q.insert(*it);
+            s.insert(*it);
             } else {
-            ////std::cout << "already in queue" << std::endl;
+            // std::cout << "already in queue" << std::endl;
             }
         }
         ent_list.clear();
             }
         } else {
-            ////std::cout << "not a vertex" << std::endl;
+            // std::cout << "not a vertex" << std::endl;
         } // end of vertex checking
         if(q.size() > 500 ) {
-            //std::cout << "bad termination" << std::endl;
+            // std::cout << "bad termination" << std::endl;
             break;
         }
         } //end of while loop

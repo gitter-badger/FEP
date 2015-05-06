@@ -60,10 +60,6 @@ TEST_F(RectMeshTest, Rectangle) {
 
     apf::Numbering* nodeNums = apf::createNumbering(mesh, "nodeNums", mesh->getShape(),1);
     apf::Numbering* faceNums = apf::createNumbering(mesh, "faceNums", apf::getConstant(mesh->getDimension()), 1);
-    std::cout << nodeNums << std::endl;
-    std::cout << faceNums << std::endl;
-    std::cout << mesh << std::endl;
-    std::cout << fs << std::endl;
 
 	adjReorder(mesh, fs, 1, nodeNums, faceNums);
 	std::cout << nodeNums << std::endl;
@@ -83,7 +79,7 @@ TEST_F(RectMeshTest, Rectangle) {
             }
         }
     }
-
+    
 	// apf::Field * field = getField(num);
  // 	apf::Mesh * mesh = getMesh(field);
  //  	apf::FieldShape * shape = getShape(field);  
