@@ -20,9 +20,8 @@ bool hasNode(apf::Mesh* m, apf::MeshEntity* e)
     return m->getShape()->countNodesOn(m->getType(e)) > 0;
 }
 
-apf::MeshEntity* getGoodStartingElement(apf::Mesh* m, int dim) {
+void getGoodStartingElement(apf::Mesh* m, apf::MeshEntity* & start, int dim) {
     // unsigned int min_order = 400;
-    apf::MeshEntity* start;
     apf::MeshIterator* it = m->begin(dim);
     // while((e = m->iterate(it))){
     //     apf::ModelEntity* model_ent = m->toModel(e);
@@ -44,7 +43,7 @@ apf::MeshEntity* getGoodStartingElement(apf::Mesh* m, int dim) {
 
     //return the first vertex
     start = m->iterate(it);
-    return start;
+    std::cout << start << std::endl;
 }
 
 struct sortVertsFunctor {
@@ -93,8 +92,8 @@ void adjReorder(apf::Mesh* m,
     
 
     apf::MeshEntity* start_vert = NULL;
-    start_vert = getGoodStartingElement(m, 0);
-
+    getGoodStartingElement(m, start_vert, 0);
+    std::cout << start_vert << std::endl;
     std::queue<apf::MeshEntity*> q;
     std::set<apf::MeshEntity*> s;
     q.push(start_vert);
