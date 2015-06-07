@@ -40,10 +40,8 @@ protected:
 
 TEST_F(RectMeshTest, Rectangle) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0, 0, 2, 1);
-	//apf::writeVtkFiles("outQuad", mesh);
 	apf::changeMeshShape(mesh, apf::getSerendipity());
 	//apf::changeMeshShape(mesh, apf::getLagrange(1));
-	//apf::writeVtkFiles("secondQuad", mesh);
 	apf::MeshEntity* e;
 	apf::MeshIterator* it;
 	//apf::Field * master_f = createFieldOn(mesh, "foo", apf::VECTOR); 
@@ -56,39 +54,15 @@ TEST_F(RectMeshTest, Rectangle) {
 	
 	//apf::Numbering* temp_nums = apf::createNumbering(master_f);
 
-	std::cout << "outside" << std::endl;
-
     apf::Numbering* nodeNums = apf::createNumbering(mesh, "nodeNums", mesh->getShape(),1);
     apf::Numbering* faceNums = apf::createNumbering(mesh, "faceNums", apf::getConstant(mesh->getDimension()), 1);
 
 	adjReorder(mesh, fs, 1, nodeNums, faceNums);
-	std::cout << nodeNums << std::endl;
+	// std::cout << nodeNums << std::endl;
 
 	apf::Numbering* arb_nums = apf::createNumbering(mesh, "arb", mesh->getShape(), 1);
 	int dim = mesh->getDimension();
-	int batman = 0;
-    for(int ii = 0; ii <= dim; ++ii){
-        if(fs->hasNodesIn(ii)){
-            it = mesh->begin(ii);
-            while((e = mesh->iterate(it))) {
-                if(mesh->isOwned(e)) {
-                	//int temp_number =  apf::getNumber(nodeNums, e, 0, 0);
-                	//std::cout << temp_number << std::endl;
-                	//apf::number(arb_nums, e, 0 , 0, temp_number);
-                }
-            }
-        }
-    }
-    
-	// apf::Field * field = getField(num);
- // 	apf::Mesh * mesh = getMesh(field);
- //  	apf::FieldShape * shape = getShape(field);  
- //  	int dim = mesh->getDimension();
- //  	int components = countComponents(field);
-
-	//apf::MeshTag* other_nodes = apf::reorder(mesh, "batman");
-
-	
+	int batman = 0;	
 
 	apf::writeVtkFiles("secondQuad", mesh);
 	it = mesh->begin(2);
@@ -125,13 +99,8 @@ TEST_F(RectMeshTest, Rectangle) {
 			es->getLocalGradients(mesh, e, param, grads);
 
 			for(uint32_t jj = 0; jj < num_nodes; ++jj ) {
-				//std::cout << grads[jj].x() << " " << grads[jj].y() << " " << grads[jj].z() << std::endl;
-				//apf::Vector3 xi(3,3,3);
-				//std::cout << ii << ": " << xi.x() << ", " << xi.y() << ", " << xi.z() << std::endl;
-				//fs->getNodeXi(apf::Mesh::QUAD, ii, xi);
-				//std::cout << ii << ": " << xi.x() << ", " << xi.y() << ", " << xi.z() << std::endl;
+
 			}
-			std::cout << "========" << ii << "========" << std::endl;
 		}
 		std::cout << apf::countElementNodes(fs, mesh->getType(e)) << std::endl;
 		//std::cout << master_f->countComponents() << std::endl;
