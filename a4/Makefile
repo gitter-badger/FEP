@@ -104,3 +104,15 @@ $(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
 						   $(ODIR)/SimpleRectMesh_unittest.o $(LDIR)/gtest.a \
 						   $(ODIR)/MeshAdjReorder.o
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
+
+
+
+#parser debugging compile
+Factfinder : $(BDIR)/parse.out
+
+$(ODIR)/parse.o : $(SDIR)/parseVtk.cc
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
+$(BDIR)/parse.out : $(ODIR)/parse.o
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
+
