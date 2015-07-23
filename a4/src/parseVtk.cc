@@ -1,7 +1,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <expat.h>
+#include <xercesc/sax2/DefaultHandler.hpp>
 
 #include <apf.h>
 /*apf.h includes the definition of the writeVtkFiles,
@@ -16,9 +16,11 @@ maybe we will ask for some reuse? */
 
 
 static void readPvtuFile(const char* filename, apf::Mesh* m) {
-	apf::writeVtkFiles("foo", m);
+	//apf::writeVtkFiles("foo", m);
 }
 
 static void readVtuFile(const char* filename, apf::Numbering* n) {
+	
 
+	
 }

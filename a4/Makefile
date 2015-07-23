@@ -2,7 +2,7 @@ BDIR = ./bin
 SDIR = ./src
 IDIR = ./inc
 LDIR = ./lib
-ODIR = ./src/obj
+ODIR = ./obj
 
 export OMPI_CXX=clang++
 
@@ -11,7 +11,7 @@ export OMPI_CXX=clang++
 #===============================
 
 XERCES_DIR  = $(LDIR)/xerces-c-3.1.2/build
-XERCES_INC = $(XERCES_DIR)/include/
+XERCES_INC = -I $(XERCES_DIR)/include/
 
 XERCES_LIBS += -L $(XERCES_DIR)/lib
 
@@ -61,7 +61,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 all : $(TESTS)
 
 clean :
-	rm -f $(TESTS) $(LDIR)/gtest.a $(LDIR)/gtest_main.a $(ODIR)/*.o
+	rm -vf $(TESTS) $(BDIR)/* $(LDIR)/gtest.a $(LDIR)/gtest_main.a $(ODIR)/*.o
 
 # Builds gtest.a and gtest_main.a.
 
@@ -124,13 +124,25 @@ $(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
 
 
 
+Goofy : $(BDIR)/test_xml_reader.out
+
+$(ODIR)/test_xml_reader.o : $(SDIR)/test_xml_reader.cc
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) $(XERCES_INC) -c $< -o $@
+
+$(ODIR)/vtkSAX2Handler.o : $(SDIR)/vtkSAX2Handler.cc
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) $(XERCES_INC) -c $< -o $@
+
+$(BDIR)/test_xml_reader.out : $(ODIR)/test_xml_reader.o $(ODIR)/vtkSAX2Handler.o
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(XERCES_LIBS) $^\
+			-lpthread -lxerces-c -o $@
+
 #parser debugging compile
 Factfinder : $(BDIR)/parse.out
 
 $(ODIR)/parse.o : $(SDIR)/parseVtk.cc
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+	mpicxx -v $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) $(XERCES_INC) -c $< -o $@
 
 $(BDIR)/parse.out : $(ODIR)/parse.o
-	mpicxx -v $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $(XERCES_LIBS) $^ \
-			-lmds -lapf -lgmi -lpcu -lpthread -lxerces-3.1 -c -o $@
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $(XERCES_LIBS) $^ \
+			-lmds -lapf -lgmi -lpcu -lpthread -lxerces-c -o $@
 

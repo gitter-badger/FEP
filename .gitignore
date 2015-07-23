@@ -37,6 +37,7 @@ UserStore
 *.smb
 
 #ignore object files
+*/obj/*
 */src/obj/*
 */bin/*
 */lib/*
