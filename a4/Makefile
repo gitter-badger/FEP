@@ -6,12 +6,29 @@ ODIR = ./src/obj
 
 export OMPI_CXX=clang++
 
+#===============================
+#	  XERCES C++ XML PARSING 
+#===============================
+
+XERCES_DIR  = $(LDIR)/xerces-c-3.1.2/build
+XERCES_INC = $(XERCES_DIR)/include/
+
+XERCES_LIBS += -L $(XERCES_DIR)/lib
+
+#===============================
+#			PUMI 
+#===============================
+
 PUMI_DIR = ~/Documents/GitHub/core
 PUMI_INC = -I $(PUMI_DIR)/apf -I $(PUMI_DIR)/gmi -I $(PUMI_DIR)/mds \
 			-I $(PUMI_DIR)/pcu
 
-LIBS = -L $(PUMI_DIR)/build/apf -L $(PUMI_DIR)/build/gmi -L \
+PUMI_LIBS += -L $(PUMI_DIR)/build/apf -L $(PUMI_DIR)/build/gmi -L \
 		$(PUMI_DIR)/build/mds -L $(PUMI_DIR)/build/pcu -L $(LDIR)
+
+#===============================
+#		GOOGLE TEST 
+#===============================
 
 # Points to the root of Google Test, relative to where this file is.
 # Remember to tweak this if you move this file.
@@ -103,7 +120,7 @@ $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS) .PHONY
 $(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
 						   $(ODIR)/SimpleRectMesh_unittest.o $(LDIR)/gtest.a \
 						   $(ODIR)/MeshAdjReorder.o
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
 
 
@@ -114,5 +131,6 @@ $(ODIR)/parse.o : $(SDIR)/parseVtk.cc
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 $(BDIR)/parse.out : $(ODIR)/parse.o
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
+	mpicxx -v $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $(XERCES_LIBS) $^ \
+			-lmds -lapf -lgmi -lpcu -lpthread -lxerces-3.1 -c -o $@
 
