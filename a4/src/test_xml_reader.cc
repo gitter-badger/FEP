@@ -6,12 +6,16 @@
 #include "vtkSAX2Handler.h"
 
 #include <iostream>
+#include <cstdio>
 
 using namespace std;
-using namespace xercesc_3_1;
 
-int main (int argc, char* args[]) {
+int main (int argc, char* argv[]) {
 
+    if(argc != 2) {
+        printf("Usage %s filename\n",argv[0]);
+        exit(0);
+    }
     try {
         XMLPlatformUtils::Initialize();
     }
@@ -24,9 +28,7 @@ int main (int argc, char* args[]) {
         return 1;
     }
 
-    char* xmlFile = "corporate.xml";
-
-    std::cout << "file target is " << xmlFile << std::endl;
+    std::cout << "file target is " << argv[1] << std::endl;
 
     SAX2XMLReader* parser = XMLReaderFactory::createXMLReader();
     parser->setFeature(XMLUni::fgSAX2CoreValidation, true);
@@ -38,7 +40,7 @@ int main (int argc, char* args[]) {
     parser->setErrorHandler(defaultHandler);
 
     try {
-        parser->parse(xmlFile);
+        parser->parse(argv[1]);
     }
     catch (const XMLException& toCatch) {
         char* message = XMLString::transcode(toCatch.getMessage());

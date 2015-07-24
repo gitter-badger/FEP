@@ -60,6 +60,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 all : $(TESTS)
 
+#there are other things in lib, so only remove libraries explictly by name
 clean :
 	rm -vf $(TESTS) $(BDIR)/* $(LDIR)/gtest.a $(LDIR)/gtest_main.a $(ODIR)/*.o
 
