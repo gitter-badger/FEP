@@ -24,7 +24,9 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
     for(ii = 0; ii < len; ++ii){
         attr_name = attrs.getQName(ii);
         message = XMLString::transcode(attr_name);
-        std::cout << "attr: " << message << std::endl;
+        std::cout << "attr: " << message << " value: " \
+            << XMLString::transcode(attrs.getValue(ii)) \
+            << std::endl;
         XMLString::release(&message); 
     }
 }
