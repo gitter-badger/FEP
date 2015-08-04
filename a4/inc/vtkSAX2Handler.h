@@ -9,7 +9,6 @@
 #include <apfShape.h>
 #include <apfFieldData.h>
 
-using namespace xercesc_3_1;
 
 class vtkSAX2Handler : public DefaultHandler {
 public:

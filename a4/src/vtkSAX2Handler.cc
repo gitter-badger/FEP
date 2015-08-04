@@ -3,7 +3,6 @@
 
 
 using namespace std;
-using namespace xercesc_3_1;
 
 vtkSAX2Handler::vtkSAX2Handler()
 {
