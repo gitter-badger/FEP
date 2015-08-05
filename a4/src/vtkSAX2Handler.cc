@@ -1,5 +1,6 @@
 #include "vtkSAX2Handler.h"
 #include <iostream>
+#include <cstring>
 
 #define VTKFILE_TAG_NAME  "VTKFile"
 
@@ -21,17 +22,19 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
     /*check for VTKFile tag and start */
     if( std::strcmp(message, VTKFILE_TAG_NAME ) == 0) {
         if(this->_have_seen_VTK_file_tag == true) {
+            std::cout << "\tSEEN TWICE" << std::endl;
             /*two nested VTKFile tags is an error, should never happen*/
-            XMLCh* error_message, * publicId, * systemId;
+            XMLCh *error_message, *publicId, *systemId;
             XMLFileLoc lineNumber, columnNumber;
-            error_message = XMLString::transcode("Nested <VTKFile> tag not allowed");
+            const char* error_msg = "Nested <VTKFile> tag not allowed";
+            error_message = XMLString::transcode(error_msg);
             publicId = XMLString::transcode("a publicId");
             systemId = XMLString::transcode("a systemID");
             /*right now we don't know where in the document we are*/
             lineNumber = 0;
             columnNumber = 0;
             /*leaving off mememory manager*/
-            throw SAXParseException(message, publicId, systemId, lineNumber, columnNumber);
+            //throw SAXParseException(message, publicId, systemId, lineNumber, columnNumber);
         }
         this->_have_seen_VTK_file_tag = true;
         XMLString::release(&message);
@@ -69,7 +72,7 @@ void vtkSAX2Handler::endElement(const   XMLCh* const uri,
     XMLString::release(&message);
 }
 
-void characters(
+void vtkSAX2Handler::characters(
         const   XMLCh* const    chars,
         const   XMLSize_t       length
     ) {

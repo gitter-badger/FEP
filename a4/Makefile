@@ -128,10 +128,10 @@ $(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
 Goofy : $(BDIR)/test_xml_reader.out
 
 $(ODIR)/test_xml_reader.o : $(SDIR)/test_xml_reader.cc
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) $(XERCES_INC) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) $(PUMI_INC) $(XERCES_INC) -c $< -o $@
 
 $(ODIR)/vtkSAX2Handler.o : $(SDIR)/vtkSAX2Handler.cc
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) $(XERCES_INC) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) -I $(IDIR) $(PUMI_INC) $(XERCES_INC) -c $< -o $@
 
 $(BDIR)/test_xml_reader.out : $(ODIR)/test_xml_reader.o $(ODIR)/vtkSAX2Handler.o
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(XERCES_LIBS) $^\

@@ -64,6 +64,6 @@ int main (int argc, char* argv[]) {
     delete parser;
     delete defaultHandler;
     /*clear all mememory useage*/
-    XMLPlatformUtils::Terminate()
+    XMLPlatformUtils::Terminate();
     return 0;
 }
