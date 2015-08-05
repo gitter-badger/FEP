@@ -34,7 +34,7 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
             lineNumber = 0;
             columnNumber = 0;
             /*leaving off mememory manager*/
-            //throw SAXParseException(message, publicId, systemId, lineNumber, columnNumber);
+            throw SAXParseException(error_message, publicId, systemId, lineNumber, columnNumber);
         }
         this->_have_seen_VTK_file_tag = true;
         XMLString::release(&message);
