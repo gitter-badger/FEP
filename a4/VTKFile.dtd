@@ -1,0 +1,21 @@
+<!ELEMENT VTKFile (UnstructuredGrid?)>
+<!ATTLIST VTKFile
+	type (UnstructuredGrid) #REQUIRED>
+<!ELEMENT UnstructuredGrid (Piece*)> <!-- can have more than one <Piece> -->
+<!ATTLIST Piece
+	NumberOfPoints CDATA #IMPLIED
+	NumberOfCells CDATA #IMPLIED>
+<!ELEMENT Piece ((Cells| Points|PointData|CellData)?, 
+(Points|Cells|PointData|CellData)?,
+(Points|Cells|PointData|CellData)?,
+(Points|Cells|PointData|CellData)?)> <!-- only one of each type in any order -->
+<!ELEMENT Points (DataArray)>
+<!ELEMENT PointData (DataArray*)>
+<!ELEMENT DataArray (#PCDATA)>
+<!ATTLIST DataArray 
+	type (Float64|Int32|Int64|UInt8) #REQUIRED
+	Name CDATA #IMPLIED
+	NumberOfComponents CDATA #IMPLIED
+	format (ascii) #REQUIRED>
+<!ELEMENT Cells (DataArray*)>
+<!ELEMENT CellData (DataArray*)>
