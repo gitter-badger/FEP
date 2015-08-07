@@ -26,21 +26,7 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
     cout << "I saw element: "<< tag_name << endl;
     /*check for VTKFile tag and start */
     if(std::strcmp(tag_name.c_str(), VTKFILE_TAG_NAME ) == 0) {
-        if(this->_have_seen_VTK_file_tag == true) {
-            /*two nested VTKFile tags is an error, should never happen*/
-            XMLCh *error_message, *publicId, *systemId;
-            XMLFileLoc lineNumber, columnNumber;
-            error_message = XMLString::transcode("Nested <VTKFile> tag not allowed");
-            publicId = XMLString::transcode("a publicId");
-            systemId = XMLString::transcode("a systemID");
-            /*right now we don't know where in the document we are*/
-            lineNumber = 0;
-            columnNumber = 0;
-            /*leaving off mememory manager*/
-            throw SAXParseException(error_message, publicId, systemId, lineNumber, columnNumber);
-        } else {
-            this->_have_seen_VTK_file_tag = true;
-        }
+        this->_have_seen_VTK_file_tag = true;    
     }
     if(this->_have_seen_VTK_file_tag == false) {
         /*no need to process anything */
@@ -84,11 +70,8 @@ void vtkSAX2Handler::characters(
 }
 
 void vtkSAX2Handler::error(const SAXParseException& exception) {
-    char* message = XMLString::transcode(exception.getMessage());
-    cout << "Recoverable Error: " << message
-         << " at line: " << exception.getLineNumber()
-         << endl << endl << endl;
-    XMLString::release(&message);
+    /*right now just throw on all errors*/    
+    throw SAXParseException(exception);
 }
 
 void vtkSAX2Handler::fatalError(const SAXParseException& exception)
