@@ -8,7 +8,8 @@ using namespace std;
 
 vtkSAX2Handler::vtkSAX2Handler()
 {
-    _have_seen_VTK_file_tag = false;
+    this->_have_seen_VTK_file_tag = false;
+    this->_ignore_tag = false;
 }
 
 void vtkSAX2Handler::startElement(const   XMLCh* const    uri,

@@ -38,4 +38,5 @@ public:
     apf::Mesh* mesh;
 private:
     bool _have_seen_VTK_file_tag;
+    bool _ignore_tag;
 };
