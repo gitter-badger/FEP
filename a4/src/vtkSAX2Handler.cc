@@ -1,6 +1,7 @@
 #include "vtkSAX2Handler.h"
 #include <iostream>
 #include <cstring>
+#include <string>
 
 #define VTKFILE_TAG_NAME  "VTKFile"
 
@@ -10,6 +11,7 @@ vtkSAX2Handler::vtkSAX2Handler()
 {
     this->_have_seen_VTK_file_tag = false;
     this->_ignore_tag = false;
+    this->_ignore_tag_char_data = false;
 }
 
 void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
@@ -18,17 +20,17 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
                             const   Attributes&     attrs)
 {
     char* message = XMLString::transcode(localname);
-    cout << "I saw element: "<< message << endl;
+    std::string tag_name(message);
+    XMLString::release(&message);
 
+    cout << "I saw element: "<< tag_name << endl;
     /*check for VTKFile tag and start */
-    if( std::strcmp(message, VTKFILE_TAG_NAME ) == 0) {
+    if(std::strcmp(tag_name.c_str(), VTKFILE_TAG_NAME ) == 0) {
         if(this->_have_seen_VTK_file_tag == true) {
-            std::cout << "\tSEEN TWICE" << std::endl;
             /*two nested VTKFile tags is an error, should never happen*/
             XMLCh *error_message, *publicId, *systemId;
             XMLFileLoc lineNumber, columnNumber;
-            const char* error_msg = "Nested <VTKFile> tag not allowed";
-            error_message = XMLString::transcode(error_msg);
+            error_message = XMLString::transcode("Nested <VTKFile> tag not allowed");
             publicId = XMLString::transcode("a publicId");
             systemId = XMLString::transcode("a systemID");
             /*right now we don't know where in the document we are*/
@@ -36,12 +38,12 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
             columnNumber = 0;
             /*leaving off mememory manager*/
             throw SAXParseException(error_message, publicId, systemId, lineNumber, columnNumber);
+        } else {
+            this->_have_seen_VTK_file_tag = true;
         }
-        this->_have_seen_VTK_file_tag = true;
-        XMLString::release(&message);
-    } else {
-        /*if the tage is not a VTKFile then do not bother parsing rest*/
-        XMLString::release(&message);
+    }
+    if(this->_have_seen_VTK_file_tag == false) {
+        /*no need to process anything */
         return;
     }
 
@@ -79,6 +81,14 @@ void vtkSAX2Handler::characters(
     ) {
 
     std::cout << "character data of length " << length << std::endl;
+}
+
+void vtkSAX2Handler::error(const SAXParseException& exception) {
+    char* message = XMLString::transcode(exception.getMessage());
+    cout << "Recoverable Error: " << message
+         << " at line: " << exception.getLineNumber()
+         << endl << endl << endl;
+    XMLString::release(&message);
 }
 
 void vtkSAX2Handler::fatalError(const SAXParseException& exception)

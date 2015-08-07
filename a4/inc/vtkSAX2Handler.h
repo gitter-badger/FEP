@@ -33,10 +33,13 @@ public:
         const   XMLSize_t       length
     );
 
+    void error(const SAXParseException &exc);
+
     void fatalError(const SAXParseException&);
 
     apf::Mesh* mesh;
 private:
     bool _have_seen_VTK_file_tag;
     bool _ignore_tag;
+    bool _ignore_tag_char_data;
 };
