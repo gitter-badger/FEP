@@ -25,7 +25,7 @@ void vtkSAX2Handler::startElement(const   XMLCh* const    uri,
 
     cout << "I saw element: "<< tag_name << endl;
     /*check for VTKFile tag and start */
-    if(std::strcmp(tag_name.c_str(), VTKFILE_TAG_NAME ) == 0) {
+    if(tag_name == std::string("VTKFile")) {
         this->_have_seen_VTK_file_tag = true;    
     }
     if(this->_have_seen_VTK_file_tag == false) {
@@ -70,7 +70,10 @@ void vtkSAX2Handler::characters(
 }
 
 void vtkSAX2Handler::error(const SAXParseException& exception) {
-    /*right now just throw on all errors*/    
+    /*right now just throw on all errors*
+    * all of the DTD errors use this callback, and right
+    * now I have no way to distinguish them, so throw on all
+    */    
     throw SAXParseException(exception);
 }
 

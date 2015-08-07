@@ -11,11 +11,11 @@
 (Points|Cells|PointData|CellData)?)> <!-- only one of each type in any order -->
 <!ELEMENT Points (DataArray)>
 <!ELEMENT PointData (DataArray*)>
+<!ELEMENT Cells (DataArray*)>
+<!ELEMENT CellData (DataArray*)> 
 <!ELEMENT DataArray (#PCDATA)>
 <!ATTLIST DataArray 
 	type (Float64|Int32|Int64|UInt8) #REQUIRED
 	Name CDATA #IMPLIED
 	NumberOfComponents CDATA #IMPLIED
 	format (ascii) #REQUIRED>
-<!ELEMENT Cells (DataArray*)>
-<!ELEMENT CellData (DataArray*)>
