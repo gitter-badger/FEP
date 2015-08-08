@@ -7,6 +7,9 @@
 #include <apf.h>
 #include <apfMesh2.h>
 #include <apfMesh.h>
+#include <gmi_mesh.h>
+#include <gmi_null.h>
+#include <apfMDS.h>
 
 #include "ElasticAnalysis2D.h"
 
@@ -16,8 +19,9 @@ protected:
 	apf::Mesh2* mesh;
 
 	virtual void SetUp() {
-		/*use mesh builder to abstract mesh creations*/
-		mesh = NULL;
+		gmi_register_null();
+  		gmi_model* g = gmi_load(".null");
+  		mesh = apf::makeEmptyMdsMesh(g, 2, false);
 	}
 
 	virtual void TearDown() {
@@ -30,7 +34,7 @@ protected:
 };
 
 TEST_F(ElasticAnalysisTest, FunctionReturns) {
-	ElasticAnalysis2D* tmp = new ElasticAnalysis2D();
+	ElasticAnalysis2D* tmp = new ElasticAnalysis2D(mesh);
 
 	EXPECT_EQ(0, tmp->setup());
 	EXPECT_EQ(0, tmp->solve());

@@ -45,3 +45,6 @@ UserStore
 #ignore paraview files
 *.pvtu
 *.vtu
+
+#ignore config files
+*config*

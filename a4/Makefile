@@ -134,9 +134,6 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(LDIR)/gtest.a
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
-
-
-
 #===============================================
 
 Goofy : $(BDIR)/test_xml_reader.out
@@ -150,6 +147,3 @@ $(ODIR)/vtkSAX2Handler.o : $(SDIR)/vtkSAX2Handler.cc
 $(BDIR)/test_xml_reader.out : $(ODIR)/test_xml_reader.o $(ODIR)/vtkSAX2Handler.o
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(XERCES_LIBS) $^\
 			-lpthread -lxerces-c -o $@
-
-
-

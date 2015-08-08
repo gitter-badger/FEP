@@ -9,7 +9,7 @@
 class ElasticAnalysis2D : FEAnalysis
 {
 public:
-	ElasticAnalysis2D();
+	ElasticAnalysis2D(apf::Mesh* m);
 	~ElasticAnalysis2D();
 
 	virtual uint32_t setup();
