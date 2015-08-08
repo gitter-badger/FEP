@@ -97,20 +97,28 @@ PumiBuild :
 	$(MAKE) -C $(PUMI_DIR)/build
 
 
-$(ODIR)/MeshAdjReorder.o : $(SDIR)/MeshAdjReorder.cc \
-					  $(GTEST_HEADERS)
+$(ODIR)/MeshAdjReorder.o : 	$(SDIR)/MeshAdjReorder.cc \
+					  		$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(ODIR)/MeshBuilder_unittest.o : $(SDIR)/MeshBuilder_unittest.cc \
-					  $(GTEST_HEADERS)
+$(ODIR)/MeshBuilder_unittest.o : 	$(SDIR)/MeshBuilder_unittest.cc \
+					  				$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/MeshBuilder.o : $(SDIR)/MeshBuilder.cc $(IDIR)/MeshBuilder.h \
-					  $(GTEST_HEADERS)
+					  	$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/SimpleRectMesh_unittest.o : $(SDIR)/SimpleRectMesh_unittest.cc \
-					  $(GTEST_HEADERS)
+					  				$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
+$(ODIR)/ElasticAnalysis2D.o : 	$(SDIR)/ElasticAnalysis2D.cc \
+								$(IDIR)/ElasticAnalysis2D.h
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
+$(ODIR)/ElasticAnalysis_unittest.o : 	$(SDIR)/ElasticAnalysis_unittest.cc \
+										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 #use the phony rule to ensure that the latest pumi library is built
@@ -118,12 +126,18 @@ $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS) .PHONY
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 
-$(BDIR)/a4 : $(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
-						   $(ODIR)/SimpleRectMesh_unittest.o $(LDIR)/gtest.a \
-						   $(ODIR)/MeshAdjReorder.o
+$(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
+				$(ODIR)/SimpleRectMesh_unittest.o \
+				$(ODIR)/MeshAdjReorder.o \
+				$(ODIR)/ElasticAnalysis_unittest.o \
+				$(ODIR)/ElasticAnalysis2D.o\
+				$(LDIR)/gtest.a
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
 
+
+
+#===============================================
 
 Goofy : $(BDIR)/test_xml_reader.out
 
@@ -137,13 +151,5 @@ $(BDIR)/test_xml_reader.out : $(ODIR)/test_xml_reader.o $(ODIR)/vtkSAX2Handler.o
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(XERCES_LIBS) $^\
 			-lpthread -lxerces-c -o $@
 
-#parser debugging compile
-Factfinder : $(BDIR)/parse.out
 
-$(ODIR)/parse.o : $(SDIR)/parseVtk.cc
-	mpicxx -v $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) $(XERCES_INC) -c $< -o $@
-
-$(BDIR)/parse.out : $(ODIR)/parse.o
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $(XERCES_LIBS) $^ \
-			-lmds -lapf -lgmi -lpcu -lpthread -lxerces-c -o $@
 
