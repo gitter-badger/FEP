@@ -5,13 +5,14 @@ LDIR = ./lib
 ODIR = ./obj
 
 export OMPI_CXX=clang++
+export
 
 #===============================
 #	  XERCES C++ XML PARSING 
 #===============================
 
 XERCES_DIR  = $(LDIR)/xerces-c-3.1.2/build
-XERCES_INC = -I $(XERCES_DIR)/include/
+XERCES_INC = -I $(XERCES_DIR)/include
 
 XERCES_LIBS += -L $(XERCES_DIR)/lib
 
