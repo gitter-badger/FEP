@@ -25,12 +25,13 @@ uint32_t ElasticAnalysis2D::solve() {
 
 uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e) {
 
-	apf::Mesh::Type entity_type = this->m->getType(e);
+	int entity_type = this->m->getType(e);
 
 	if(entity_type == apf::Mesh::QUAD || entity_type == apf::Mesh::TRIANGLE){
 		std::cout << "face" << std::endl;
-	} else if(entity_type == apf::Mesh::EDGE){
-		std::cout << "edge" << std::endl;
+	} else {
+		/*only accepts faces, so indicate improper input*/
+		return 1;
 	}
 	return 0;
 }
