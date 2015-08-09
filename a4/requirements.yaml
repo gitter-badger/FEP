@@ -1,0 +1,22 @@
+application: linear-elastostatics
+version: 0.1
+language: C++
+processes: 1
+
+requirements:
+	libraries:
+	- name: Parallel Unstructured Mesh Infrastructure
+	  version: latest
+	  repo: https://github.com/SCOREC/core.git
+	- name: GoogleTest
+	  version: "1.7.0"
+	  repo: https://github.com/YetAnotherMinion/googletest.git
+	- name: OpenMPI
+	  version: "1.8.4"
+	- name: Xerces-C++
+	  version: "3.1.2"
+	- name: armadillo
+	  version: "5.300.4"
+	  depends: 
+	  	name: SuperLU
+	  	version: "4.3"
