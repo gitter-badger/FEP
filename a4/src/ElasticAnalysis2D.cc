@@ -1,14 +1,17 @@
 #include "ElasticAnalysis2D.h"
 
-ElasticAnalysis2D::ElasticAnalysis2D(apf::Mesh* m) {
+ElasticAnalysis2D::ElasticAnalysis2D(apf::Mesh* m)
+{
 	this->m = m;
 }
 
-ElasticAnalysis2D::~ElasticAnalysis2D() {
+ElasticAnalysis2D::~ElasticAnalysis2D()
+{
 
 }
 
-uint32_t ElasticAnalysis2D::setup() {
+uint32_t ElasticAnalysis2D::setup()
+{
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
 	/*iterate over the faces first*/
@@ -19,11 +22,13 @@ uint32_t ElasticAnalysis2D::setup() {
 	return 0;
 }
 
-uint32_t ElasticAnalysis2D::solve() {
+uint32_t ElasticAnalysis2D::solve()
+{
 	return 0;
 }
 
-uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e) {
+uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
+{
 
 	int entity_type = this->m->getType(e);
 
@@ -36,14 +41,17 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e) {
 	return 0;
 }
 
-uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e) {
+uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
+{
 	return 0;
 }
 
-uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e) {
+uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e)
+{
 	return 0;
 }
 
-uint32_t ElasticAnalysis2D::recover() {
+uint32_t ElasticAnalysis2D::recover()
+{
 	return 0;
 }
