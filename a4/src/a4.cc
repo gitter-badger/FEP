@@ -10,9 +10,11 @@
 
 int main(int argc, char** argv)
 {
+	::testing::InitGoogleTest(&argc, argv);
+	/*MPI init comes after google testing, since google test will remove
+	* its specific arguments from argv*/
 	MPI_Init(&argc,&argv);
   	PCU_Comm_Init();
-  	::testing::InitGoogleTest(&argc, argv);
 	int rc = RUN_ALL_TESTS();
 	if(rc != 0){
 		printf("Google Test returned: %d", rc);

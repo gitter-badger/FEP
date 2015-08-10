@@ -40,20 +40,16 @@ protected:
 
 TEST_F(RectMeshTest, Rectangle) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0, 0, 2, 1);
-	apf::changeMeshShape(mesh, apf::getSerendipity());
-	//apf::changeMeshShape(mesh, apf::getLagrange(1));
+	//apf::changeMeshShape(mesh, apf::getSerendipity());
+	apf::changeMeshShape(mesh, apf::getLagrange(2));
 	apf::MeshEntity* e;
-	apf::MeshIterator* it;
-	//apf::Field * master_f = createFieldOn(mesh, "foo", apf::VECTOR); 
-	//apf::Field* master_f = createFieldOn(mesh, "foo", apf::SCALAR);
+	apf::MeshIterator* it;	
 	apf::FieldShape* fs = mesh->getShape();
 
 	apf::Numbering* nodes_numbers = apf::numberOwnedNodes(mesh, "fatman", fs);
 
 	//apf::Numbering* all_node_nums = apf::createNumbering(mesh, "allNodes", mesh->getShape(), 1);
 	
-	//apf::Numbering* temp_nums = apf::createNumbering(master_f);
-
     apf::Numbering* nodeNums = apf::createNumbering(mesh, "nodeNums", mesh->getShape(),1);
     apf::Numbering* faceNums = apf::createNumbering(mesh, "faceNums", apf::getConstant(mesh->getDimension()), 1);
 
@@ -66,6 +62,10 @@ TEST_F(RectMeshTest, Rectangle) {
 
 	apf::writeVtkFiles("secondQuad", mesh);
 	it = mesh->begin(2);
+
+	apf::Field* master_f = createField(mesh, "master_f", apf::SCALAR, mesh->getShape());
+	apf::zeroField(master_f);
+
 	while((e = mesh->iterate(it))) {
 		//apf::MeshElement* mesh_elm = apf::getMeshElement()
 		//apf::Element* element_ptr = apf::createElement(master_f, e );
@@ -75,15 +75,20 @@ TEST_F(RectMeshTest, Rectangle) {
 
 		param.fromArray(zeros);
 		int order = 4; //this is the order accuracy, not the polynomial degree
+		
 		apf::MeshElement* mesh_elm = apf::createMeshElement(mesh, e);
+		apf::Element* field_elm = apf::createElement(master_f, mesh_elm);
+		std::cout << "Ndofs " << apf::countNodes(field_elm) << std::endl;
+
 		int num_int_points = apf::countIntPoints(mesh_elm, order);
-		apf::EntityShape* es = fs->getEntityShape(mesh->getType(e));
+		//apf::EntityShape* es = master_f->getEntityShape(mesh->getType(e));
 		uint32_t num_nodes = apf::countElementNodes(fs, mesh->getType(e));
 
 		apf::NewArray< int > node_mapping(num_nodes);
 
 		apf::getElementNumbers(nodes_numbers, e, node_mapping);
 
+		#if 0
 		for(int ii = 0; ii < num_nodes; ++ii) {
 			//std::cout << ii << " => " << node_mapping[ii] << std::endl;
 		}
@@ -104,6 +109,7 @@ TEST_F(RectMeshTest, Rectangle) {
 		}
 		std::cout << apf::countElementNodes(fs, mesh->getType(e)) << std::endl;
 		//std::cout << master_f->countComponents() << std::endl;
+		#endif
 	}
 
 }
