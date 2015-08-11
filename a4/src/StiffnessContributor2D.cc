@@ -4,7 +4,8 @@
 
 StiffnessContributor2D::StiffnessContributor2D(
 	apf::Field* f,
-	uint32_t integrate_order) : apf::Integrator(integrate_order), field(f)
+	apf::Matrix< 3,3 > D_input,
+	uint32_t integrate_order) : apf::Integrator(integrate_order), field(f), D(D_input)
 {
   ndims = apf::getMesh(f)->getDimension();
 }
@@ -28,5 +29,5 @@ void StiffnessContributor2D::outElement()
 
 void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 {
-
+	std::cout << this->D << std::endl;
 }

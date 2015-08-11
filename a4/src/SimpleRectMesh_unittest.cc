@@ -11,6 +11,7 @@
 #include <apfShape.h>
 #include <apfField.h>
 #include <apfNumbering.h>
+#include <apfMatrix.h>
 
 #include "MeshBuilder.h"
 #include "MeshAdjReorder.h"
@@ -79,7 +80,10 @@ TEST_F(RectMeshTest, Rectangle) {
 	apf::Field* master_f = createField(mesh, "master_f", apf::VECTOR, mesh->getShape());
 	apf::zeroField(master_f);
 
-	StiffnessContributor2D integrate(master_f, 4);
+	apf::Matrix< 3,3 > D;
+
+
+	StiffnessContributor2D integrate(master_f, D, 4);
 
 	it = mesh->begin(2);
 	while((e = mesh->iterate(it))) {

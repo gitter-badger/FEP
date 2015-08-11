@@ -9,7 +9,7 @@
 class StiffnessContributor2D : public apf::Integrator
 {
 public:
-	StiffnessContributor2D(apf::Field *f, uint32_t integrate_order);
+	StiffnessContributor2D(apf::Field *f, apf::Matrix< 3, 3 > D, uint32_t integrate_order);
 	virtual void inElement(apf::MeshElement *me);
     virtual void outElement();
     virtual void atPoint(apf::Vector3 const& p, double w, double dV);
@@ -20,6 +20,7 @@ private:
     uint32_t ndims;
     apf::Field* field;
     apf::Element* field_element;
+    apf::Matrix< 3,3 > D;
 };
 
 #endif
