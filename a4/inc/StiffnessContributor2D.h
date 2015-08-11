@@ -6,13 +6,13 @@
 #include <apfDynamicMatrix.h>
 #include <apfDynamicVector.h>
 
-class StiffnessContributor : public apf::Integrator
+class StiffnessContributor2D : public apf::Integrator
 {
 public:
-	StiffnessContributor(apf::Field *f, uint32_t integrate_order);
-	void inElement(apf::MeshElement *me);
-    void outElement();
-    void atPoint(apf::Vector3 const& p, double w, double dV);
+	StiffnessContributor2D(apf::Field *f, uint32_t integrate_order);
+	virtual void inElement(apf::MeshElement *me);
+    virtual void outElement();
+    virtual void atPoint(apf::Vector3 const& p, double w, double dV);
     apf::DynamicVector fe;
     apf::DynamicMatrix ke;
 private:
@@ -20,7 +20,6 @@ private:
     uint32_t ndims;
     apf::Field* field;
     apf::Element* field_element;
-
 };
 
 #endif

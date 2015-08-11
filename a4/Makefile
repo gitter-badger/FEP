@@ -119,8 +119,8 @@ $(ODIR)/TestClass.o : 	$(SDIR)/TestClass.cc \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(ODIR)/StiffnessContributor.o : 	$(SDIR)/StiffnessContributor.cc \
-								$(IDIR)/StiffnessContributor.h \
+$(ODIR)/StiffnessContributor2D.o : 	$(SDIR)/StiffnessContributor2D.cc \
+								$(IDIR)/StiffnessContributor2D.h \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
@@ -136,7 +136,7 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/ElasticAnalysis2D.o \
 				$(ODIR)/TestClass.o \
 				$(ODIR)/IntegrationHelper.o \
-				$(ODIR)/StiffnessContributor.o \
+				$(ODIR)/StiffnessContributor2D.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
