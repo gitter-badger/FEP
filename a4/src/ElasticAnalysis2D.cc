@@ -36,6 +36,7 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		std::cout << "face" << std::endl;
 	} else {
 		/*only accepts faces, so indicate improper input*/
+		std::cout << "entity type: " << entity_type << std::endl;
 		return 1;
 	}
 	return 0;
