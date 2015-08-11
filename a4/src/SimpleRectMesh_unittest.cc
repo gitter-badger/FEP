@@ -15,6 +15,13 @@
 #include "MeshBuilder.h"
 #include "MeshAdjReorder.h"
 
+#include "IntegrationHelper.h"
+#include "TestClass.h"
+
+
+double foo_func(apf::Vector3 const& p) {
+	return 0.0;
+}
 
 class RectMeshTest : public testing::Test
 {
@@ -39,9 +46,11 @@ protected:
 };
 
 TEST_F(RectMeshTest, Rectangle) {
-	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0, 0, 2, 1);
+	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
 	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	apf::writeVtkFiles("before_secondQuad", mesh);
+
 	apf::MeshEntity* e;
 	apf::MeshIterator* it;	
 	apf::FieldShape* fs = mesh->getShape();
@@ -55,17 +64,25 @@ TEST_F(RectMeshTest, Rectangle) {
 
 	adjReorder(mesh, fs, 1, nodeNums, faceNums);
 	// std::cout << nodeNums << std::endl;
+	
 
-	apf::Numbering* arb_nums = apf::createNumbering(mesh, "arb", mesh->getShape(), 1);
+	apf::Numbering* arb_nums = apf::createNumbering(mesh, "arb", mesh->getShape(), 2);
+
+	apf::writeVtkFiles("secondQuad", mesh);
+
 	int dim = mesh->getDimension();
 	int batman = 0;	
 
-	apf::writeVtkFiles("secondQuad", mesh);
-	it = mesh->begin(2);
+	
 
-	apf::Field* master_f = createField(mesh, "master_f", apf::SCALAR, mesh->getShape());
+	apf::Field* master_f = createField(mesh, "master_f", apf::VECTOR, mesh->getShape());
 	apf::zeroField(master_f);
 
+	//IntegrationHelper* integrate = new IntegrationHelper(master_f, &foo_func, 4);
+
+	struct IntegrateInput input = {4, master_f };
+	Integrate integrate(4, master_f);
+	it = mesh->begin(1);
 	while((e = mesh->iterate(it))) {
 		//apf::MeshElement* mesh_elm = apf::getMeshElement()
 		//apf::Element* element_ptr = apf::createElement(master_f, e );
@@ -75,10 +92,17 @@ TEST_F(RectMeshTest, Rectangle) {
 
 		param.fromArray(zeros);
 		int order = 4; //this is the order accuracy, not the polynomial degree
-		
+
 		apf::MeshElement* mesh_elm = apf::createMeshElement(mesh, e);
-		apf::Element* field_elm = apf::createElement(master_f, mesh_elm);
-		std::cout << "Ndofs " << apf::countNodes(field_elm) << std::endl;
+		integrate.process(mesh_elm);
+
+		std::cout << "==============================" << std::endl;
+		// apf::Element* field_elm = apf::createElement(master_f, mesh_elm);
+		// std::cout << "Ndofs " << apf::countNodes(field_elm) << std::endl;
+		// int num_components = master_f->countComponents();
+		// std::cout << "num_components: " << num_components << std::endl;
+
+
 
 		int num_int_points = apf::countIntPoints(mesh_elm, order);
 		//apf::EntityShape* es = master_f->getEntityShape(mesh->getType(e));
