@@ -18,13 +18,8 @@ void IntegrationHelper::inElement(apf::MeshElement* me)
 	this->f_e.setSize(this->n_dofs);
 	this->k_e.setSize(this->n_dofs, this->n_dofs);
 	/*zero the internal matricies*/
-	uint32_t ii, jj;
-	for(ii = 0; ii < this->n_dofs; ++ii) {
-		this->f_e(ii) = 0.0;
-		for(jj = 0; jj < this->n_dofs; ++jj){
-			this->k_e(ii,jj) = 0.0;
-		}
-	}
+	this->k_e.zero();
+	this->f_e.zero();
 
 }
 
