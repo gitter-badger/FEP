@@ -1,17 +1,12 @@
+#include <apfMesh.h>
+
 #include "IntegrationHelper.h"
 
-IntegrationHelper::IntegrationHelper(apf::Field* field, double(*func)(apf::Vector3 const& p), uint32_t order) : apf::Integrator(order)
+IntegrationHelper::IntegrationHelper(apf::Field* f, uint32_t order) :
+  apf::Integrator(order),
+  field(f)
 {
-	this->field = field;
-	this->fnc_ptr = func;
-	this->n_dimensions = apf::getMesh(field)->getDimension();
-}
-
-IntegrationHelper::IntegrationHelper(apf::Field* field, apf::Vector3(*func)(apf::Vector3 const& p), uint32_t order) : apf::Integrator(order)
-{
-	this->field = field;
-	this->fnc_ptr = func;
-	this->n_dimensions = apf::getMesh(field)->getDimension();
+  n_dimensions = apf::getMesh(f)->getDimension();
 }
 
 void IntegrationHelper::inElement(apf::MeshElement* me)
@@ -21,14 +16,16 @@ void IntegrationHelper::inElement(apf::MeshElement* me)
 	/*determine the size of the force matrices*/
 	this->n_dofs = apf::countNodes(this->field_element);
 	this->f_e.setSize(this->n_dofs);
+	this->k_e.setSize(this->n_dofs, this->n_dofs);
 	/*zero the internal matricies*/
 	uint32_t ii, jj;
 	for(ii = 0; ii < this->n_dofs; ++ii) {
-		this->f_e = 0.0;
-		for(jj = 0; jj < this->n_dofs; ++ii){
+		this->f_e(ii) = 0.0;
+		for(jj = 0; jj < this->n_dofs; ++jj){
 			this->k_e(ii,jj) = 0.0;
 		}
 	}
+
 }
 
 void IntegrationHelper::outElement()
@@ -39,11 +36,12 @@ void IntegrationHelper::outElement()
 
 void IntegrationHelper::atPoint(apf::Vector3 const& p, double w, double dV)
 {
-	/*Purpose: Compute force contributions for function*/
-	/*storage for*/
-	apf::NewArray<double> 
+	/**/
+	std::cout << "p: " << p << std::endl;
+	std::cout << "weight: " << w << " dV: " << dV << std::endl;
 
-	/*location of point p in global coordinates*/
-	apf::Vector3 global_p;
-
+	apf::MeshElement* me = apf::getMeshElement(this->field_element);
+	apf::Vector3 x;
+	apf::mapLocalToGlobal(me, p, x);
+	std::cout << "global x: " << x << std::endl;
 }

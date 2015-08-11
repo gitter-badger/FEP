@@ -78,10 +78,8 @@ TEST_F(RectMeshTest, Rectangle) {
 	apf::Field* master_f = createField(mesh, "master_f", apf::VECTOR, mesh->getShape());
 	apf::zeroField(master_f);
 
-	//IntegrationHelper* integrate = new IntegrationHelper(master_f, &foo_func, 4);
+	IntegrationHelper integrate(master_f, 4);
 
-	struct IntegrateInput input = {4, master_f };
-	Integrate integrate(4, master_f);
 	it = mesh->begin(1);
 	while((e = mesh->iterate(it))) {
 		//apf::MeshElement* mesh_elm = apf::getMeshElement()

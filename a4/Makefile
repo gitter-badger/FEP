@@ -137,7 +137,8 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/ElasticAnalysis_unittest.o \
 				$(ODIR)/ElasticAnalysis2D.o \
 				$(ODIR)/TestClass.o \
-				$(LDIR)/gtest.a 				#$(ODIR)/IntegrationHelper.o
+				$(ODIR)/IntegrationHelper.o \
+				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
 #===============================================
