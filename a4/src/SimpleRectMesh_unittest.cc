@@ -17,6 +17,7 @@
 
 #include "IntegrationHelper.h"
 #include "TestClass.h"
+#include "StiffnessContributor.h"
 
 
 double foo_func(apf::Vector3 const& p) {
@@ -78,9 +79,9 @@ TEST_F(RectMeshTest, Rectangle) {
 	apf::Field* master_f = createField(mesh, "master_f", apf::VECTOR, mesh->getShape());
 	apf::zeroField(master_f);
 
-	IntegrationHelper integrate(master_f, 4);
+	StiffnessContributor integrate(master_f, 4);
 
-	it = mesh->begin(1);
+	it = mesh->begin(2);
 	while((e = mesh->iterate(it))) {
 		//apf::MeshElement* mesh_elm = apf::getMeshElement()
 		//apf::Element* element_ptr = apf::createElement(master_f, e );
@@ -93,6 +94,8 @@ TEST_F(RectMeshTest, Rectangle) {
 
 		apf::MeshElement* mesh_elm = apf::createMeshElement(mesh, e);
 		integrate.process(mesh_elm);
+		/*only print out the elements after processing*/
+		std::cout << integrate.ke << std::endl;
 
 		std::cout << "==============================" << std::endl;
 		// apf::Element* field_elm = apf::createElement(master_f, mesh_elm);
