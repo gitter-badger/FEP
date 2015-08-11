@@ -1,37 +1,29 @@
+CONFIG ?= config
+include $(CONFIG).mk
+
 BDIR = ./bin
 SDIR = ./src
 IDIR = ./inc
 LDIR = ./lib
 ODIR = ./obj
 
-export OMPI_CXX=clang++
-export
-
 #===============================
 #	  XERCES C++ XML PARSING 
 #===============================
 
-XERCES_DIR  = $(LDIR)/xerces-c-3.1.2/build
 XERCES_INC = -I $(XERCES_DIR)/include
-
 XERCES_LIBS += -L $(XERCES_DIR)/lib
 
 #===============================
 #			PUMI 
 #===============================
 
-PUMI_DIR = $(LDIR)/pumi
 PUMI_INC = -I $(PUMI_DIR)/include
-
 PUMI_LIBS += -L $(PUMI_DIR)/lib
 
 #===============================
 #		GOOGLE TEST 
 #===============================
-
-# Points to the root of Google Test, relative to where this file is.
-# Remember to tweak this if you move this file.
-GTEST_DIR =  ~/Documents/GitHub/googletest
 
 # Where to find user code.
 USER_DIR = $(GTEST_DIR)/samples
@@ -44,6 +36,7 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include -isystem $(GTEST_DIR)
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra -pthread --pedantic-errors
 
+#now that we are using mpich, clang errors on long long
 MPIFLAGS += -Wall -g -I $(IDIR) --pedantic-errors
 
 # All tests produced by this Makefile.  Remember to add new tests you
