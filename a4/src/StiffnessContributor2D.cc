@@ -40,10 +40,6 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
   	apf::MeshElement* me = apf::getMeshElement(this->field_element);
   	apf::mapLocalToGlobal(me, p, x);
 
-	//std::cout << this->D << std::endl;
-
-	/*explicitly instandiate the size of this array*/
-	/*this goes by columns, rows*/
 	apf::NewArray< apf::Matrix< 3,2 > > B(this->nnodes);
 	/*construct each of the nnodes shape function matricies*/
 	uint32_t ii, jj;
@@ -54,7 +50,6 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 		B[ii][1][1] = gradShape[ii][1];
 		B[ii][2][0] = gradShape[ii][1];
 		B[ii][2][1] = gradShape[ii][0];
-		// returns the transpose of matrix; apf::transpose(B[ii]);
 	}
 	/*walk over the upper triangular block matrix and compute nodal
 	* stiffness contributors. Only the upper half in blocks are computed.
@@ -65,7 +60,7 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 	for(ii = 0; ii < this->nnodes; ++ii) {
 		for(jj = ii; jj < this->nnodes; ++jj) {
 			if(ii == jj) {
-				/*skip the first block on the main diagonal*/
+				/*skip the blocks on the main block diagonal*/
 				continue;
 			}
 			nodal_submatrix = transpose(B[ii]) * this->D * B[ii];
