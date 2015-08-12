@@ -46,7 +46,7 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 	/*this goes by columns, rows*/
 	apf::NewArray< apf::Matrix< 3,2 > > B(this->nnodes);
 	/*construct each of the nnodes shape function matricies*/
-	uint32_t ii;
+	uint32_t ii, jj;
 	for(ii = 0; ii < this->nnodes; ++ii) {
 		B[ii][0][0] = gradShape[ii][0];
 		B[ii][0][1] = 0.0;
@@ -54,19 +54,45 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 		B[ii][1][1] = gradShape[ii][1];
 		B[ii][2][0] = gradShape[ii][1];
 		B[ii][2][1] = gradShape[ii][0];
-		std::cout << std::endl << B[ii] << std::endl;
 		// returns the transpose of matrix; apf::transpose(B[ii]);
 	}
-	std::cout << "-------------------------------" << std::endl;
+	/*walk over the upper triangular block matrix and compute nodal
+	* stiffness contributors. Only the upper half in blocks are computed.
+	*/
 
+	/*assemble all blocks above the main diagonal of blocks normally*/
+	apf::Matrix< 2,2 > nodal_submatrix;
+	for(ii = 0; ii < this->nnodes; ++ii) {
+		for(jj = ii; jj < this->nnodes; ++jj) {
+			if(ii == jj) {
+				/*skip the first block on the main diagonal*/
+				continue;
+			}
+			nodal_submatrix = transpose(B[ii]) * this->D * B[ii];
+			nodal_submatrix = nodal_submatrix * w * dV;
+			/*add the contribution to the element stiffness matrix,
+			* we unroll the element access loop since it is so small*/
+			this->ke(2*ii,2*jj) = nodal_submatrix[0][0];
+			this->ke(2*ii,2*jj+1) = nodal_submatrix[0][1];
+			this->ke(2*ii+1,2*jj) = nodal_submatrix[1][0];
+			this->ke(2*ii+1,2*jj+1) = nodal_submatrix[1][1];
+		}
+	}
+	/*now assemble the nodal contributors along the main diagonal
+	* these are special since we only add the upper triangular portion
+	* of these blocks since thier main diagonal corresponds with the
+	* main diagonal of the element stiffness matrix and we don't want to
+	* waste storage space, or add the same contribution twice when using
+	* a generic symmetric matrix class*/
+
+	for(ii = 0; ii < this->nnodes; ++ii) {
+		nodal_submatrix = transpose(B[ii]) * this->D * B[ii];
+		nodal_submatrix = nodal_submatrix * w * dV;
+		/*add the contribution to the element stiffness matrix,
+		* we unroll the element access loop since it is so small
+		*/
+		this->ke(2*ii,2*ii) = nodal_submatrix[0][0];
+		this->ke(2*ii,2*ii+1) = nodal_submatrix[0][1];
+		this->ke(2*ii+1,2*ii+1) = nodal_submatrix[1][1];
+	}
 }
-void StiffnessContributor2D::computeBtranspose(apf::Vector3 const& grad, apf::Matrix< 2,3 > & B_T)
-{
-	B_T[0][0] = grad[0];
-}
-
-void StiffnessContributor2D::computeB(apf::Vector3 const& grad, apf::Matrix< 3,2 > & B)
-{
-
-}
-

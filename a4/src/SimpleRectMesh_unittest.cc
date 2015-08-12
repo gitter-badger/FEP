@@ -81,6 +81,16 @@ TEST_F(RectMeshTest, Rectangle) {
 	apf::zeroField(master_f);
 
 	apf::Matrix< 3,3 > D;
+	/*simulate structure of lame parameters*/
+	D[0][0] = 10;
+	D[0][1] = 3;
+	D[0][2] = 0;
+	D[1][0] = 3;
+	D[1][1] = 10;
+	D[1][2] = 0;
+	D[2][0] = 0;
+	D[2][1] = 0;
+	D[2][2] = 7;
 
 
 	StiffnessContributor2D integrate(master_f, D, 4);
