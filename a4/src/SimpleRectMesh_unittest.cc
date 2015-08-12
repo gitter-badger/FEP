@@ -50,7 +50,7 @@ protected:
 TEST_F(RectMeshTest, Rectangle) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	apf::changeMeshShape(mesh, apf::getLagrange(1));
 	apf::writeVtkFiles("before_secondQuad", mesh);
 
 	apf::MeshEntity* e;

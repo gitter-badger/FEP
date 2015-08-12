@@ -10,13 +10,16 @@ class StiffnessContributor2D : public apf::Integrator
 {
 public:
 	StiffnessContributor2D(apf::Field *f, apf::Matrix< 3, 3 > D, uint32_t integrate_order);
-	virtual void inElement(apf::MeshElement *me);
-    virtual void outElement();
-    virtual void atPoint(apf::Vector3 const& p, double w, double dV);
+	void inElement(apf::MeshElement *me);
+    void outElement();
+    void atPoint(apf::Vector3 const& p, double w, double dV);
+    void computeBtranspose(apf::Vector3 const& grad, apf::Matrix< 2,3 > & B_T);
+    void computeB(apf::Vector3 const& grad, apf::Matrix< 3,2 > & B);
     apf::DynamicVector fe;
     apf::DynamicMatrix ke;
 private:
     uint32_t ndofs;
+    uint32_t nnodes;
     uint32_t ndims;
     apf::Field* field;
     apf::Element* field_element;
