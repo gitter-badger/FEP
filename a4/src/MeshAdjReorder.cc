@@ -190,7 +190,7 @@ void adjReorder(apf::Mesh* m,
             // std::cout << "bad termination" << std::endl;
             break;
         }
-        } //end of while loop
+    } //end of while loop
     //make sure that we did not leave an unlabeled node in the queue
     while(!q.empty()) {
         assert(apf::isNumbered(nodeNums, q.front(), 0, 0) == 1);

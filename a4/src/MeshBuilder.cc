@@ -20,7 +20,6 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	uint32_t y_elms, double x0, double y0, double xf, double yf)
 {
 	/*there is nothing to be done for a zero size mesh so return*/
-	/*there is nothing to be done for a zero size mesh so return*/
 	if ((x_elms == 0) || (y_elms == 0)) {
 		mesh = NULL;
 		return;
@@ -190,9 +189,4 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	mesh->acceptChanges();
 	mesh->verify();
 	delete[] vertices;
-
-}
-
-void AdjReorder(apf::Mesh2* & mesh) {
-
 }
