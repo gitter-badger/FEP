@@ -47,6 +47,7 @@ void getGoodStartingElement(apf::Mesh* m, apf::MeshEntity* & start, int dim) {
     #endif
     /* return the first vertex*/
     start = m->iterate(it);
+    m->end(it);
     // std::cout << start << std::endl;
 }
 
@@ -82,8 +83,10 @@ void adjReorder(apf::Mesh* m,
                     node_label += shape->countNodesOn(m->getType(e)) * n_components;
                 }
             }
+            m->end(it);
         }
     }
+    
 
     /* deduct any fixed entities from the locally-owned total */
     apf::MeshEntity* start_vert = NULL;

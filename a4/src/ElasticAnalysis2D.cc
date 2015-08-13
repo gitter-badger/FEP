@@ -46,6 +46,7 @@ uint32_t ElasticAnalysis2D::setup()
 	while((e = this->m->iterate(it))){
 		this->makeStiffnessContributor(e);
 	}
+	this->m->end(it);
 	return 0;
 }
 
@@ -87,7 +88,7 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 	if(entity_type == apf::Mesh::QUAD || entity_type == apf::Mesh::TRIANGLE){
 		apf::MeshElement* me = apf::createMeshElement(this->m, e);
 		stiff.process(me);
-
+		apf::destroyMeshElement(me);
 		/*view the intermediate matrix*/
 		std::cout << stiff.ke << std::endl << "=====================" << std::endl;
 

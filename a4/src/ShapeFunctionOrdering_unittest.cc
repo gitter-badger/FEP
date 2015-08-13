@@ -62,4 +62,5 @@ TEST_F(ShapeFunctionOrder, Quadrilaterals) {
 		}
 		std::cout << "Mesh element processed" << std::endl;
 	}
+	mesh->end(it);
 }

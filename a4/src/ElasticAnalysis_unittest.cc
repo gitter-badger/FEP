@@ -59,6 +59,6 @@ TEST_F(ElasticAnalysisTest, FunctionReturns) {
 		EXPECT_EQ(0, tmp->makeConstraint(e));
 	}
 	EXPECT_EQ(0, tmp->recover());
-
+	mesh->end(it);
 	delete tmp;
 }

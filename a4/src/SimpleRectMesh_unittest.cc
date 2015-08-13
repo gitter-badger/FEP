@@ -108,6 +108,7 @@ TEST_F(RectMeshTest, Rectangle) {
 
 		apf::MeshElement* mesh_elm = apf::createMeshElement(mesh, e);
 		integrate.process(mesh_elm);
+		apf::destroyMeshElement(mesh_elm);
 		/*only print out the elements after processing*/
 		std::cout << integrate.ke << std::endl;
 
@@ -150,7 +151,7 @@ TEST_F(RectMeshTest, Rectangle) {
 		//std::cout << master_f->countComponents() << std::endl;
 		#endif
 	}
-
+	mesh->end(it);
 }
 
 TEST_F(RectMeshTest, Triangle) {

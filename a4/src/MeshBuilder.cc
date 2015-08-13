@@ -97,6 +97,7 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	apf::destroyNumbering(numbers);
 	mesh->acceptChanges();
 	mesh->verify();
+	delete temp_vec;
 	delete[] vertices;
 
 }
@@ -188,5 +189,6 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	//accept the changes
 	mesh->acceptChanges();
 	mesh->verify();
+	delete temp_vec;
 	delete[] vertices;
 }
