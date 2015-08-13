@@ -109,6 +109,10 @@ $(ODIR)/ElasticAnalysis_unittest.o : 	$(SDIR)/ElasticAnalysis_unittest.cc \
 										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
+$(ODIR)/ShapeFunctionOrdering_unittest.o : 	$(SDIR)/ShapeFunctionOrdering_unittest.cc \
+										$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
 $(ODIR)/IntegrationHelper.o : 	$(SDIR)/IntegrationHelper.cc \
 								$(IDIR)/IntegrationHelper.h \
 								$(GTEST_HEADERS)
@@ -134,6 +138,7 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/MeshAdjReorder.o \
 				$(ODIR)/ElasticAnalysis_unittest.o \
 				$(ODIR)/ElasticAnalysis2D.o \
+				$(ODIR)/ShapeFunctionOrdering_unittest.o \
 				$(ODIR)/TestClass.o \
 				$(ODIR)/IntegrationHelper.o \
 				$(ODIR)/StiffnessContributor2D.o \
