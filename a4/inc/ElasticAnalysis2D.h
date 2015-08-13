@@ -3,13 +3,14 @@
 
 #include <apf.h>
 #include <apfMesh.h>
+#include <apfMatrix.h>
 
 #include "FEAnalysis.h"
 
 class ElasticAnalysis2D : FEAnalysis
 {
 public:
-	ElasticAnalysis2D(apf::Mesh* m);
+	ElasticAnalysis2D(apf::Mesh* m, uint32_t integration_order, double E, double nu);
 	virtual ~ElasticAnalysis2D();
 
 	virtual uint32_t setup();
@@ -20,8 +21,12 @@ public:
 	virtual uint32_t recover();
 
 private:
-	/* data */
+	uint32_t integration_order;
+	uint32_t polynomial_order;
 	apf::Mesh* m;
+	apf::Field* field;
+	apf::Matrix< 3,3> D;
+
 };
 
 #endif

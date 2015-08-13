@@ -38,10 +38,15 @@ protected:
 
 TEST_F(ElasticAnalysisTest, FunctionReturns) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
+	EXPECT_TRUE(mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
 	apf::changeMeshShape(mesh, apf::getLagrange(2));
-
-	ElasticAnalysis2D* tmp = new ElasticAnalysis2D(mesh);
+	/*physical parameters*/
+	double E, Nu;
+	E = 1e8;
+	Nu = 0.35;
+	uint32_t integration_order = 4;
+	ElasticAnalysis2D* tmp = new ElasticAnalysis2D(mesh, integration_order, E, Nu);
 
 	EXPECT_EQ(0, tmp->setup());
 	EXPECT_EQ(0, tmp->solve());
@@ -49,7 +54,7 @@ TEST_F(ElasticAnalysisTest, FunctionReturns) {
 	apf::MeshEntity* e;
 	it = mesh->begin(mesh->getDimension());
 	while((e = mesh->iterate(it))) {
-		EXPECT_EQ(0, tmp->makeStiffnessContributor(e));
+		//EXPECT_EQ(0, tmp->makeStiffnessContributor(e));
 		EXPECT_EQ(0, tmp->makeForceContributor(e));
 		EXPECT_EQ(0, tmp->makeConstraint(e));
 	}
