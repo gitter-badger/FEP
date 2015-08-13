@@ -43,19 +43,21 @@ TEST_F(ShapeFunctionOrder, Quadrilaterals) {
 	EXPECT_TRUE(mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
 	apf::changeMeshShape(mesh, apf::getLagrange(2));
-	apf::Numbering* nodeNums = apf::createNumbering(mesh, "nodeNums", mesh->getShape(),1);
+	apf::Numbering* nodeNums = apf::createNumbering(mesh, "nodeNums", mesh->getShape(),2);
     apf::Numbering* faceNums = apf::createNumbering(mesh, "faceNums", apf::getConstant(mesh->getDimension()), 1);
 
-	adjReorder(mesh, mesh->getShape(), 1, nodeNums, faceNums);
+	adjReorder(mesh, mesh->getShape(), 2, nodeNums, faceNums);
+
 
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
 	it = mesh->begin(mesh->getDimension());
 	while((e = mesh->iterate(it))) {
 		uint32_t nnodes = apf::countElementNodes(mesh->getShape(), mesh->getType(e));
-		apf::NewArray< int > node_mapping(nnodes);
+		apf::NewArray< int > node_mapping(nnodes*2);
 		apf::getElementNumbers(nodeNums, e, node_mapping);
-		for(uint32_t ii = 0; ii < nnodes; ++ii){
+		// std::cout  << "length of numbering: " << length << std::endl;
+		for(uint32_t ii = 0; ii < nnodes*2; ++ii){
 			std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
 		}
 		std::cout << "Mesh element processed" << std::endl;
