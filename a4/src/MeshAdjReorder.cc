@@ -117,7 +117,7 @@ void adjReorder(apf::Mesh* m,
         /*assuming that there is only one dof per entity*/
         if(!apf::isNumbered(nodeNums, current_entity,0,0)) {
             for(uint32_t kk = 0; kk < n_components; ++kk){
-                apf::number(nodeNums, current_entity, 0, kk, node_label);
+                apf::number(nodeNums, current_entity, 0, (n_components - kk - 1), node_label);
                 --node_label;
             }
         } else {
@@ -161,7 +161,7 @@ void adjReorder(apf::Mesh* m,
                     if( (apf::isNumbered(nodeNums, other_vert, 0, 0) || is_s ) &&
                         !apf::isNumbered(nodeNums, curr_edge, 0, 0) ) {
                         for(uint32_t kk = 0; kk < n_components; ++kk) {
-                            apf::number(nodeNums, curr_edge, 0 , kk, node_label);
+                            apf::number(nodeNums, curr_edge, 0 ,  (n_components - kk - 1), node_label);
                             --node_label;
                         }
                     } else {
