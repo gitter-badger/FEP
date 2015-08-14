@@ -1,20 +1,19 @@
 #include "ElasticAnalysis2D.h"
 #include "StiffnessContributor2D.h"
+#include "MeshAdjReorder.h"
 
-ElasticAnalysis2D::ElasticAnalysis2D(
-	apf::Mesh* m,
-	uint32_t integration_order,
-	double E,
-	double Nu)
+#define NUM_COMPONENTS 2
+
+ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 {
-	this->integration_order = integration_order;
-	this->m = m;
+	this->integration_order = in.integration_order;
+	this->m = in.m;
 	this->field = createField(this->m, "Field_1", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
 	/*find the Lame parameters for plane strain*/
 	double lambda, mu;
-	lambda = (Nu * E) / ((1.0 + Nu) * (1.0 - 2.0 * Nu));
-	mu = E / (2.0 + 2.0 * Nu);
+	lambda = (in.Nu * in.E) / ((1.0 + in.Nu) * (1.0 - 2.0 * in.Nu));
+	mu = in.E / (2.0 + 2.0 * in.Nu);
 	/*modify for plane stress*/
 	const uint32_t PLANE_STRESS = 1;
 	if(PLANE_STRESS) {
@@ -30,6 +29,12 @@ ElasticAnalysis2D::ElasticAnalysis2D(
 	this->D[2][0] = 0.0;
 	this->D[2][1] = 0.0;
 	this->D[2][2] = mu;
+	/*set up element numberings we will use for assembly*/
+	this->nodeNums = apf::createNumbering(this->m, "nodeNums", this->m->getShape(), NUM_COMPONENTS);
+    this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);
+	if(in.reorder == true){
+		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
+	}
 }
 
 ElasticAnalysis2D::~ElasticAnalysis2D()
@@ -57,7 +62,6 @@ uint32_t ElasticAnalysis2D::solve()
 
 uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 {
-
 	int entity_type = this->m->getType(e);
 	/*stiffness contributors are entirely local to this method, and are
 	* assembled directly as they are generated. For meshes of same element
@@ -91,6 +95,13 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		apf::destroyMeshElement(me);
 		/*view the intermediate matrix*/
 		std::cout << stiff.ke << std::endl << "=====================" << std::endl;
+		uint32_t nnodes = apf::countElementNodes(this->m->getShape(), entity_type);
+		apf::NewArray< int > node_mapping(nnodes*2);
+		apf::getElementNumbers(nodeNums, e, node_mapping);
+		// std::cout  << "length of numbering: " << length << std::endl;
+		for(uint32_t ii = 0; ii < nnodes*2; ++ii){
+			std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
+		}
 
 	} else {
 		/*only accepts faces, so indicate improper input*/

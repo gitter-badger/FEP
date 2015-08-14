@@ -4,13 +4,22 @@
 #include <apf.h>
 #include <apfMesh.h>
 #include <apfMatrix.h>
+#include <apfNumbering.h>
 
 #include "FEAnalysis.h"
+
+struct ElasticAnalysisInput {
+	apf::Mesh* m;
+	uint32_t integration_order;
+	double E;
+	double Nu;
+	bool reorder;
+};
 
 class ElasticAnalysis2D : FEAnalysis
 {
 public:
-	ElasticAnalysis2D(apf::Mesh* m, uint32_t integration_order, double E, double nu);
+	ElasticAnalysis2D(struct ElasticAnalysisInput & in);
 	virtual ~ElasticAnalysis2D();
 
 	virtual uint32_t setup();
@@ -26,6 +35,8 @@ private:
 	apf::Mesh* m;
 	apf::Field* field;
 	apf::Matrix< 3,3> D;
+	apf::Numbering* nodeNums;
+	apf::Numbering* faceNums;
 
 };
 

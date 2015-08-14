@@ -46,7 +46,9 @@ TEST_F(ElasticAnalysisTest, FunctionReturns) {
 	E = 1e8;
 	Nu = 0.35;
 	uint32_t integration_order = 4;
-	ElasticAnalysis2D* tmp = new ElasticAnalysis2D(mesh, integration_order, E, Nu);
+	bool reorder_flag = true;
+	struct ElasticAnalysisInput input = {mesh, integration_order, E, Nu, reorder_flag};
+	ElasticAnalysis2D* tmp = new ElasticAnalysis2D(input);
 
 	EXPECT_EQ(0, tmp->setup());
 	EXPECT_EQ(0, tmp->solve());
