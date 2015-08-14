@@ -128,6 +128,11 @@ $(ODIR)/StiffnessContributor2D.o : 	$(SDIR)/StiffnessContributor2D.cc \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
+$(ODIR)/ForceContributor2D.o : 	$(SDIR)/ForceContributor2D.cc \
+								$(IDIR)/ForceContributor2D.h \
+								$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
 #pumi library is no longer rebuilt every time
 $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
@@ -142,6 +147,7 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/TestClass.o \
 				$(ODIR)/IntegrationHelper.o \
 				$(ODIR)/StiffnessContributor2D.o \
+				$(ODIR)/ForceContributor2D.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
