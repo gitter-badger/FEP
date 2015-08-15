@@ -3,8 +3,8 @@
 
 #include "BandedSymmetricMatrix.h"
 
-BandedSymmetricMatrix::BandedSymmetricMatrix(uint32_t r, uint32_t c) :
-	rows(r), columns(c)
+BandedSymmetricMatrix::BandedSymmetricMatrix(uint32_t r) :
+	rows(r)
 {
 	this->elements.reserve(r);
 	this->elements.clear();

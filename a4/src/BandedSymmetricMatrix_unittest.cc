@@ -20,8 +20,7 @@ protected:
 };
 
 TEST_F(MatrixTest, AccessOperators) {
-	BandedSymmetricMatrix mat(10,10);
-
+	BandedSymmetricMatrix mat(10);
 	/*test for symmetry*/
 	mat(0,9) = 27.0;
 	EXPECT_EQ(27.0, mat(0,9));
@@ -32,7 +31,4 @@ TEST_F(MatrixTest, AccessOperators) {
 	EXPECT_EQ(0.0, mat(7,3));
 	EXPECT_EQ(0.0, mat(2,3));
 	EXPECT_EQ(0.0, mat(5,9));
-
 }
-
-

@@ -25,7 +25,7 @@ class BandedSymmetricMatrix
 *
 */
 public:
-    BandedSymmetricMatrix(uint32_t rows, uint32_t columns);
+    BandedSymmetricMatrix(uint32_t rows);
     ~BandedSymmetricMatrix();
 
     /*read only operator*/
@@ -57,7 +57,6 @@ public:
 
 private:
     uint32_t rows;
-    uint32_t columns;
     std::vector<std::size_t> offsets;
     std::vector <std::vector<double> > elements;
 };
