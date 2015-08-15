@@ -1,10 +1,10 @@
 #ifndef STIFFNESS_CONTRIBUTOR_H
 #define STIFFNESS_CONTRIBUTOR_H 1
 
+#include <vector>
 #include <stdint.h>
 #include <apf.h>
-#include <apfDynamicMatrix.h>
-#include <apfDynamicVector.h>
+
 
 class ForceContributor2D : public apf::Integrator
 {
@@ -13,7 +13,7 @@ public:
 	void inElement(apf::MeshElement *me);
     void outElement();
     void atPoint(apf::Vector3 const& p, double w, double dV);
-    apf::DynamicVector fe;
+    std::vector<double> fe;
 private:
     uint32_t ndofs;
     uint32_t nnodes;

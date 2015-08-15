@@ -8,7 +8,7 @@ ForceContributor2D::ForceContributor2D(
     apf::Vector3(*fnc)(apf::Vector3 const& p)) : apf::Integrator(integrate_order), field(f)
 {
     this->ndims = apf::getMesh(f)->getDimension();
-    this->fnc  =fnc;
+    this->fnc = fnc;
 }
 
 void ForceContributor2D::inElement(apf::MeshElement* me)
@@ -18,9 +18,13 @@ void ForceContributor2D::inElement(apf::MeshElement* me)
     /*determine the size of the force matrices*/
     this->nnodes = apf::countNodes(this->field_element);
     this->ndofs = this->ndims * apf::countNodes(this->field_element);
-    this->fe.setSize(this->ndofs);
+    this->fe.reserve(this->ndofs);
     /*zero the internal matricies*/
-    this->fe.zero();
+    this->fe.clear();
+    for(std::size_t ii = 0; ii < this->ndofs; ++ii) {
+        fe.resize(this->ndofs, 0.0);
+    }
+
 }
 
 void ForceContributor2D::outElement()
@@ -41,7 +45,7 @@ void ForceContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
     apf::Vector3 tmp = this->fnc(x);
     for(uint32_t ii = 0; ii < this->nnodes; ++ii){
         for(uint32_t jj = 0; jj < this->ndims; ++jj){
-            this->fe += (shape_val[ii] * tmp[jj] * w * dV);
+            this->fe[ii] += (shape_val[ii] * tmp[jj] * w * dV);
         }
     }
 }
