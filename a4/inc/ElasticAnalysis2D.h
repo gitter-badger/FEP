@@ -7,6 +7,7 @@
 #include <apfNumbering.h>
 
 #include "FEAnalysis.h"
+#include "AlgebraicSystem.h"
 
 struct ElasticAnalysisInput {
 	apf::Mesh* m;
@@ -37,6 +38,7 @@ private:
 	apf::Matrix< 3,3> D;
 	apf::Numbering* nodeNums;
 	apf::Numbering* faceNums;
+	AlgebraicSystem* linsys;
 
 };
 

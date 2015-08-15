@@ -8,6 +8,7 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 {
 	this->integration_order = in.integration_order;
 	this->m = in.m;
+	/*we create a 3 dimensional field but only will use 2 dimensions of that, (x & y)*/
 	this->field = createField(this->m, "Field_1", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
 	/*find the Lame parameters for plane strain*/
@@ -35,11 +36,15 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
 	}
+	/*compute the global degrees of freedom for the mesh*/
+	std::size_t n_global_dofs = apf::countNodes(this->nodeNums);
+	/*initialize the linear system*/
+	this->linsys = new AlgebraicSystem(n_global_dofs);
 }
 
 ElasticAnalysis2D::~ElasticAnalysis2D()
 {
-
+	delete this->linsys;
 }
 
 uint32_t ElasticAnalysis2D::setup()
