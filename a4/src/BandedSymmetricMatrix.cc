@@ -36,8 +36,11 @@ double BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj) const
 		ii ^= jj;
 		jj ^= ii;
 	}
-	std::size_t col_index = 0;
-	return this->elements[ii][col_index];
+	/*if the requested element is no tracked, it is zero*/
+	if(jj < this->offsets[ii]) {
+		return 0.0;
+	}
+	return this->elements[ii][(ii - jj)];
 }
 
 double& BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj)
@@ -52,10 +55,10 @@ double& BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj)
 	}
 	/*check if that row has the column initialized, otherwise
 	* we must allocate new mememory up to that point*/
-	if( jj < this->offsets[ii])	{
-		std::cout << "must allocate more" << std::endl;
+	while(jj < this->offsets[ii]) {
+		this->elements[ii].push_back(0.0);
+		this->offsets[ii] -= 1;
 	}
-	std::size_t col_index = 0;
-	return this->elements[ii][col_index];
+	return this->elements[ii][(ii-jj)];
 }
 

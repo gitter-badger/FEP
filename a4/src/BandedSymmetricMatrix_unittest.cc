@@ -19,13 +19,20 @@ protected:
 	}
 };
 
-TEST_F(MatrixTest, Insertions) {
-	BandedSymmetricMatrix* mat = new BandedSymmetricMatrix(10,10);
+TEST_F(MatrixTest, AccessOperators) {
+	BandedSymmetricMatrix mat(10,10);
 
-	std::cout << "test not implemented" << std::endl;
-	std::cout << *mat << std::endl;
+	/*test for symmetry*/
+	mat(0,9) = 27.0;
+	EXPECT_EQ(27.0, mat(0,9));
+	EXPECT_EQ(27.0, mat(9,0));
 
-	delete mat;
+	/*test that non instantiated things off diagonal are zero,
+	* we just quickly test some random indices in range*/
+	EXPECT_EQ(0.0, mat(7,3));
+	EXPECT_EQ(0.0, mat(2,3));
+	EXPECT_EQ(0.0, mat(5,9));
+
 }
 
 
