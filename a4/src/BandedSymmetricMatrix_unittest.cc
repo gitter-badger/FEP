@@ -20,7 +20,8 @@ protected:
 };
 
 TEST_F(MatrixTest, AccessOperators) {
-	BandedSymmetricMatrix mat(10);
+	BandedSymmetricMatrix mat;
+	mat.setSize(10);
 	/*test for symmetry*/
 	mat(0,9) = 27.0;
 	EXPECT_EQ(27.0, mat(0,9));

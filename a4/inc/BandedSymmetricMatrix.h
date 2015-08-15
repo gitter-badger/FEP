@@ -25,7 +25,7 @@ class BandedSymmetricMatrix
 *
 */
 public:
-    BandedSymmetricMatrix(uint32_t rows);
+    BandedSymmetricMatrix();
     ~BandedSymmetricMatrix();
 
     /*read only operator*/
@@ -54,6 +54,10 @@ public:
         }
         return s;
     }
+
+    void setSize(std::size_t rows);
+
+    void zero();
 
 private:
     uint32_t rows;

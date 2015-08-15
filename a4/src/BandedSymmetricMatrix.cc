@@ -1,33 +1,28 @@
-#include <exception>
+#include <stdexcept>
 #include <iostream>
+#include <algorithm>
+#include <assert.h>
 
 #include "BandedSymmetricMatrix.h"
 
-BandedSymmetricMatrix::BandedSymmetricMatrix(uint32_t r) :
-	rows(r)
+BandedSymmetricMatrix::BandedSymmetricMatrix()
 {
-	this->elements.reserve(r);
-	this->elements.clear();
-	this->offsets.reserve(r);
-	/*initialize the row of offsets*/
-	for(std::size_t ii = 0; ii < r; ++ii){
-		this->offsets[ii] = ii;
-		
-		/*initialize the main diagonal*/
-		this->elements.push_back(std::vector< double >());
-		this->elements[ii].clear();
-		this->elements[ii].push_back(0.0);
-	}
-
+	this->rows = 0;
 }
 
 BandedSymmetricMatrix::~BandedSymmetricMatrix()
 {
-
 }
 
 double BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj) const
 {
+	/*sanity checks*/
+	if(ii >= this->rows) {
+		throw std::out_of_range("row index out of range");
+	}
+	if( jj >= this->rows) {
+		throw std::out_of_range("column index out of range");
+	}
 	/*internally the storage is lower triangular, so swap indicies if
 	* requested component is upper triangular*/
 	if( jj > ii ) {
@@ -55,10 +50,39 @@ double& BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj)
 	}
 	/*check if that row has the column initialized, otherwise
 	* we must allocate new mememory up to that point*/
-	while(jj < this->offsets[ii]) {
-		this->elements[ii].push_back(0.0);
-		this->offsets[ii] -= 1;
+	if(jj < this->offsets[ii]) {
+		this->elements[ii].resize((ii-jj+1), 0.0);
+		this->offsets[ii] = jj;
 	}
 	return this->elements[ii][(ii-jj)];
 }
 
+void BandedSymmetricMatrix::setSize(std::size_t r)
+{
+	/*nothing to do if it is same size*/
+	if(r == this->rows) {
+		return;
+	} else if(r < this->rows) {
+		/*shrink the vector by truncating*/
+		this->elements.resize(r);
+		this->offsets.resize(r);
+		this->rows = r;
+	} else {
+		/*expand the vector, adding in new once cell vectors*/
+		this->elements.resize(r, std::vector <double>(1, 0.0));
+		this->offsets.resize(r);
+		for(std::size_t ii = this->rows; ii < r; ++ii) {
+			this->offsets[ii] = ii;
+		}
+		this->rows = r;
+	}
+	assert(this->rows == this->elements.size());
+	assert(this->rows == this->offsets.size());
+}
+
+void BandedSymmetricMatrix::zero()
+{
+	for(std::size_t ii = 0; ii < this->rows; ++ii){
+		std::fill(this->elements[ii].begin(), this->elements[ii].end(), 0.0);
+	}
+}
