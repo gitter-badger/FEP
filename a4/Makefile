@@ -142,6 +142,11 @@ $(ODIR)/BandedSymmetricMatrix_unittest.o : 	$(SDIR)/BandedSymmetricMatrix_unitte
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
+$(ODIR)/AlgebraicSystem.o : $(SDIR)/AlgebraicSystem.cc \
+							$(IDIR)/AlgebraicSystem.h\
+							$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
 #pumi library is no longer rebuilt every time
 $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
@@ -159,6 +164,7 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/ForceContributor2D.o \
 				$(ODIR)/BandedSymmetricMatrix.o \
 				$(ODIR)/BandedSymmetricMatrix_unittest.o \
+				$(ODIR)/AlgebraicSystem.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
