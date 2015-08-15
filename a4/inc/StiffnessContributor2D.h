@@ -13,7 +13,6 @@ public:
 	void inElement(apf::MeshElement *me);
     void outElement();
     void atPoint(apf::Vector3 const& p, double w, double dV);
-    apf::DynamicVector fe;
     apf::DynamicMatrix ke;
 private:
     uint32_t ndofs;
