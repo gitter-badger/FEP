@@ -43,7 +43,7 @@ void ForceContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
     apf::Vector3 tmp = this->fnc(x);
     for(uint32_t ii = 0; ii < this->nnodes; ++ii){
         for(uint32_t jj = 0; jj < this->ndims; ++jj){
-            this->fe[ii] += (shape_val[ii] * tmp[jj] * w * dV);
+            this->fe[(ii*this->ndims)+jj] += (shape_val[ii] * tmp[jj] * w * dV);
         }
     }
 }
