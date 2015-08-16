@@ -12,7 +12,7 @@ AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs) : ndofs(global_n_dof
 
 AlgebraicSystem::~AlgebraicSystem()
 {
-	
+
 }
 
 
@@ -55,5 +55,22 @@ void AlgebraicSystem::assemble(
 	apf::NewArray<int> const& node_mapping,
 	uint32_t nLocalDOFs)
 {
-	
+	/*iterate over the input vector and add each value
+	* into the global force vector according to the mapping in */
+	std::size_t nrows = fe.size();
+	/*sanity checks that we actually have a mapglobal_n_dofsping*/
+	if(nLocalDOFs > this->ndofs) {
+		throw std::range_error("local mapping size exceeded global size");
+	}
+	/*check that every row will have a mapping*/
+	if((nrows > this->ndofs) || (nrows > nLocalDOFs)) {
+		throw std::range_error("local rows size exceeded mapping size");
+	}
+
+
+	for(std::size_t ii = 0; ii < nrows; ++ii){
+		/*lookup where we put this in the global array*/
+		std::size_t kk = node_mapping[ii];
+		this->F[kk] += fe[ii];
+	}	
 }

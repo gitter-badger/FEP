@@ -1,5 +1,5 @@
-#ifndef STIFFNESS_CONTRIBUTOR_H
-#define STIFFNESS_CONTRIBUTOR_H 1
+#ifndef FORCE_CONTRIBUTOR_H
+#define FORCE_CONTRIBUTOR_H 1
 
 #include <vector>
 #include <stdint.h>

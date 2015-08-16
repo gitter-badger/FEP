@@ -21,9 +21,7 @@ void ForceContributor2D::inElement(apf::MeshElement* me)
     this->fe.reserve(this->ndofs);
     /*zero the internal matricies*/
     this->fe.clear();
-    for(std::size_t ii = 0; ii < this->ndofs; ++ii) {
-        fe.resize(this->ndofs, 0.0);
-    }
+    fe.resize(this->ndofs, 0.0);
 
 }
 

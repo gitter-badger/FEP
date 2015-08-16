@@ -1,8 +1,16 @@
 #include "ElasticAnalysis2D.h"
 #include "StiffnessContributor2D.h"
+#include "ForceContributor2D.h"
 #include "MeshAdjReorder.h"
 
+#include <fstream>
+
 #define NUM_COMPONENTS 2
+
+apf::Vector3 dummy(apf::Vector3 const& p){
+	return apf::Vector3(10,0,0);
+}
+
 
 ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 {
@@ -37,7 +45,7 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
 	}
 	/*compute the global degrees of freedom for the mesh*/
-	std::size_t n_global_dofs = apf::countNodes(this->nodeNums);
+	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
 	/*initialize the linear system*/
 	this->linsys = new AlgebraicSystem(n_global_dofs);
 }
@@ -53,15 +61,25 @@ uint32_t ElasticAnalysis2D::setup()
 	apf::MeshEntity* e;
 	/*iterate over the faces first*/
 	it = this->m->begin(2);
-	while((e = this->m->iterate(it))){
+	while((e = this->m->iterate(it))) {
 		this->makeStiffnessContributor(e);
+		this->makeForceContributor(e);
 	}
 	this->m->end(it);
+	/*then pick up the edges*/
+	it = this->m->begin(1);
+	while((e = this->m->iterate(it))) {
+		this->makeForceContributor(e);
+	}
 	return 0;
 }
 
 uint32_t ElasticAnalysis2D::solve()
 {
+	std::ofstream out_file;
+	out_file.open("K.txt", std::ios::out);
+	out_file << this->linsys->K << std::endl;
+	out_file.close();
 	return 0;
 }
 
@@ -99,14 +117,14 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		stiff.process(me);
 		apf::destroyMeshElement(me);
 		/*view the intermediate matrix*/
-		std::cout << stiff.ke << std::endl << "=====================" << std::endl;
-		uint32_t nnodes = apf::countElementNodes(this->m->getShape(), entity_type);
-		apf::NewArray< int > node_mapping(nnodes*2);
+		uint32_t ndofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
+		apf::NewArray< int > node_mapping(ndofs);
 		apf::getElementNumbers(nodeNums, e, node_mapping);
 		// std::cout  << "length of numbering: " << length << std::endl;
-		for(uint32_t ii = 0; ii < nnodes*2; ++ii){
-			std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
-		}
+		// for(uint32_t ii = 0; ii < nnodes; ++ii){
+		// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
+		// }
+		this->linsys->assemble(stiff.ke, node_mapping, ndofs);
 
 	} else {
 		/*only accepts faces, so indicate improper input*/
@@ -118,6 +136,25 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 
 uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 {
+	int entity_type = this->m->getType(e);
+	apf::Vector3(*fnc_ptr)(apf::Vector3 const& p);
+	fnc_ptr = &dummy;
+
+	ForceContributor2D force(this->field, this->integration_order, fnc_ptr);
+
+	apf::MeshElement* me = apf::createMeshElement(this->m, e);
+	force.process(me);
+	apf::destroyMeshElement(me);
+	/*view the intermediate matrix*/
+	uint32_t ndofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
+	apf::NewArray< int > node_mapping(ndofs);
+	apf::getElementNumbers(nodeNums, e, node_mapping);
+	// std::cout  << "length of numbering: " << length << std::endl;
+	// for(uint32_t ii = 0; ii < nnodes; ++ii){
+	// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
+	// }
+	this->linsys->assemble(force.fe, node_mapping, ndofs);
+
 	return 0;
 }
 
