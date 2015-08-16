@@ -4,7 +4,7 @@
 #include <vector>
 #include <stdint.h>
 
-class BandedMaskedMatrix
+class BandedSymmetricMatrix
 {
 /* store the symmetric matrix as a Lower Triangular matrix using
 * a series of row vectors as the element storage. These row vectors
@@ -25,8 +25,8 @@ class BandedMaskedMatrix
 *
 */
 public:
-    BandedMaskedMatrix();
-    ~BandedMaskedMatrix();
+    BandedSymmetricMatrix();
+    ~BandedSymmetricMatrix();
 
     /*read only operator*/
     double operator()(std::size_t ii, std::size_t jj) const;
@@ -34,9 +34,8 @@ public:
     double& operator()(std::size_t ii, std::size_t jj);
 
     /* output format corresponds to matlab's sparse matrix import*
-    * format for ease of checking, so we must add one to each index to
-    * support MatLab's 1 based indexing */
-    friend std::ostream& operator<< (std::ostream& s, BandedMaskedMatrix const& M)
+    * format for ease of checking */
+    friend std::ostream& operator<< (std::ostream& s, BandedSymmetricMatrix const& M)
     {
         for(std::size_t ii = 0; ii < M.rows; ++ii) {
             /*compute the column index max*/
@@ -44,20 +43,20 @@ public:
             /*iterate over each row vector backwards to keep ouput with 
             * ordered as if we were reading each row left to right*/
             for(std::size_t jj = 0; jj <= col_max; ++jj) {
-                s << ii+1 << '\t' << (M.offsets[ii] + jj)+1 << '\t';
+                s << ii << '\t' << (M.offsets[ii] + jj) << '\t';
                 s << M.elements[ii][col_max - jj] << '\n';
                 /*ouput the symmetric element*/
                 if( ii != (M.offsets[ii] + jj)) {
-                    s << (M.offsets[ii] + jj)+1 << '\t' << ii+1 << '\t';
+                    s << (M.offsets[ii] + jj) << '\t' << ii << '\t';
                     s << M.elements[ii][col_max - jj] << '\n';
                 }
             }
         }
         return s;
     }
-    /*change the size of the square matrix*/
+
     void setSize(std::size_t rows);
-    /*zero all existing elements of matrix, does not change storage*/
+
     void zero();
 
 private:

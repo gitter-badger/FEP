@@ -3,18 +3,18 @@
 #include <algorithm>
 #include <assert.h>
 
-#include "BandedMaskedMatrix.h"
+#include "BandedSymmetricMatrix.h"
 
-BandedMaskedMatrix::BandedMaskedMatrix()
+BandedSymmetricMatrix::BandedSymmetricMatrix()
 {
 	this->rows = 0;
 }
 
-BandedMaskedMatrix::~BandedMaskedMatrix()
+BandedSymmetricMatrix::~BandedSymmetricMatrix()
 {
 }
 
-double BandedMaskedMatrix::operator()(std::size_t ii, std::size_t jj) const
+double BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj) const
 {
 	/*sanity checks*/
 	if(ii >= this->rows) {
@@ -38,7 +38,7 @@ double BandedMaskedMatrix::operator()(std::size_t ii, std::size_t jj) const
 	return this->elements[ii][(ii - jj)];
 }
 
-double& BandedMaskedMatrix::operator()(std::size_t ii, std::size_t jj)
+double& BandedSymmetricMatrix::operator()(std::size_t ii, std::size_t jj)
 {
 	/*internally the storage is lower triangular, so swap indicies if
 	* requested component is upper triangular*/
@@ -57,7 +57,7 @@ double& BandedMaskedMatrix::operator()(std::size_t ii, std::size_t jj)
 	return this->elements[ii][(ii-jj)];
 }
 
-void BandedMaskedMatrix::setSize(std::size_t r)
+void BandedSymmetricMatrix::setSize(std::size_t r)
 {
 	/*nothing to do if it is same size*/
 	if(r == this->rows) {
@@ -80,7 +80,7 @@ void BandedMaskedMatrix::setSize(std::size_t r)
 	assert(this->rows == this->offsets.size());
 }
 
-void BandedMaskedMatrix::zero()
+void BandedSymmetricMatrix::zero()
 {
 	for(std::size_t ii = 0; ii < this->rows; ++ii){
 		std::fill(this->elements[ii].begin(), this->elements[ii].end(), 0.0);

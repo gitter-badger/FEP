@@ -133,12 +133,12 @@ $(ODIR)/ForceContributor2D.o : 	$(SDIR)/ForceContributor2D.cc \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(ODIR)/BandedMaskedMatrix.o : 	$(SDIR)/BandedMaskedMatrix.cc \
-								$(IDIR)/BandedMaskedMatrix.h \
+$(ODIR)/BandedSymmetricMatrix.o : 	$(SDIR)/BandedSymmetricMatrix.cc \
+								$(IDIR)/BandedSymmetricMatrix.h \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(ODIR)/BandedMaskedMatrix_unittest.o : 	$(SDIR)/BandedMaskedMatrix_unittest.cc \
+$(ODIR)/BandedSymmetricMatrix_unittest.o : 	$(SDIR)/BandedSymmetricMatrix_unittest.cc \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
@@ -162,8 +162,8 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/IntegrationHelper.o \
 				$(ODIR)/StiffnessContributor2D.o \
 				$(ODIR)/ForceContributor2D.o \
-				$(ODIR)/BandedMaskedMatrix.o \
-				$(ODIR)/BandedMaskedMatrix_unittest.o \
+				$(ODIR)/BandedSymmetricMatrix.o \
+				$(ODIR)/BandedSymmetricMatrix_unittest.o \
 				$(ODIR)/AlgebraicSystem.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "BandedMaskedMatrix.h"
+#include "BandedSymmetricMatrix.h"
 
 class MatrixTest : public testing::Test
 {
@@ -20,7 +20,7 @@ protected:
 };
 
 TEST_F(MatrixTest, AccessOperators) {
-	BandedMaskedMatrix mat;
+	BandedSymmetricMatrix mat;
 	mat.setSize(10);
 	/*test for symmetry*/
 	mat(0,9) = 27.0;
