@@ -43,6 +43,8 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
     this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
+		/*TEMPORARY: view the mesh*/
+		apf::writeVtkFiles("elasticQuad", this->m);
 	}
 	/*compute the global degrees of freedom for the mesh*/
 	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
@@ -63,7 +65,7 @@ uint32_t ElasticAnalysis2D::setup()
 	it = this->m->begin(2);
 	while((e = this->m->iterate(it))) {
 		this->makeStiffnessContributor(e);
-		this->makeForceContributor(e);
+		//this->makeForceContributor(e);
 	}
 	this->m->end(it);
 	/*then pick up the edges*/
@@ -137,6 +139,8 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 {
 	int entity_type = this->m->getType(e);
+	std::cout << "=====force contributor " << entity_type << " =======" << std::endl;
+
 	apf::Vector3(*fnc_ptr)(apf::Vector3 const& p);
 	fnc_ptr = &dummy;
 
@@ -145,13 +149,19 @@ uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 	apf::MeshElement* me = apf::createMeshElement(this->m, e);
 	force.process(me);
 	apf::destroyMeshElement(me);
+
 	/*view the intermediate matrix*/
 	uint32_t ndofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
 	apf::NewArray< int > node_mapping(ndofs);
 	apf::getElementNumbers(nodeNums, e, node_mapping);
+
+	for(std::size_t ii = 0; ii < force.fe.size(); ++ii){
+		std::cout << "Node " << node_mapping[ii] << ": " <<  ii << "= "<< force.fe[ii] << std::endl;
+	}
+	std::cout << "========================" << std::endl;
 	// std::cout  << "length of numbering: " << length << std::endl;
 	// for(uint32_t ii = 0; ii < nnodes; ++ii){
-	// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
+	// 	
 	// }
 	this->linsys->assemble(force.fe, node_mapping, ndofs);
 

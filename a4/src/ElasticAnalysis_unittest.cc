@@ -36,8 +36,8 @@ protected:
 
 };
 
-TEST_F(ElasticAnalysisTest, FunctionReturns) {
-	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
+TEST_F(ElasticAnalysisTest, AppRunTest) {
+	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
 	apf::changeMeshShape(mesh, apf::getLagrange(2));
@@ -52,15 +52,6 @@ TEST_F(ElasticAnalysisTest, FunctionReturns) {
 
 	EXPECT_EQ(0, tmp->setup());
 	EXPECT_EQ(0, tmp->solve());
-	apf::MeshIterator* it;
-	apf::MeshEntity* e;
-	it = mesh->begin(mesh->getDimension());
-	while((e = mesh->iterate(it))) {
-		//EXPECT_EQ(0, tmp->makeStiffnessContributor(e));
-		EXPECT_EQ(0, tmp->makeForceContributor(e));
-		EXPECT_EQ(0, tmp->makeConstraint(e));
-	}
 	EXPECT_EQ(0, tmp->recover());
-	mesh->end(it);
 	delete tmp;
 }
