@@ -4,7 +4,7 @@
 #include <vector>
 #include <apfDynamicMatrix.h>
 
-#include "BandedSymmetricMatrix.h"
+#include "BandedMaskedMatrix.h"
 
 class AlgebraicSystem
 {
@@ -20,10 +20,12 @@ public:
 		std::vector<double> const& fe,
 		apf::NewArray<int> const& node_mapping,
 		uint32_t nLocalDOFs);
+
+	BandedMaskedMatrix K;
+	std::vector< double > F;
 private:
 	std::size_t ndofs;
-	BandedSymmetricMatrix K;
-	std::vector< double > F;
+
 
 };
 
