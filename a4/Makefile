@@ -7,6 +7,14 @@ IDIR = ./inc
 LDIR = ./lib
 ODIR = ./obj
 
+
+#===============================
+#	  PETSC NUMERICAL LIB 
+#===============================
+
+PETSC_INC = -I $(PETSC_DIR)/include
+PETSC_LIB = -L $(PETSC_DIR)/lib
+
 #===============================
 #	  XERCES C++ XML PARSING 
 #===============================
@@ -149,7 +157,7 @@ $(ODIR)/AlgebraicSystem.o : $(SDIR)/AlgebraicSystem.cc \
 
 #pumi library is no longer rebuilt every time
 $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
 
 $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o \
@@ -166,7 +174,7 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/BandedSymmetricMatrix_unittest.o \
 				$(ODIR)/AlgebraicSystem.o \
 				$(LDIR)/gtest.a 				
-	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PUMI_LIBS) $^ -lmds -lapf -lgmi -lpcu -lpthread  -o $@
+	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PETSC_LIB) $(PUMI_LIBS) $^ -lpetsc -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
 #===============================================
 

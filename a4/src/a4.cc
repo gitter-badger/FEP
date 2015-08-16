@@ -6,6 +6,8 @@
 #include <apfNumbering.h>
 #include <apfShape.h>
 
+#include <petscsys.h>
+
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv)
@@ -15,10 +17,14 @@ int main(int argc, char** argv)
 	* its specific arguments from argv*/
 	MPI_Init(&argc,&argv);
   	PCU_Comm_Init();
+  	PetscInitialize(0,0,0,0);
+
 	int rc = RUN_ALL_TESTS();
 	if(rc != 0){
 		printf("Google Test returned: %d", rc);
 	}
+	
+	PetscFinalize();
 	PCU_Comm_Free();
   	MPI_Finalize();
 	return 0;
