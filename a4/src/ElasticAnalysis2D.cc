@@ -65,13 +65,13 @@ uint32_t ElasticAnalysis2D::setup()
 	it = this->m->begin(2);
 	while((e = this->m->iterate(it))) {
 		this->makeStiffnessContributor(e);
-		//this->makeForceContributor(e);
+		this->makeForceContributor(e);
 	}
 	this->m->end(it);
 	/*then pick up the edges*/
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
-		this->makeForceContributor(e);
+		//this->makeForceContributor(e);
 	}
 	return 0;
 }
@@ -156,7 +156,7 @@ uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 	apf::getElementNumbers(nodeNums, e, node_mapping);
 
 	for(std::size_t ii = 0; ii < force.fe.size(); ++ii){
-		std::cout << "Node " << node_mapping[ii] << ": " <<  ii << "= "<< force.fe[ii] << std::endl;
+		std::cout << "Node " << node_mapping[ii] << ": " << force.fe[ii] << std::endl;
 	}
 	std::cout << "========================" << std::endl;
 	// std::cout  << "length of numbering: " << length << std::endl;

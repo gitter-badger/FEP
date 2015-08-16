@@ -2,7 +2,10 @@
 #define ALGEBRAIC_SYSTEM 1
 
 #include <vector>
+#include <map>
+#include <stdint.h>
 #include <apfDynamicMatrix.h>
+
 
 #include "BandedMaskedMatrix.h"
 
@@ -25,6 +28,9 @@ public:
 	std::vector< double > F;
 private:
 	std::size_t ndofs;
+	/*we keep track of which degrees of freedom are
+	* fixed by boundary constraints first*/
+	std::map<std::size_t, uint64_t> mask;
 
 
 };
