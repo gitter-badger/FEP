@@ -12,6 +12,8 @@
 #include "BandedSymmetricMatrix.h"
 
 #define KNOWN_DOF_MASK ((uint64_t)1<<63)
+#define SAMPLE_LOW_32_BITS ((uint32_t)(0xFFFFFFFF))
+#define UNMAPPED_VALUE ((uint64_t)-1)
 
 class AlgebraicSystem
 {
@@ -20,9 +22,8 @@ public:
 	~AlgebraicSystem();
 
 	void addBoundaryConstraint(
-		std::vector<double> fixed,
-		apf::NewArray<int> const& node_mapping,
-		uint32_t size);
+		std::vector<double> const& fixed,
+		std::vector<uint32_t> const& node_mapping);
 
 	void beginAssembly();
 
@@ -37,16 +38,19 @@ public:
 
 	PetscErrorCode synchronize();
 	PetscErrorCode solve();
+	
+	Mat K;
 
 private:
 	bool _allow_assembly;
 	/*the key is the index in the global numbering of dofs,
-	( most significant bit of the value is 1 if the global dof
-	* is fixed, with the lower  */
+	* most significant bit of the value is 1 if the global dof
+	* is fixed, with the lower 32 bits being the only valid indices
+	* because of interaction with PetscInt not being a reliable 
+	* size across platforms*/
 	std::map< std::size_t,uint64_t > masks;
 	std::vector< double > known_d;
 
-	Mat K;
     Vec d;
     Vec F;
     KSP solver;

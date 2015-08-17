@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <climits>
+#include <assert.h>
 
 #include "AlgebraicSystem.h"
 
@@ -16,8 +17,12 @@ AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs) : ndofs(global_n_dof
 		* 500 million rows in a matrix before on super computers, it is
 		* reasonable to assume that we will never be in danger of overflow
 		* for this value for the next 20 years*/
-		this->masks.insert(std::map< size_t, uint64_t >::value_type(ii, -1));
+		this->masks.insert(std::map< size_t, uint64_t >::value_type(ii, UNMAPPED_VALUE));
 	}
+	/*make sure there are zero elements in the known_d vector, following
+	* code depends on it starting out as zero*/
+	this->known_d.clear();
+	assert(0 == this->known_d.size());
 }
 
 AlgebraicSystem::~AlgebraicSystem()
@@ -31,50 +36,81 @@ AlgebraicSystem::~AlgebraicSystem()
 	}
 }
 
-void AlgebraicSystem::beginAssembly() {
-	_allow_assembly = true;
-
-
-	/*now compute the remaining degrees of freedom*/
-	std::size_t ndogs = this->known_d.size();
-	std::size_t n_eq = this->ndofs - ndogs;
-	/*we construct the stiffness matrix only for degress of freedom
-	* which have not been fixed, 
-	* WARNING: this program is intended to run on a single process
-	* there for the local size of all petsc variables is set to
-	* the same as the global size.*/
-	VecCreateMPI(PETSC_COMM_WORLD, n_eq, n_eq, &(this->F));
-	std::cout << "here" << std::endl;
-	VecSetOption(this->F, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-		std::cout << "here" << std::endl;
-
-	MatCreateAIJ(PETSC_COMM_WORLD, n_eq, n_eq, n_eq, n_eq,
-		300, PETSC_NULL, 300, PETSC_NULL, &(this->K));
-		std::cout << "here" << std::endl;
-
-	MatSetOption(this->K, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-		std::cout << "here" << std::endl;
-
-	KSPCreate(PETSC_COMM_WORLD, &(this->solver));
-		std::cout << "here" << std::endl;
-
-	KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);
-		std::cout << "here" << std::endl;
-
-	VecDuplicate(this->F, &(this->d));
-		std::cout << "here" << std::endl;
-}
-
 void AlgebraicSystem::addBoundaryConstraint(
-	std::vector<double> fixed,
-	apf::NewArray<int> const& node_mapping,
-	uint32_t size)
+	std::vector<double> const& fixed,
+	std::vector<uint32_t> const& node_mapping)
 {
 	/*do not add a constraint after assembly has begun*/
 	if(this->_allow_assembly == true) {
 		throw std::invalid_argument("cannot add constraint after assembly has started");
 	}
+	std::size_t input_size = fixed.size();
+	/*check that there are at least as many mappings as there are elements
+	* in fixed that will be mapped. Otherwise we will walk off end of 
+	* buffer*/
+	if(input_size > node_mapping.size()) {
+		throw std::range_error("local force vector rows size exceeded mapping size");
+	}
 
+	/*look up current index number of ndogs, we will start
+	* inserting each fixed dof at this index growing the vector
+	* of known displacements from here*/
+	uint64_t cur_ndogs = this->known_d.size();
+
+	for(std::size_t ii = 0; ii < input_size; ++ii) {
+		/*convert values to fixed width, discarding extra precision
+		* if so necessary by using Cs type promotion rules*/
+		uint64_t key = node_mapping[ii];
+		/*look up key an convert it */
+		this->masks[key] = cur_ndogs | (KNOWN_DOF_MASK);
+		printf("key %lx \n", this->masks[key]);
+		++cur_ndogs;
+		/*add the proscribed displacements to our known_displacement store*/
+		this->known_d.push_back(fixed[ii]);
+	}
+
+}
+
+void AlgebraicSystem::beginAssembly() {
+	_allow_assembly = true;
+
+	/*now compute the remaining degrees of freedom*/
+	std::size_t ndogs = this->known_d.size();
+	std::size_t n_eq = this->ndofs - ndogs;
+	std::cout << "ndogs: " << ndogs << " n_eq: " << n_eq << std::endl;
+	/*go throught the map and map the free degrees of freedom
+	* to indicies that will be used with Petsc matricies and vectors
+	* to solve the remaining degrees of freedom*/
+	uint64_t n_eq_counter = 0;
+	for(std::size_t ii = 0; ii < this->ndofs; ++ii) {
+		if(this->masks[ii] == UNMAPPED_VALUE) {
+			/*clear the most significant bit to indicate that this is
+			* a free dof */
+			this->masks[ii] = n_eq_counter & (~(KNOWN_DOF_MASK));
+			++n_eq_counter;
+		} else {
+			/*this dof was already labled*/
+			std::cout << "already fixed dof: " << ii << std::endl;
+		}
+	}
+	std::cout << n_eq_counter << ": " << n_eq <<std::endl;
+	/*we should have seen exactly n_eq free dofs*/
+	assert(n_eq == n_eq_counter);
+
+	/*we construct the stiffness matrix only for degress of freedom
+	* which have not been fixed, 
+	* WARNING: this program is intended to run on a single process
+	* there for the local size of all petsc variables is set to
+	* the same as the global size.*/
+	PetscErrorCode ierr;
+	ierr = VecCreateMPI(PETSC_COMM_WORLD, n_eq, n_eq, &(this->F));
+	ierr = VecSetOption(this->F, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+	ierr = MatCreateAIJ(PETSC_COMM_WORLD, n_eq, n_eq, n_eq, n_eq,
+		300, PETSC_NULL, 300, PETSC_NULL, &(this->K));
+	ierr = MatSetOption(this->K, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
+	ierr = KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);
+	ierr = VecDuplicate(this->F, &(this->d));
 }
 
 void AlgebraicSystem::assemble(
@@ -105,6 +141,20 @@ void AlgebraicSystem::assemble(
 	if((ncol > this->ndofs) || (ncol > nLocalDOFs)) {
 		throw std::range_error("local column size exceeded mapping size");
 	}
+	/*it will be cheaper to allocate the full possible size for the
+	* global indice vector than to compute exact size */
+	PetscInt *idxm = new PetscInt[nrows];
+	PetscInt *idxn = new PetscInt[ncol];
+
+	/*determine size of the assembly matrix and any force vector contributions*/
+
+	std::size_t idxm_size = 0;
+	std::size_t idxn_size = 0;
+
+	/*allocate a two dimensional storage for stiffness matrix 
+	* using PetscInts which by the default options chosen elsewhere
+	* should be row-oriented*/
+	PetscInt *values = new PetscInt[idxm_size * idxn_size] ;
 
 	// for(std::size_t ii = 0; ii < nrows; ++ii){
 	// 	for(std::size_t jj = 0; jj < ncol; ++jj){
@@ -114,6 +164,10 @@ void AlgebraicSystem::assemble(
 	// 		this->K(kk,ll) += ke(ii,jj);
 	// 	}
 	// }
+
+	delete[] idxm;
+	delete[] idxn;
+	delete[] values;
 }
 
 void AlgebraicSystem::assemble(

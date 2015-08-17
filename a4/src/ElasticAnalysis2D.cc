@@ -72,16 +72,27 @@ uint32_t ElasticAnalysis2D::setup()
 	/*find all of the boundary conditions fixed,
 	* chech all edges classified on model edge and
 	* all vertices classified on model vertex*/
+	bool _arb_flag = true;
+
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
-
+		if(_arb_flag){ 
+			this->makeConstraint(e);
+			_arb_flag = false;
+		}
 	}
+	/*randomly fix only the last edge*/
+
+	std::cout << "here" << std::endl;
+
+
 	this->m->end(it);
 	it = this->m->begin(0);
 	while((e = this->m->iterate(it))) {
 
 	}
 	this->m->end(it);
+
 	/*now that all fixed dofs have been accounted for,
 	* allow assembly of force and stiffness contributors*/
 	this->linsys->beginAssembly();
@@ -96,7 +107,7 @@ uint32_t ElasticAnalysis2D::setup()
 	/*then pick up the edges*/
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
-		//this->makeForceContributor(e);
+		this->makeForceContributor(e);
 	}
 	this->m->end(it);
 
@@ -107,6 +118,11 @@ uint32_t ElasticAnalysis2D::setup()
 
 uint32_t ElasticAnalysis2D::solve()
 {
+	std::fstream myfile;
+	myfile.open("K.txt");
+	myfile << this->linsys->K;
+	myfile.close();
+
 	double t0 = PCU_Time();
 	this->linsys->solve();
 	double t1 = PCU_Time();
@@ -148,14 +164,14 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		stiff.process(me);
 		apf::destroyMeshElement(me);
 		/*view the intermediate matrix*/
-		uint32_t ndofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
-		apf::NewArray< int > node_mapping(ndofs);
+		uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
+		apf::NewArray< int > node_mapping(n_l_dofs);
 		apf::getElementNumbers(nodeNums, e, node_mapping);
 		// std::cout  << "length of numbering: " << length << std::endl;
 		// for(uint32_t ii = 0; ii < nnodes; ++ii){
 		// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
 		// }
-		this->linsys->assemble(stiff.ke, node_mapping, ndofs);
+		this->linsys->assemble(stiff.ke, node_mapping, n_l_dofs);
 
 	} else {
 		/*only accepts faces, so indicate improper input*/
@@ -168,11 +184,8 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 {
 	int entity_type = this->m->getType(e);
-	std::cout << "=====force contributor " << entity_type << " =======" << std::endl;
-
 	apf::Vector3(*fnc_ptr)(apf::Vector3 const& p);
 	fnc_ptr = &dummy;
-
 	ForceContributor2D force(this->field, this->integration_order, fnc_ptr);
 
 	apf::MeshElement* me = apf::createMeshElement(this->m, e);
@@ -180,25 +193,35 @@ uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 	apf::destroyMeshElement(me);
 
 	/*view the intermediate matrix*/
-	uint32_t ndofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
-	apf::NewArray< int > node_mapping(ndofs);
+	uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
+	apf::NewArray< int > node_mapping(n_l_dofs);
 	apf::getElementNumbers(nodeNums, e, node_mapping);
 
-	for(std::size_t ii = 0; ii < force.fe.size(); ++ii){
-		std::cout << "Node " << node_mapping[ii] << ": " << force.fe[ii] << std::endl;
-	}
-	std::cout << "========================" << std::endl;
-	// std::cout  << "length of numbering: " << length << std::endl;
-	// for(uint32_t ii = 0; ii < nnodes; ++ii){
-	// 	
-	// }
-	this->linsys->assemble(force.fe, node_mapping, ndofs);
+	this->linsys->assemble(force.fe, node_mapping, n_l_dofs);
 
 	return 0;
 }
 
 uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e)
 {
+	int entity_type = this->m->getType(e);
+	uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
+	apf::NewArray< int > node_mapping(n_l_dofs);
+	apf::getElementNumbers(nodeNums, e, node_mapping);
+
+	std::vector< uint32_t > fixed_mapping(0);
+	std::vector< double > displacement(0);
+
+
+	/*right now all fixed nodes will have zero displacement in the x*/
+	for(uint32_t ii = 0; ii < n_l_dofs; ++ii) {
+		if(node_mapping[ii] % 2 == 0) {
+			fixed_mapping.push_back(node_mapping[ii]);
+			displacement.push_back(0.0);
+		}
+	}
+	this->linsys->addBoundaryConstraint(displacement, fixed_mapping);
+
 	return 0;
 }
 

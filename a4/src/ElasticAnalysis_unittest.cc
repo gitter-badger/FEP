@@ -50,6 +50,10 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	struct ElasticAnalysisInput input = {mesh, integration_order, E, Nu, reorder_flag};
 	ElasticAnalysis2D tmp(input);
 
+	uint64_t b = ((uint64_t)1)<<33;
+	PetscInt a = (PetscInt)b;
+	printf("%lu : %d\n",b, a);
+
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
