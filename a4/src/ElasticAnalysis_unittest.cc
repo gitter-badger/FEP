@@ -40,14 +40,22 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	uint32_t polynomial_order = 2;
+	apf::changeMeshShape(mesh, apf::getLagrange(polynomial_order));
 	/*physical parameters*/
 	double E, Nu;
 	E = 1e8;
 	Nu = 0.35;
 	uint32_t integration_order = 4;
 	bool reorder_flag = true;
-	struct ElasticAnalysisInput input = {mesh, integration_order, E, Nu, reorder_flag};
+	struct ElasticAnalysisInput input = {
+			mesh,
+			integration_order,
+			polynomial_order,
+			E,
+			Nu,
+			reorder_flag};
+			
 	ElasticAnalysis2D tmp(input);
 
 	uint64_t b = ((uint64_t)1)<<33;

@@ -12,6 +12,7 @@
 struct ElasticAnalysisInput {
 	apf::Mesh* m;
 	uint32_t integration_order;
+	uint32_t poly_order;
 	double E;
 	double Nu;
 	bool reorder;

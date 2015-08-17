@@ -37,10 +37,11 @@ apf::Matrix< 3,3 > buildD(double E, double Nu) {
 	return D;
 }
 
-ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
+ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
+	integration_order(in.integration_order),
+	polynomial_order(in.poly_order),
+	m(in.m)
 {
-	this->integration_order = in.integration_order;
-	this->m = in.m;
 	/*we create a 3 dimensional field but only will use 2 dimensions of that, (x & y)*/
 	this->field = createField(this->m, "Field_1", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);

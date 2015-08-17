@@ -4,7 +4,8 @@
 
 #include "AlgebraicSystem.h"
 
-AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs) : ndofs(global_n_dofs)
+AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs)
+	: ndofs(global_n_dofs)
 {
 	this->_allow_assembly = false;
 	/*preallocate the map since its keys will run from [0, ndofs-1]*/
@@ -17,7 +18,8 @@ AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs) : ndofs(global_n_dof
 		* 500 million rows in a matrix before on super computers, it is
 		* reasonable to assume that we will never be in danger of overflow
 		* for this value for the next 20 years*/
-		this->masks.insert(std::map< size_t, uint64_t >::value_type(ii, UNMAPPED_VALUE));
+		this->masks.insert(
+			std::map< size_t, uint64_t >::value_type(ii, UNMAPPED_VALUE));
 	}
 	/*make sure there are zero elements in the known_d vector, following
 	* code depends on it starting out as zero*/
@@ -42,14 +44,16 @@ void AlgebraicSystem::addBoundaryConstraint(
 {
 	/*do not add a constraint after assembly has begun*/
 	if(this->_allow_assembly == true) {
-		throw std::invalid_argument("cannot add constraint after assembly has started");
+		throw std::invalid_argument(
+			"cannot add constraint after assembly has started");
 	}
 	std::size_t input_size = fixed.size();
 	/*check that there are at least as many mappings as there are elements
 	* in fixed that will be mapped. Otherwise we will walk off end of 
 	* buffer*/
 	if(input_size > node_mapping.size()) {
-		throw std::range_error("local force vector rows size exceeded mapping size");
+		throw std::range_error(
+			"local force vector rows size exceeded mapping size");
 	}
 
 	/*look up current index number of ndogs, we will start
@@ -143,18 +147,40 @@ void AlgebraicSystem::assemble(
 	}
 	/*it will be cheaper to allocate the full possible size for the
 	* global indice vector than to compute exact size */
-	PetscInt *idxm = new PetscInt[nrows];
-	PetscInt *idxn = new PetscInt[ncol];
+	PetscInt *idxM = new PetscInt[nrows];
+	PetscInt *idxN = new PetscInt[ncol];
 
-	/*determine size of the assembly matrix and any force vector contributions*/
+	/*determine size of the assembly matrix & any force vector contributions*/
+	std::size_t idxM_size = 0;
 
-	std::size_t idxm_size = 0;
-	std::size_t idxn_size = 0;
+	for(std::size_t ii = 0; ii < nrows; ++ii){
+		/*get the reduced global index using the map*/
+		int tmp_global_index = node_mapping[ii];
+		if(tmp_global_index < 0){
+			throw std::logic_error(
+				"cannot have negative indices for global dofs");
+		}
+		/*convert to unsigned type using promotion*/
+		std::size_t tmp_key = tmp_global_index;
+		uint64_t tmp_val = this->masks[tmp_key];
+		/*test if dof is fixed or not*/
+		if(!(tmp_val & KNOWN_DOF_MASK)){
+			/*extract the 32 bit number*/
+			idxM[idxM_size] = (PetscInt) (tmp_val & SAMPLE_LOW_32_BITS);
+			std::cout << "ii: " << ii << " maps to: " << idxM[idxM_size] << std::endl;
+			++idxM_size;
+		} else {
+			std::cout << "dof already mapped" << std::endl;
+		}
+	}
+
+
+	std::size_t idxN_size = 0;
 
 	/*allocate a two dimensional storage for stiffness matrix 
 	* using PetscInts which by the default options chosen elsewhere
 	* should be row-oriented*/
-	PetscInt *values = new PetscInt[idxm_size * idxn_size] ;
+	PetscScalar *values = new PetscScalar[idxM_size * idxN_size] ;
 
 	// for(std::size_t ii = 0; ii < nrows; ++ii){
 	// 	for(std::size_t jj = 0; jj < ncol; ++jj){
@@ -165,8 +191,8 @@ void AlgebraicSystem::assemble(
 	// 	}
 	// }
 
-	delete[] idxm;
-	delete[] idxn;
+	delete[] idxM;
+	delete[] idxN;
 	delete[] values;
 }
 
