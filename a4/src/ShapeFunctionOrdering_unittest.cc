@@ -57,10 +57,10 @@ TEST_F(ShapeFunctionOrder, Quadrilaterals) {
 		apf::NewArray< int > node_mapping(nnodes*2);
 		apf::getElementNumbers(nodeNums, e, node_mapping);
 		// std::cout  << "length of numbering: " << length << std::endl;
-		for(uint32_t ii = 0; ii < nnodes*2; ++ii){
-			std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
-		}
-		std::cout << "Mesh element processed" << std::endl;
+		// for(uint32_t ii = 0; ii < nnodes*2; ++ii){
+		// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
+		// }
+		// std::cout << "Mesh element processed" << std::endl;
 	}
 	mesh->end(it);
 }
