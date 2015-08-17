@@ -60,6 +60,8 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 
 ElasticAnalysis2D::~ElasticAnalysis2D()
 {
+	apf::destroyNumbering(this->nodeNums);
+	apf::destroyNumbering(this->faceNums);
 	delete this->linsys;
 }
 
