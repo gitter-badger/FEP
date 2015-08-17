@@ -5,12 +5,37 @@
 
 #include <fstream>
 
+#include <PCU.h>
+
 #define NUM_COMPONENTS 2
 
 apf::Vector3 dummy(apf::Vector3 const& p){
 	return apf::Vector3(10,0,0);
 }
 
+apf::Matrix< 3,3 > buildD(double E, double Nu) {
+	apf::Matrix< 3,3 > D;
+	/*find the Lame parameters for plane strain*/
+	double lambda, mu;
+	lambda = (Nu * E) / ((1.0 + Nu) * (1.0 - 2.0 * Nu));
+	mu = E / (2.0 + 2.0 * Nu);
+	/*modify for plane stress*/
+	const uint32_t PLANE_STRESS = 1;
+	if(PLANE_STRESS) {
+		lambda = (2.0 * lambda * mu) / ( lambda + 2.0 * mu);
+	}
+	/*initialize the D matrix for which ever case we are using*/
+	D[0][0] = lambda + 2 * mu;
+	D[0][1] = lambda;
+	D[0][2] = 0.0;
+	D[1][0] = lambda;
+	D[1][1] = lambda + 2 * mu;
+	D[1][2] = 0.0;
+	D[2][0] = 0.0;
+	D[2][1] = 0.0;
+	D[2][2] = mu;
+	return D;
+}
 
 ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 {
@@ -19,32 +44,13 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in)
 	/*we create a 3 dimensional field but only will use 2 dimensions of that, (x & y)*/
 	this->field = createField(this->m, "Field_1", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
-	/*find the Lame parameters for plane strain*/
-	double lambda, mu;
-	lambda = (in.Nu * in.E) / ((1.0 + in.Nu) * (1.0 - 2.0 * in.Nu));
-	mu = in.E / (2.0 + 2.0 * in.Nu);
-	/*modify for plane stress*/
-	const uint32_t PLANE_STRESS = 1;
-	if(PLANE_STRESS) {
-		lambda = (2.0 * lambda * mu) / ( lambda + 2.0 * mu);
-	}
-	/*initialize the D matrix for which ever case we are using*/
-	this->D[0][0] = lambda + 2 * mu;
-	this->D[0][1] = lambda;
-	this->D[0][2] = 0.0;
-	this->D[1][0] = lambda;
-	this->D[1][1] = lambda + 2 * mu;
-	this->D[1][2] = 0.0;
-	this->D[2][0] = 0.0;
-	this->D[2][1] = 0.0;
-	this->D[2][2] = mu;
+
+	this->D = buildD(in.E, in.Nu);
 	/*set up element numberings we will use for assembly*/
 	this->nodeNums = apf::createNumbering(this->m, "nodeNums", this->m->getShape(), NUM_COMPONENTS);
     this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
-		/*TEMPORARY: view the mesh*/
-		apf::writeVtkFiles("elasticQuad", this->m);
 	}
 	/*compute the global degrees of freedom for the mesh*/
 	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
@@ -78,10 +84,9 @@ uint32_t ElasticAnalysis2D::setup()
 
 uint32_t ElasticAnalysis2D::solve()
 {
-	std::ofstream out_file;
-	out_file.open("K.txt", std::ios::out);
-	out_file << this->linsys->K << std::endl;
-	out_file.close();
+	double t0 = PCU_Time();
+	double t1 = PCU_Time();
+
 	return 0;
 }
 

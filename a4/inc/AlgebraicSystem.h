@@ -4,7 +4,10 @@
 #include <vector>
 #include <map>
 #include <stdint.h>
+
 #include <apfDynamicMatrix.h>
+
+#include <petscksp.h>
 
 #include "BandedSymmetricMatrix.h"
 
@@ -23,9 +26,12 @@ public:
 		apf::NewArray<int> const& node_mapping,
 		uint32_t nLocalDOFs);
 
-	BandedSymmetricMatrix K;
-	std::vector< double > F;
 private:
+	Mat K;
+    Vec d;
+    Vec F;
+    KSP solver;
+
 	std::size_t ndofs;
 	/*we keep track of which degrees of freedom are
 	* fixed by boundary constraints first*/

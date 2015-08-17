@@ -111,11 +111,11 @@ $(ODIR)/SimpleRectMesh_unittest.o : $(SDIR)/SimpleRectMesh_unittest.cc \
 
 $(ODIR)/ElasticAnalysis2D.o : 	$(SDIR)/ElasticAnalysis2D.cc \
 								$(IDIR)/ElasticAnalysis2D.h
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/ElasticAnalysis_unittest.o : 	$(SDIR)/ElasticAnalysis_unittest.cc \
 										$(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/ShapeFunctionOrdering_unittest.o : 	$(SDIR)/ShapeFunctionOrdering_unittest.cc \
 										$(GTEST_HEADERS)
@@ -141,19 +141,10 @@ $(ODIR)/ForceContributor2D.o : 	$(SDIR)/ForceContributor2D.cc \
 								$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(ODIR)/BandedSymmetricMatrix.o : 	$(SDIR)/BandedSymmetricMatrix.cc \
-								$(IDIR)/BandedSymmetricMatrix.h \
-								$(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
-
-$(ODIR)/BandedSymmetricMatrix_unittest.o : 	$(SDIR)/BandedSymmetricMatrix_unittest.cc \
-								$(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
-
 $(ODIR)/AlgebraicSystem.o : $(SDIR)/AlgebraicSystem.cc \
 							$(IDIR)/AlgebraicSystem.h\
 							$(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
 #pumi library is no longer rebuilt every time
 $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
@@ -170,8 +161,6 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/IntegrationHelper.o \
 				$(ODIR)/StiffnessContributor2D.o \
 				$(ODIR)/ForceContributor2D.o \
-				$(ODIR)/BandedSymmetricMatrix.o \
-				$(ODIR)/BandedSymmetricMatrix_unittest.o \
 				$(ODIR)/AlgebraicSystem.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PETSC_LIB) $(PUMI_LIBS) $^ -lpetsc -lmds -lapf -lgmi -lpcu -lpthread  -o $@
@@ -189,3 +178,13 @@ $(ODIR)/vtkSAX2Handler.o : $(SDIR)/vtkSAX2Handler.cc
 $(BDIR)/test_xml_reader.out : $(ODIR)/test_xml_reader.o $(ODIR)/vtkSAX2Handler.o
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(XERCES_LIBS) $^\
 			-lpthread -lxerces-c -o $@
+
+#old class not used anymore
+$(ODIR)/BandedSymmetricMatrix.o : 	$(SDIR)/BandedSymmetricMatrix.cc \
+								$(IDIR)/BandedSymmetricMatrix.h \
+								$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
+$(ODIR)/BandedSymmetricMatrix_unittest.o : 	$(SDIR)/BandedSymmetricMatrix_unittest.cc \
+								$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@

@@ -51,7 +51,7 @@ TEST_F(RectMeshTest, Rectangle) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
 	apf::changeMeshShape(mesh, apf::getLagrange(1));
-	apf::writeVtkFiles("before_secondQuad", mesh);
+	//apf::writeVtkFiles("before_secondQuad", mesh);
 
 	apf::MeshEntity* e;
 	apf::MeshIterator* it;	
@@ -70,7 +70,7 @@ TEST_F(RectMeshTest, Rectangle) {
 
 	apf::Numbering* arb_nums = apf::createNumbering(mesh, "arb", mesh->getShape(), 2);
 
-	apf::writeVtkFiles("secondQuad", mesh);
+	//apf::writeVtkFiles("secondQuad", mesh);
 
 	int dim = mesh->getDimension();
 	int batman = 0;	
@@ -156,7 +156,7 @@ TEST_F(RectMeshTest, Rectangle) {
 
 TEST_F(RectMeshTest, Triangle) {
 	mesh_builder->build2DRectTriMesh(mesh, 2, 1, 0, 0, 2, 1);
-	apf::writeVtkFiles("outTri", mesh);
+	//apf::writeVtkFiles("outTri", mesh);
 	apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::writeVtkFiles("secondTri", mesh);
+	//apf::writeVtkFiles("secondTri", mesh);
 }

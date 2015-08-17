@@ -4,10 +4,7 @@
 
 AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs) : ndofs(global_n_dofs)
 {
-	this->K.setSize(global_n_dofs);
-	this->K.zero();
-	this->F.clear();
-	this->F.resize(global_n_dofs, 0.0);
+
 }
 
 AlgebraicSystem::~AlgebraicSystem()
@@ -40,14 +37,14 @@ void AlgebraicSystem::assemble(
 		throw std::range_error("local column size exceeded mapping size");
 	}
 
-	for(std::size_t ii = 0; ii < nrows; ++ii){
-		for(std::size_t jj = 0; jj < ncol; ++jj){
-			/*lookup where we put this in the global array*/
-			std::size_t kk = node_mapping[ii];
-			std::size_t ll = node_mapping[jj];
-			this->K(kk,ll) += ke(ii,jj);
-		}
-	}
+	// for(std::size_t ii = 0; ii < nrows; ++ii){
+	// 	for(std::size_t jj = 0; jj < ncol; ++jj){
+	// 		/*lookup where we put this in the global array*/
+	// 		std::size_t kk = node_mapping[ii];
+	// 		std::size_t ll = node_mapping[jj];
+	// 		this->K(kk,ll) += ke(ii,jj);
+	// 	}
+	// }
 }
 
 void AlgebraicSystem::assemble(
@@ -68,9 +65,9 @@ void AlgebraicSystem::assemble(
 	}
 
 
-	for(std::size_t ii = 0; ii < nrows; ++ii){
-		/*lookup where we put this in the global array*/
-		std::size_t kk = node_mapping[ii];
-		this->F[kk] += fe[ii];
-	}	
+//	for(std::size_t ii = 0; ii < nrows; ++ii){
+//		/*lookup where we put this in the global array*/
+//		std::size_t kk = node_mapping[ii];
+//		this->F[kk] += fe[ii];
+//	}	
 }
