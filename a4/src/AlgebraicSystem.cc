@@ -140,3 +140,31 @@ void AlgebraicSystem::assemble(
 //		this->F[kk] += fe[ii];
 //	}	
 }
+
+PetscErrorCode AlgebraicSystem::synchronize()
+{
+	PetscErrorCode ierr;
+	ierr = VecAssemblyBegin(this->F);
+  	CHKERRQ(ierr);
+  	ierr = VecAssemblyEnd(this->F);
+  	CHKERRQ(ierr);
+  	ierr = MatAssemblyBegin(this->K, MAT_FINAL_ASSEMBLY);
+  	CHKERRQ(ierr);
+  	ierr = MatAssemblyEnd(this->K, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
+  	return (PetscErrorCode)0;
+}
+
+PetscErrorCode AlgebraicSystem::solve()
+{
+	PetscErrorCode ierr;
+	/*we use same matrix as preconditioner*/
+	ierr = KSPSetOperators(this->solver, this->K, this->K);
+	CHKERRQ(ierr);
+  	ierr = KSPSetFromOptions(this->solver);
+  	CHKERRQ(ierr);
+  	ierr = KSPSolve(this->solver, this->F, this->d);
+  	CHKERRQ(ierr);
+  	/*zero is no error*/
+  	return (PetscErrorCode)0;
+}

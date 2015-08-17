@@ -35,8 +35,14 @@ public:
 		apf::NewArray<int> const& node_mapping,
 		uint32_t size);
 
+	PetscErrorCode synchronize();
+	PetscErrorCode solve();
+
 private:
 	bool _allow_assembly;
+	/*the key is the index in the global numbering of dofs,
+	( most significant bit of the value is 1 if the global dof
+	* is fixed, with the lower  */
 	std::map< std::size_t,uint64_t > masks;
 	std::vector< double > known_d;
 

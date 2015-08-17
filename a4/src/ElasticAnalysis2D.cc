@@ -69,7 +69,24 @@ uint32_t ElasticAnalysis2D::setup()
 {
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
-	/*iterate over the faces first*/
+	/*find all of the boundary conditions fixed,
+	* chech all edges classified on model edge and
+	* all vertices classified on model vertex*/
+	it = this->m->begin(1);
+	while((e = this->m->iterate(it))) {
+
+	}
+	this->m->end(it);
+	it = this->m->begin(0);
+	while((e = this->m->iterate(it))) {
+
+	}
+	this->m->end(it);
+	/*now that all fixed dofs have been accounted for,
+	* allow assembly of force and stiffness contributors*/
+	this->linsys->beginAssembly();
+
+	/*iterate over the faces*/
 	it = this->m->begin(2);
 	while((e = this->m->iterate(it))) {
 		this->makeStiffnessContributor(e);
@@ -81,14 +98,19 @@ uint32_t ElasticAnalysis2D::setup()
 	while((e = this->m->iterate(it))) {
 		//this->makeForceContributor(e);
 	}
+	this->m->end(it);
+
+	/*now synchronize the linear system in preparation for solving*/
+	this->linsys->synchronize();
 	return 0;
 }
 
 uint32_t ElasticAnalysis2D::solve()
 {
 	double t0 = PCU_Time();
+	this->linsys->solve();
 	double t1 = PCU_Time();
-
+	std::cout << "System solved in: " << t1- t0 << " seconds" <<std::endl;
 	return 0;
 }
 
