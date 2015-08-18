@@ -115,7 +115,6 @@ void AlgebraicSystem::beginAssembly() {
 	ierr = MatSetOption(this->K, MAT_SYMMETRIC, PETSC_TRUE);
 	/*this part will ignore any insertions in the lower triangular, solving
 	* all of my problems and making the assembly code 10x less complex */
-	std::cout << "ignore lower triangular value: " << MAT_IGNORE_LOWER_TRIANGULAR << std::endl;
 	ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
 	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
 	ierr = KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);

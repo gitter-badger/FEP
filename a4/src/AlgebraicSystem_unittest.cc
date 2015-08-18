@@ -79,7 +79,6 @@ TEST_F(AlgebraicSystemTest, AssembleInsertionTest) {
 }
 
 TEST_F(AlgebraicSystemTest, IgnoreLowerDiagonals) {
-	std::cout << ke_2 << std::endl;
 	/*use nGlobalDOFs, no boundary conditions for this one*/
 	std::size_t nGlobalDOFs = 12;
 	AlgebraicSystem linsys(nGlobalDOFs);
@@ -88,11 +87,43 @@ TEST_F(AlgebraicSystemTest, IgnoreLowerDiagonals) {
 	linsys.assemble(ke_2, mapping_2, ke_2_size);
 	linsys.synchronize();
 
-	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+	PetscInt ncols;
+	const PetscInt *cols;
+	const PetscScalar *vals;
 
-	MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
-	VecView(linsys.F, PETSC_VIEWER_STDOUT_WORLD);
-
+	PetscInt row;
+	/*check that the rows above the diagonal are correct*/
+	for(std::size_t ii = 0; ii < ke_2_size; ++ii){
+		row = mapping_2[ii];
+		/*we only expect to see the upper triangular portion*/
+		MatGetRowUpperTriangular(linsys.K);
+		MatGetRow(linsys.K, row, &ncols, &cols, &vals);
+		/*cross check with the initial submatrix*/
+		for(std::size_t jj = 0; jj < ncols; ++jj) {
+			std::size_t kk = -1;
+			/*find the mapping for this column back to local
+			* this is done by looping over every mapping until we find it
+			* this is hacky but ok since the size is only 4*/
+			for(std::size_t ll = 0; ll < ke_2_size; ++ll) {
+				if(mapping_2[ll] == cols[jj]) {
+					kk = ll;
+					break; /*stop once we have found a mapping*/
+				}
+			}
+			if(kk != -1) {
+				EXPECT_TRUE(kk < ke_2_size);
+				EXPECT_TRUE(ii < ke_2_size);
+				/*only test when */
+				EXPECT_EQ(ke_2(ii, kk), vals[jj]);
+				
+			} else {
+				/*we should always find mapping*/
+				FAIL();
+			}
+		}
+		MatRestoreRow(linsys.K, row, &ncols, &cols, &vals);
+		MatRestoreRowUpperTriangular(linsys.K);
+	}
 }
 
 TEST_F(AlgebraicSystemTest, PreventPrematureAssembly) {
@@ -113,3 +144,8 @@ TEST_F(AlgebraicSystemTest, AllowCorrectAssembly) {
 	linsys.beginAssembly();
 	EXPECT_NO_THROW(linsys.assemble(ke_1, mapping_1, ke_1_size));
 }
+
+	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
+	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
+	// VecView(linsys.F, PETSC_VIEWER_STDOUT_WORLD);
