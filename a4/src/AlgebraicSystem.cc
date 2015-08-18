@@ -268,6 +268,7 @@ void AlgebraicSystem::assemble(
 	for(std::size_t ii = 0; ii < idxN_size; ++ii) {
 		std::cout << ii << " -> " << idxN[ii] << std::endl;
 	}
+	std::cout << "-------------|----------------" << std::endl;
 
 	/*now that all of the above has been computed*/
 	MatSetValues(this->K, idxM_size, idxM, idxN_size, idxN, values, ADD_VALUES);
