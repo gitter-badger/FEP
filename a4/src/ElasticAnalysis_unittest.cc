@@ -63,3 +63,55 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
 }
+
+TEST_F(ElasticAnalysisTest, PlaneStrainComputation) {
+	double E = 8e8;
+	/*impossible for Nu to go over 0.5*/
+	double Nu = 0.35;
+
+	/*manually compute D using different method*/
+	double mult_factor = E /((1+Nu)*(1- 2* Nu));
+
+	double elm1 = mult_factor * (1 - Nu);
+	double elm2 = mult_factor * (Nu);
+	double elm3 = mult_factor * (1 - 2 *Nu) / 2;
+
+	bool use_plane_stress = false;
+	apf::Matrix< 3,3 > result_D = buildD(E, Nu, use_plane_stress);
+
+	EXPECT_FLOAT_EQ(elm1, result_D[0][0]);
+	EXPECT_FLOAT_EQ(elm2, result_D[0][1]);
+	EXPECT_FLOAT_EQ(0.0, result_D[0][2]);
+	EXPECT_FLOAT_EQ(elm2, result_D[1][0]);
+	EXPECT_FLOAT_EQ(elm1, result_D[1][1]);
+	EXPECT_FLOAT_EQ(0.0, result_D[1][2]);
+	EXPECT_FLOAT_EQ(0.0, result_D[2][0]);
+	EXPECT_FLOAT_EQ(0.0, result_D[2][1]);
+	EXPECT_FLOAT_EQ(elm3, result_D[2][2]);
+}
+
+TEST_F(ElasticAnalysisTest, PlaneStressComputation) {
+	double E = 8e8;
+	/*impossible for Nu to go over 0.5*/
+	double Nu = 0.35;
+
+	/*manually compute D using different method*/
+	double mult_factor = E /(1- Nu * Nu);
+
+	double elm1 = mult_factor ;
+	double elm2 = mult_factor * (Nu);
+	double elm3 = mult_factor * (1 - Nu) / 2;
+
+	bool use_plane_stress = true;
+	apf::Matrix< 3,3 > result_D = buildD(E, Nu, use_plane_stress);
+
+	EXPECT_FLOAT_EQ(elm1, result_D[0][0]);
+	EXPECT_FLOAT_EQ(elm2, result_D[0][1]);
+	EXPECT_FLOAT_EQ(0.0, result_D[0][2]);
+	EXPECT_FLOAT_EQ(elm2, result_D[1][0]);
+	EXPECT_FLOAT_EQ(elm1, result_D[1][1]);
+	EXPECT_FLOAT_EQ(0.0, result_D[1][2]);
+	EXPECT_FLOAT_EQ(0.0, result_D[2][0]);
+	EXPECT_FLOAT_EQ(0.0, result_D[2][1]);
+	EXPECT_FLOAT_EQ(elm3, result_D[2][2]);
+}
