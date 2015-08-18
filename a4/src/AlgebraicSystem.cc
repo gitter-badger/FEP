@@ -6,12 +6,12 @@
 
 #include "AlgebraicSystem.h"
 
-AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs)
-	: ndofs(global_n_dofs)
+AlgebraicSystem::AlgebraicSystem(std::size_t ngd)
+	: nGlobalDOFs(ngd)
 {
 	this->_allow_assembly = false;
-	/*preallocate the map since its keys will run from [0, ndofs-1]*/
-	for(std::size_t ii = 0; ii < this->ndofs; ++ii) {
+	/*preallocate the map since its keys will run from [0, nGlobalDOFs-1]*/
+	for(std::size_t ii = 0; ii < this->nGlobalDOFs; ++ii) {
 		/* -1 is valid intializer for unsigned types since this puts us at
 		* UINT_MAX for what ever type we are using. Using this value as 
 		* sentinal value for unitialized is valid, since this number
@@ -82,13 +82,12 @@ void AlgebraicSystem::beginAssembly() {
 
 	/*now compute the remaining degrees of freedom*/
 	std::size_t ndogs = this->known_d.size();
-	std::size_t n_eq = this->ndofs - ndogs;
-	std::cout << "ndogs: " << ndogs << " n_eq: " << n_eq << std::endl;
+	std::size_t n_eq = this->nGlobalDOFs - ndogs;
 	/*go throught the map and map the free degrees of freedom
 	* to indicies that will be used with Petsc matricies and vectors
 	* to solve the remaining degrees of freedom*/
 	uint64_t n_eq_counter = 0;
-	for(std::size_t ii = 0; ii < this->ndofs; ++ii) {
+	for(std::size_t ii = 0; ii < this->nGlobalDOFs; ++ii) {
 		if(this->masks[ii] == UNMAPPED_VALUE) {
 			/*clear the most significant bit to indicate that this is
 			* a free dof */
@@ -96,10 +95,8 @@ void AlgebraicSystem::beginAssembly() {
 			++n_eq_counter;
 		} else {
 			/*this dof was already labled*/
-			std::cout << "already fixed dof: " << ii << std::endl;
 		}
 	}
-	std::cout << n_eq_counter << ": " << n_eq <<std::endl;
 	/*we should have seen exactly n_eq free dofs*/
 	assert(n_eq == n_eq_counter);
 
@@ -117,7 +114,7 @@ void AlgebraicSystem::beginAssembly() {
 	ierr = MatSetOption(this->K, MAT_SYMMETRIC, PETSC_TRUE);
 	/*this part will ignore any insertions in the lower triangular, solving
 	* all of my problems and making the assembly code 10x less complex */
-	ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
+	//ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
 	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
 	ierr = KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);
 	ierr = VecDuplicate(this->F, &(this->d));
@@ -138,17 +135,17 @@ void AlgebraicSystem::assemble(
 	std::size_t nrows = ke.getRows();
 	std::size_t ncol = ke.getColumns();
 	/*sanity checks that we actually have a mapglobal_n_dofsping*/
-	if(nLocalDOFs > this->ndofs) {
+	if(nLocalDOFs > this->nGlobalDOFs) {
 		throw std::range_error("local mapping size exceeded global size");
 	}
 	/*this will accept a non square matrix as long as its mappings fit*/
 	/*check that every row will have a mapping*/
-	if((nrows > this->ndofs) || (nrows > nLocalDOFs)) {
+	if((nrows > this->nGlobalDOFs) || (nrows > nLocalDOFs)) {
 		throw std::range_error("local rows size exceeded mapping size");
 	}
 	/*check that every column will have mapping and will fit into the
 	* global matrix*/
-	if((ncol > this->ndofs) || (ncol > nLocalDOFs)) {
+	if((ncol > this->nGlobalDOFs) || (ncol > nLocalDOFs)) {
 		throw std::range_error("local column size exceeded mapping size");
 	}
 	/*it will be cheaper to allocate the full possible size for the
@@ -264,16 +261,6 @@ void AlgebraicSystem::assemble(
 			y[jj] = tmp;
 		}
 	}
-	/*print out the columns mapped, and the rows mapped*/
-	for(std::size_t ii = 0; ii < idxM_size; ++ii) {
-		std::cout << ii << " -> " << idxM[ii] << std::endl;
-	}
-	std::cout << "======================" << std::endl;
-	for(std::size_t ii = 0; ii < idxN_size; ++ii) {
-		std::cout << ii << " -> " << idxN[ii] << std::endl;
-	}
-	std::cout << "-------------|----------------" << std::endl;
-
 	/*now that all of the above has been computed*/
 	MatSetValues(this->K, idxM_size, idxM, idxN_size, idxN, values, ADD_VALUES);
 	VecSetValues(this->F, ni, ix, y, ADD_VALUES);
@@ -294,11 +281,11 @@ void AlgebraicSystem::assemble(
 	* into the global force vector according to the mapping in */
 	std::size_t nrows = fe.size();
 	/*sanity checks that we actually have a mapglobal_n_dofsping*/
-	if(nLocalDOFs > this->ndofs) {
+	if(nLocalDOFs > this->nGlobalDOFs) {
 		throw std::range_error("local mapping size exceeded global size");
 	}
 	/*check that every row will have a mapping*/
-	if((nrows > this->ndofs) || (nrows > nLocalDOFs)) {
+	if((nrows > this->nGlobalDOFs) || (nrows > nLocalDOFs)) {
 		throw std::range_error("local rows size exceeded mapping size");
 	}
 

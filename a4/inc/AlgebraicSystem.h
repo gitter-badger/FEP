@@ -18,7 +18,7 @@
 class AlgebraicSystem
 {
 public:
-	AlgebraicSystem(std::size_t global_n_dofs);
+	AlgebraicSystem(std::size_t nGlobalDOFs);
 	~AlgebraicSystem();
 
 	void addBoundaryConstraint(
@@ -40,6 +40,7 @@ public:
 	PetscErrorCode solve();
 	
 	Mat K;
+	Vec F;
 
 private:
 	bool _allow_assembly;
@@ -52,10 +53,10 @@ private:
 	std::vector< double > known_d;
 
     Vec d;
-    Vec F;
+
     KSP solver;
 
-	std::size_t ndofs;
+	std::size_t nGlobalDOFs;
 };
 
 #endif

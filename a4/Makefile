@@ -114,6 +114,7 @@ $(ODIR)/ElasticAnalysis2D.o : 	$(SDIR)/ElasticAnalysis2D.cc \
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/ElasticAnalysis_unittest.o : 	$(SDIR)/ElasticAnalysis_unittest.cc \
+										$(IDIR)/ElasticAnalysis2D.h \
 										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
@@ -142,8 +143,13 @@ $(ODIR)/ForceContributor2D.o : 	$(SDIR)/ForceContributor2D.cc \
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/AlgebraicSystem.o : $(SDIR)/AlgebraicSystem.cc \
-							$(IDIR)/AlgebraicSystem.h\
+							$(IDIR)/AlgebraicSystem.h \
 							$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
+
+$(ODIR)/AlgebraicSystem_unittest.o : 	$(SDIR)/AlgebraicSystem_unittest.cc \
+										$(IDIR)/AlgebraicSystem.h \
+										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
 #pumi library is no longer rebuilt every time
@@ -162,6 +168,7 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/StiffnessContributor2D.o \
 				$(ODIR)/ForceContributor2D.o \
 				$(ODIR)/AlgebraicSystem.o \
+				$(ODIR)/AlgebraicSystem_unittest.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PETSC_LIB) $(PUMI_LIBS) $^ -lpetsc -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 

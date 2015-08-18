@@ -13,15 +13,14 @@ apf::Vector3 dummy(apf::Vector3 const& p){
 	return apf::Vector3(10,0,0);
 }
 
-apf::Matrix< 3,3 > buildD(double E, double Nu) {
+apf::Matrix< 3,3 > buildD(double E, double Nu, bool use_plane_stress) {
 	apf::Matrix< 3,3 > D;
 	/*find the Lame parameters for plane strain*/
 	double lambda, mu;
 	lambda = (Nu * E) / ((1.0 + Nu) * (1.0 - 2.0 * Nu));
 	mu = E / (2.0 + 2.0 * Nu);
 	/*modify for plane stress*/
-	const uint32_t PLANE_STRESS = 1;
-	if(PLANE_STRESS) {
+	if(use_plane_stress) {
 		lambda = (2.0 * lambda * mu) / ( lambda + 2.0 * mu);
 	}
 	/*initialize the D matrix for which ever case we are using*/
@@ -46,7 +45,9 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 	this->field = createField(this->m, "Field_1", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
 
-	this->D = buildD(in.E, in.Nu);
+	bool use_plane_stress = true;
+	this->D = buildD(in.E, in.Nu, use_plane_stress);
+	
 	/*set up element numberings we will use for assembly*/
 	this->nodeNums = apf::createNumbering(this->m, "nodeNums", this->m->getShape(), NUM_COMPONENTS);
     this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);

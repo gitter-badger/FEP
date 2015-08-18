@@ -43,4 +43,7 @@ private:
 
 };
 
+/*expose this internal method for testing purposes*/
+apf::Matrix< 3,3 > buildD(double E, double Nu, bool use_plane_stress);
+
 #endif
