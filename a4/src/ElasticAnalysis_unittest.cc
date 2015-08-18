@@ -40,9 +40,10 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	uint32_t polynomial_order = 2;
+	uint32_t polynomial_order = 1;
 	apf::changeMeshShape(mesh, apf::getLagrange(polynomial_order));
 	/*physical parameters*/
+
 	double E, Nu;
 	E = 1e8;
 	Nu = 0.35;

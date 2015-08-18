@@ -114,6 +114,10 @@ void AlgebraicSystem::beginAssembly() {
 	ierr = MatCreateAIJ(PETSC_COMM_WORLD, n_eq, n_eq, n_eq, n_eq,
 		300, PETSC_NULL, 300, PETSC_NULL, &(this->K));
 	ierr = MatSetOption(this->K, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	ierr = MatSetOption(this->K, MAT_SYMMETRIC, PETSC_TRUE);
+	/*this part will ignore any insertions in the lower triangular, solving
+	* all of my problems and making the assembly code 10x less complex */
+	ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
 	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
 	ierr = KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);
 	ierr = VecDuplicate(this->F, &(this->d));
@@ -274,6 +278,8 @@ void AlgebraicSystem::assemble(
 	MatSetValues(this->K, idxM_size, idxM, idxN_size, idxN, values, ADD_VALUES);
 	VecSetValues(this->F, ni, ix, y, ADD_VALUES);
 
+	delete[] y;
+	delete[] ix;
 	delete[] idxM;
 	delete[] idxN;
 	delete[] values;
@@ -323,6 +329,8 @@ PetscErrorCode AlgebraicSystem::solve()
 	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
 	MatView(this->K, PETSC_VIEWER_STDOUT_WORLD);
+	VecView(this->F, PETSC_VIEWER_STDOUT_WORLD);
+
 
 	PetscErrorCode ierr;
 	/*we use same matrix as preconditioner*/

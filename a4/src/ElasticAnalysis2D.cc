@@ -52,6 +52,7 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
     this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
+		apf::writeVtkFiles("test_els_quad", this->m);
 	}
 	/*compute the global degrees of freedom for the mesh*/
 	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
@@ -172,6 +173,8 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		// for(uint32_t ii = 0; ii < nnodes; ++ii){
 		// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
 		// }
+		std::cout << stiff.ke << std::endl;
+
 		this->linsys->assemble(stiff.ke, node_mapping, n_l_dofs);
 
 	} else {
