@@ -108,13 +108,15 @@ void AlgebraicSystem::beginAssembly() {
 	PetscErrorCode ierr;
 	ierr = VecCreateMPI(PETSC_COMM_WORLD, n_eq, n_eq, &(this->F));
 	ierr = VecSetOption(this->F, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-	ierr = MatCreateAIJ(PETSC_COMM_WORLD, n_eq, n_eq, n_eq, n_eq,
+
+	ierr = MatCreateSBAIJ(PETSC_COMM_WORLD, 1, n_eq, n_eq, n_eq, n_eq,
 		300, PETSC_NULL, 300, PETSC_NULL, &(this->K));
 	ierr = MatSetOption(this->K, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
 	ierr = MatSetOption(this->K, MAT_SYMMETRIC, PETSC_TRUE);
 	/*this part will ignore any insertions in the lower triangular, solving
 	* all of my problems and making the assembly code 10x less complex */
-	//ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
+	std::cout << "ignore lower triangular value: " << MAT_IGNORE_LOWER_TRIANGULAR << std::endl;
+	ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
 	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
 	ierr = KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);
 	ierr = VecDuplicate(this->F, &(this->d));
