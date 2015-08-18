@@ -78,7 +78,7 @@ uint32_t ElasticAnalysis2D::setup()
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
 		if(_arb_flag){ 
-			this->makeConstraint(e);
+			//this->makeConstraint(e);
 			_arb_flag = false;
 		}
 	}

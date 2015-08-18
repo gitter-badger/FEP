@@ -2,6 +2,8 @@
 #include <climits>
 #include <assert.h>
 
+#include <petscmat.h>
+
 #include "AlgebraicSystem.h"
 
 AlgebraicSystem::AlgebraicSystem(std::size_t global_n_dofs)
@@ -69,7 +71,7 @@ void AlgebraicSystem::addBoundaryConstraint(
 		this->masks[key] = cur_ndogs | (KNOWN_DOF_MASK);
 		printf("key %lx \n", this->masks[key]);
 		++cur_ndogs;
-		/*add the proscribed displacements to our known_displacement store*/
+		/*add the proscribed displacements to our known_d(isplacement) store*/
 		this->known_d.push_back(fixed[ii]);
 	}
 
@@ -149,9 +151,20 @@ void AlgebraicSystem::assemble(
 	* global indice vector than to compute exact size */
 	PetscInt *idxM = new PetscInt[nrows];
 	PetscInt *idxN = new PetscInt[ncol];
+	PetscInt *ix = new PetscInt[nrows];
 
 	/*determine size of the assembly matrix & any force vector contributions*/
-	std::size_t idxM_size = 0;
+	
+	/*cache the local indicies we will need*/
+	std::vector< std::size_t > keep_rows, keep_cols, add_to_f_col;
+	keep_rows.clear();
+	keep_cols.clear();
+	add_to_f_col.clear();
+	std::vector< double > local_displacements;
+	local_displacements.clear();
+
+	/*find the indices of the element stiffness we will keep*/
+	PetscInt idxM_size = 0;
 
 	for(std::size_t ii = 0; ii < nrows; ++ii){
 		/*get the reduced global index using the map*/
@@ -167,29 +180,98 @@ void AlgebraicSystem::assemble(
 		if(!(tmp_val & KNOWN_DOF_MASK)){
 			/*extract the 32 bit number*/
 			idxM[idxM_size] = (PetscInt) (tmp_val & SAMPLE_LOW_32_BITS);
-			std::cout << "ii: " << ii << " maps to: " << idxM[idxM_size] << std::endl;
+			//std::cout << "ii: " << ii << " maps to: " << idxM[idxM_size] << std::endl;
 			++idxM_size;
+			keep_rows.push_back(ii);
 		} else {
-			std::cout << "dof already mapped" << std::endl;
+			//std::cout << "dof already mapped" << std::endl;
 		}
 	}
 
+	/*find the columns of the element stiffness matrix we will keep and 
+	* the columns that will contribute to the force vector*/
+	PetscInt idxN_size = 0;
+	PetscInt ni = 0;
+	for(std::size_t ii = 0; ii < ncol; ++ii) {
+		/*get the reduced global index using the map*/
+		int tmp_global_index = node_mapping[ii];
+		if(tmp_global_index < 0){
+			throw std::logic_error(
+				"cannot have negative indices for global dofs");
+		}
+		/*convert to unsigned type using promotion*/
+		std::size_t tmp_key = tmp_global_index;
+		uint64_t tmp_val = this->masks[tmp_key];
+		/*test if dof is fixed or not*/
+		if(!(tmp_val & KNOWN_DOF_MASK)){
+			/*high bit not set means it is a free degree*/
+			/*extract the 32 bit number*/
+			idxN[idxN_size] = (PetscInt) (tmp_val & SAMPLE_LOW_32_BITS);
+			//std::cout << "ii: " << ii << " maps to: " << idxM[idxM_size] << std::endl;
+			++idxN_size;
+			keep_cols.push_back(ii);
+		} else {
+			/*high bit IS set, so it is fixed*/
 
-	std::size_t idxN_size = 0;
+			ix[ni] = (PetscInt) (tmp_val & SAMPLE_LOW_32_BITS);
+			add_to_f_col.push_back(ii);
+			local_displacements.push_back(this->known_d[(tmp_val & SAMPLE_LOW_32_BITS)]);
+			
+			std::cout << "col contributes to force vector: " << ii << " mapping: " << node_mapping[ii] <<  std::endl;
+			
+			++ni;
+		}
+	}
+	assert(idxM_size == keep_rows.size());
+	assert(idxN_size == keep_cols.size());
+	assert(ni == local_displacements.size());
+	assert(ni == add_to_f_col.size());
 
 	/*allocate a two dimensional storage for stiffness matrix 
 	* using PetscInts which by the default options chosen elsewhere
 	* should be row-oriented*/
-	PetscScalar *values = new PetscScalar[idxM_size * idxN_size] ;
+	PetscScalar *values = new PetscScalar[idxM_size * idxN_size];
+	PetscScalar *y = new PetscScalar[idxM_size];
 
-	// for(std::size_t ii = 0; ii < nrows; ++ii){
-	// 	for(std::size_t jj = 0; jj < ncol; ++jj){
-	// 		/*lookup where we put this in the global array*/
-	// 		std::size_t kk = node_mapping[ii];
-	// 		std::size_t ll = node_mapping[jj];
-	// 		this->K(kk,ll) += ke(ii,jj);
-	// 	}
-	// }
+	/*loop over element stiffness matricies and copy contents into 
+	* the petsc approved formats*/
+
+	for(std::size_t ii = 0; ii < keep_rows.size(); ++ii){
+		/*skip all rows that are already determined*/
+		for(std::size_t jj = 0; jj < keep_cols.size(); ++jj){
+			/*get the indicies we want in the local stiffness matrix*/
+			uint64_t kk = keep_rows[ii];
+			uint64_t ll = keep_cols[jj];
+			/*load the petsc scalar values which are known to be not zero
+			* by virtue of check above from the double*/
+			PetscScalar tmp = ke(kk,ll);
+			std::size_t computed_index = ii * idxM_size + jj;
+			values[computed_index] = tmp;
+		}
+		/*move the stiffness contribution for the fixed dofs to the force
+		* vector side*/
+		for(std::size_t jj = 0; jj < add_to_f_col.size(); ++jj) {
+			uint64_t kk = keep_rows[ii];
+			uint64_t ll = add_to_f_col[jj];
+			/*load the petsc scalar values which are known to be not zero
+			* by virtue of check above from the double*/
+			PetscScalar tmp = ke(kk,ll);
+			tmp *= ( -1 * local_displacements[jj]);
+			y[jj] = tmp;
+		}
+	}
+	/*print out the columns mapped, and the rows mapped*/
+	for(std::size_t ii = 0; ii < idxM_size; ++ii) {
+		std::cout << ii << " -> " << idxM[ii] << std::endl;
+	}
+	std::cout << "======================" << std::endl;
+	for(std::size_t ii = 0; ii < idxN_size; ++ii) {
+		std::cout << ii << " -> " << idxN[ii] << std::endl;
+	}
+
+	/*now that all of the above has been computed*/
+	MatSetValues(this->K, idxM_size, idxM, idxN_size, idxN, values, ADD_VALUES);
+	VecSetValues(this->F, ni, ix, y, ADD_VALUES);
 
 	delete[] idxM;
 	delete[] idxN;
@@ -237,6 +319,8 @@ PetscErrorCode AlgebraicSystem::synchronize()
 
 PetscErrorCode AlgebraicSystem::solve()
 {
+	MatView(this->K, PETSC_VIEWER_STDOUT_WORLD);
+
 	PetscErrorCode ierr;
 	/*we use same matrix as preconditioner*/
 	ierr = KSPSetOperators(this->solver, this->K, this->K);
