@@ -110,9 +110,11 @@ TEST_F(RectMeshTest, Rectangle) {
 		integrate.process(mesh_elm);
 		apf::destroyMeshElement(mesh_elm);
 		/*only print out the elements after processing*/
-		std::cout << integrate.ke << std::endl;
+		
+		// std::cout << integrate.ke << std::endl;
+		//std::cout << "==============================" << std::endl;
 
-		std::cout << "==============================" << std::endl;
+
 		// apf::Element* field_elm = apf::createElement(master_f, mesh_elm);
 		// std::cout << "Ndofs " << apf::countNodes(field_elm) << std::endl;
 		// int num_components = master_f->countComponents();

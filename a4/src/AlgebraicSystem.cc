@@ -320,6 +320,8 @@ PetscErrorCode AlgebraicSystem::synchronize()
 
 PetscErrorCode AlgebraicSystem::solve()
 {
+	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
 	MatView(this->K, PETSC_VIEWER_STDOUT_WORLD);
 
 	PetscErrorCode ierr;
