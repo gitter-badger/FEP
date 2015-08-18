@@ -72,13 +72,74 @@ protected:
 };
 
 TEST_F(AlgebraicSystemTest, AssembleInsertionTest) {
+	/*in this test we check that insertions of stiffness matrix
+	* are additive, that is if we insert the same local stiffness 
+	* matrix into the global matrix that the contributions are
+	* additive. */
+
 	/*use nGlobalDOFs, no boundary conditions for this one*/
 	std::size_t nGlobalDOFs = 12;
 	AlgebraicSystem linsys(nGlobalDOFs);
 
+	linsys.beginAssembly();
+
+	uint32_t nReps = 4;
+	for(std::size_t ii = 0; ii < nReps; ++ii) {
+		linsys.assemble(ke_1, mapping_1, ke_1_size);
+	}
+	linsys.synchronize();
+
+	PetscInt ncols;
+	const PetscInt *cols;
+	const PetscScalar *vals;
+
+	PetscInt row;
+	/*check that the rows above the diagonal are correct*/
+	for(std::size_t ii = 0; ii < ke_1_size; ++ii){
+		row = mapping_1[ii];
+		/*we only expect to see the upper triangular portion*/
+		MatGetRowUpperTriangular(linsys.K);
+		MatGetRow(linsys.K, row, &ncols, &cols, &vals);
+		/*cross check with the initial submatrix*/
+		for(std::size_t jj = 0; jj < ncols; ++jj) {
+			std::size_t kk = -1;
+			/*find the mapping for this column back to local
+			* this is done by looping over every mapping until we find it
+			* this is hacky but ok since the size is only 4*/
+			for(std::size_t ll = 0; ll < ke_1_size; ++ll) {
+				if(mapping_1[ll] == cols[jj]) {
+					kk = ll;
+					break; /*stop once we have found a mapping*/
+				}
+			}
+			if(kk != -1) {
+				EXPECT_TRUE(kk < ke_1_size);
+				EXPECT_TRUE(ii < ke_1_size);
+				/*the expected value is nReps times the local matrix*/
+				EXPECT_FLOAT_EQ((ke_1(ii, kk) * nReps), vals[jj]);
+				
+			} else {
+				/*we should always find mapping*/
+				FAIL();
+			}
+		}
+		MatRestoreRow(linsys.K, row, &ncols, &cols, &vals);
+		MatRestoreRowUpperTriangular(linsys.K);
+	}
+
 }
 
 TEST_F(AlgebraicSystemTest, IgnoreLowerDiagonals) {
+	/*In this test we insert a local stiffness matrix
+	* that has components above and below the main diagonal
+	* of the global matrix, we ensure that these lower
+	* contributions are not added to the upper triangular
+	* portion of the global matrix by the underlying 
+	* implementation. Basically we are checking that the
+	* library provided matrix behaves the way we think
+	* we are using it. */
+
+
 	/*use nGlobalDOFs, no boundary conditions for this one*/
 	std::size_t nGlobalDOFs = 12;
 	AlgebraicSystem linsys(nGlobalDOFs);
@@ -114,7 +175,7 @@ TEST_F(AlgebraicSystemTest, IgnoreLowerDiagonals) {
 				EXPECT_TRUE(kk < ke_2_size);
 				EXPECT_TRUE(ii < ke_2_size);
 				/*only test when */
-				EXPECT_EQ(ke_2(ii, kk), vals[jj]);
+				EXPECT_FLOAT_EQ(ke_2(ii, kk), vals[jj]);
 				
 			} else {
 				/*we should always find mapping*/
