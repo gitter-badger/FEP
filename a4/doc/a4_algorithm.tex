@@ -1,0 +1,71 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{amssymb}
+\usepackage{adjustbox}
+\usepackage{placeins}
+\usepackage{geometry}
+\usepackage{epstopdf}
+\geometry{tmargin = 1in}
+
+% Alter some LaTeX defaults for better treatment of figures:
+    % See p.105 of "TeX Unbound" for suggested values.
+    % See pp. 199-200 of Lamport's "LaTeX" book for details.
+    %   General parameters, for ALL pages:
+    \renewcommand{\topfraction}{0.9}    % max fraction of floats at top
+    \renewcommand{\bottomfraction}{0.8} % max fraction of floats at bottom
+    %   Parameters for TEXT pages (not float pages):
+    \setcounter{topnumber}{2}
+    \setcounter{bottomnumber}{2}
+    \setcounter{totalnumber}{4}     % 2 may work better
+    \setcounter{dbltopnumber}{2}    % for 2-column pages
+    \renewcommand{\dbltopfraction}{0.9} % fit big float above 2-col. text
+    \renewcommand{\textfraction}{0.07}  % allow minimal text w. figs
+    %   Parameters for FLOAT pages (not text pages):
+    \renewcommand{\floatpagefraction}{0.7}  % require fuller float pages
+    % N.B.: floatpagefraction MUST be less than topfraction !!
+    \renewcommand{\dblfloatpagefraction}{0.7}   % require fuller float pages
+
+\usepackage{listings}
+\lstset{
+  language              = C++
+}
+
+\renewcommand{\algorithmicforall}{\textbf{for each}}
+
+\begin{document}
+\title{Assignment 4: Finite Elements Programming}
+%\date{}   
+\author{Isaiah Bell} 
+\maketitle
+  
+\section{Pseudo code}
+
+\begin{algorithm}
+\begin{algorithmic}
+
+\Procedure{MigrateRegions}{mesh}
+    
+\EndProcedure
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+% \begin{figure}
+%     \makebox[\textwidth][c]{\adjustbox{trim= {0.15\width} {0} {0.15\width} {0}, clip}{\includegraphics[width = \textwidth ]{part1_pre_migr}}};
+%     \caption{Partition 1 surface before region migration}
+% \centering
+
+
+\lstset{linewidth = 16cm, xrightmargin = 0cm}
+\lstlistoflistings
+\lstinputlisting[caption = {Test Driver}]{src/a4.cc}
+
+
+
+
+\end{document}

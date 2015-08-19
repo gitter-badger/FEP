@@ -47,7 +47,7 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 
 	bool use_plane_stress = true;
 	this->D = buildD(in.E, in.Nu, use_plane_stress);
-	
+
 	/*set up element numberings we will use for assembly*/
 	this->nodeNums = apf::createNumbering(this->m, "nodeNums", this->m->getShape(), NUM_COMPONENTS);
     this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);
@@ -80,14 +80,11 @@ uint32_t ElasticAnalysis2D::setup()
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
 		if(_arb_flag){ 
-			//this->makeConstraint(e);
+			// this->makeConstraint(e);
 			_arb_flag = false;
 		}
 	}
 	/*randomly fix only the last edge*/
-
-	std::cout << "here" << std::endl;
-
 
 	this->m->end(it);
 	it = this->m->begin(0);
@@ -174,8 +171,6 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		// for(uint32_t ii = 0; ii < nnodes; ++ii){
 		// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
 		// }
-		std::cout << stiff.ke << std::endl;
-
 		this->linsys->assemble(stiff.ke, node_mapping, n_l_dofs);
 
 	} else {

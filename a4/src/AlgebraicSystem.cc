@@ -314,12 +314,6 @@ PetscErrorCode AlgebraicSystem::synchronize()
 
 PetscErrorCode AlgebraicSystem::solve()
 {
-	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
-
-	MatView(this->K, PETSC_VIEWER_STDOUT_WORLD);
-	VecView(this->F, PETSC_VIEWER_STDOUT_WORLD);
-
-
 	PetscErrorCode ierr;
 	/*we use same matrix as preconditioner*/
 	ierr = KSPSetOperators(this->solver, this->K, this->K);

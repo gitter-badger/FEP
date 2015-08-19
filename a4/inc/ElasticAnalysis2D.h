@@ -8,9 +8,11 @@
 
 #include "FEAnalysis.h"
 #include "AlgebraicSystem.h"
+#include "GeometryMappings.h"
 
 struct ElasticAnalysisInput {
 	apf::Mesh* m;
+	GeometryMappings* geo_map;
 	uint32_t integration_order;
 	uint32_t poly_order;
 	double E;
