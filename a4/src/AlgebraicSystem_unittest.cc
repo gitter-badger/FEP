@@ -205,7 +205,6 @@ TEST_F(AlgebraicSystemTest, AllowCorrectAssembly) {
 	linsys.beginAssembly();
 	EXPECT_NO_THROW(linsys.assemble(ke_1, mapping_1, ke_1_size));
 }
-
 	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
 	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);

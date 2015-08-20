@@ -6,10 +6,18 @@
 
 #include "AlgebraicSystem.h"
 
+/*when we are bulk copying from petsc to regular std::vectors
+* this is the size of the buffer we copy from, this may be a
+* very small number, if so it is only for testing,
+* IN PRODCUTION change this number so buffer size is close 
+* to 1/4 size of cache*/
+#define COPY_CHUNK_SIZE 10
+
 AlgebraicSystem::AlgebraicSystem(std::size_t ngd)
 	: nGlobalDOFs(ngd)
 {
 	this->_allow_assembly = false;
+	this->_allow_displacement_extraction = false;
 	/*preallocate the map since its keys will run from [0, nGlobalDOFs-1]*/
 	for(std::size_t ii = 0; ii < this->nGlobalDOFs; ++ii) {
 		/* -1 is valid intializer for unsigned types since this puts us at
@@ -117,7 +125,7 @@ void AlgebraicSystem::beginAssembly() {
 	* all of my problems and making the assembly code 10x less complex */
 	ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
 	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
-	ierr = KSPSetTolerances(this->solver, 1.0e-8, 1.0e-8, PETSC_DEFAULT, 100);
+	ierr = KSPSetTolerances(this->solver, 1.0e-10, SOLVER_ABSOLUTE_TOLERANCE, PETSC_DEFAULT, 100);
 	ierr = VecDuplicate(this->F, &(this->d));
 }
 
@@ -127,7 +135,7 @@ void AlgebraicSystem::assemble(
 	uint32_t nLocalDOFs)
 {
 	/*CHECK if assembly is possible*/
-	if(this->_allow_assembly == false) {
+	if(false == this->_allow_assembly) {
 		throw std::invalid_argument("must call beginAssembly before assembly");
 	}
 
@@ -289,13 +297,39 @@ void AlgebraicSystem::assemble(
 	if((nrows > this->nGlobalDOFs) || (nrows > nLocalDOFs)) {
 		throw std::range_error("local rows size exceeded mapping size");
 	}
+	std::size_t f_size = fe.size();
 
+	PetscInt *ix = new PetscInt[f_size];
+	PetscScalar *y = new PetscScalar[f_size];
+	PetscInt ni = 0;
 
-//	for(std::size_t ii = 0; ii < nrows; ++ii){
-//		/*lookup where we put this in the global array*/
-//		std::size_t kk = node_mapping[ii];
-//		this->F[kk] += fe[ii];
-//	}	
+	for(std::size_t ii = 0; ii < f_size; ++ii) {
+		/*get the reduced global index using the map*/
+		int tmp_global_index = node_mapping[ii];
+		if(tmp_global_index < 0){
+			throw std::logic_error(
+				"cannot have negative indices for global dofs");
+		}
+		/*convert to unsigned type using promotion*/
+		std::size_t tmp_key = tmp_global_index;
+		uint64_t tmp_val = this->masks[tmp_key];
+		/*test if dof is fixed or not*/
+		if(!(tmp_val & KNOWN_DOF_MASK)){
+			/*high bit not set means it is a free degree*/
+			/*extract the 32 bit number*/
+			ix[ni] = static_cast<PetscInt>((tmp_val & SAMPLE_LOW_32_BITS));
+			PetscScalar tmp = fe[ii];
+			y[ii] = tmp;
+			++ni;
+		} else {
+			/*high bit IS set, so it is fixed, so the force contribution is
+			* silently dropped */
+		}
+	}
+	VecSetValues(this->F, ni, ix, y, ADD_VALUES);
+
+	delete[] ix;
+	delete[] y;
 }
 
 PetscErrorCode AlgebraicSystem::synchronize()
@@ -314,6 +348,9 @@ PetscErrorCode AlgebraicSystem::synchronize()
 
 PetscErrorCode AlgebraicSystem::solve()
 {
+	std::cout << "Solving system of: "
+		<< this->masks.size() - this->known_d.size() 
+		<< " dofs" << std::endl;
 	PetscErrorCode ierr;
 	/*we use same matrix as preconditioner*/
 	ierr = KSPSetOperators(this->solver, this->K, this->K);
@@ -323,5 +360,87 @@ PetscErrorCode AlgebraicSystem::solve()
   	ierr = KSPSolve(this->solver, this->F, this->d);
   	CHKERRQ(ierr);
   	/*zero is no error*/
+  	this->_allow_displacement_extraction = true;
   	return (PetscErrorCode)0;
+}
+
+void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
+{
+	if(this->_allow_displacement_extraction) {
+		disp.resize(this->nGlobalDOFs, 0.0);
+		/*get values from vector in chunks*/
+
+		PetscScalar *y = new PetscScalar[COPY_CHUNK_SIZE];
+		PetscInt *ix = new PetscInt[COPY_CHUNK_SIZE];
+
+		/*iterate over the map, so we can fill in relevant known displacements
+		* as we get to them without having to break up the vector reading 
+		* stream into ireguarly sized chunks */
+		std::map< std::size_t,uint64_t >::iterator map_it = this->masks.begin();
+
+		for(std::size_t ii = 0; ii < this->nGlobalDOFs;) {
+			/*save a copy of where the map iterator was to fill it in*/
+			std::map< std::size_t,uint64_t >::iterator back_fill = map_it;
+			/*we do not assume that the map iterator is in order of keys*/
+			/*keep this counter globally visible so we can reuse it when filling
+			* in the output vector*/
+			std::size_t jj;
+			for(jj = 0; jj < COPY_CHUNK_SIZE;) {
+				/*attempt to find the next free degree, if the degree
+				* is actually fixed then just add it to correct place
+				* in output vector and move on to the next key in the
+				* map*/
+				uint64_t tmp_val = map_it->second;
+				/*test if dof is fixed or not*/
+				if(!(tmp_val & KNOWN_DOF_MASK)){
+					/*high bit not set means it is a free degree*/
+					/*extract the 32 bit number*/
+					ix[jj] = static_cast<PetscInt>((tmp_val & SAMPLE_LOW_32_BITS));
+					/*because a dof was found, add its index to be retrieved
+					* from the petsc vector*/
+					++jj;
+				}
+				/*increment to next key*/
+				map_it++;
+				if(map_it == this->masks.end()) {
+					/*when we run out of mappings we stop immediatly*/
+					break;
+				}
+			}
+			/*jj is now the number of free dofs transfered*/
+			VecGetValues(this->d, static_cast<PetscInt>(jj), ix, y);
+			/*now using the back fill iterator fill in the remaining values*/
+			for(std::size_t kk = 0; kk < jj;) {
+
+				std::size_t tmp_key = back_fill->first;
+				uint64_t tmp_val = map_it->second;
+				/*test if dof is fixed or not*/
+				if(!(tmp_val & KNOWN_DOF_MASK)){
+					/*high bit not set means it is a free degree*/
+					disp[tmp_key] = y[kk];
+					/*move on to the next element in the buffer retrived
+					* from the buffer vector*/
+					++kk;
+				} else {
+					std::cout << "filling a known dof: " << tmp_key << std::endl;
+					disp[tmp_key] = this->known_d[(tmp_val & SAMPLE_LOW_32_BITS)];
+				}
+				/*indicate that we wrote one dof*/
+				++ii;
+				/*increment to next key*/
+				back_fill++;
+				if(back_fill == this->masks.end()) {
+					/*when we run out of mappings we stop immediately*/
+					if(kk != jj) {
+						throw std::logic_error("unmapping went horribly wrong");
+					}
+				}
+			}
+		}
+		delete[] ix;
+		delete[] y;
+
+	} else {
+		throw std::invalid_argument("must call Solve before extracting displacements");
+	}
 }

@@ -15,6 +15,7 @@
 #include "ElasticAnalysis2D.h"
 #include "MeshBuilder.h"
 #include "GeometryMappings.h"
+#include "AlgebraicSystem.h" /*provides SOLVER_ABSOLUTE_TOLERANCE constant*/
 
 #define YOUNGS_MODULUS  1e8
 #define POISSONS_RATIO 0.35
@@ -165,6 +166,11 @@ TEST_F(ZeroConstraintZeroTraction, LinearQuad) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
+	/*now check the displacements*/
+	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
+		EXPECT_NEAR(0.0, tmp.displacement[ii], 5.0e-6);
+	}
 }
 
 TEST_F(ZeroConstraintZeroTraction, LinearTri) {
@@ -191,6 +197,11 @@ TEST_F(ZeroConstraintZeroTraction, LinearTri) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
+	/*now check the displacements*/
+	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
+		EXPECT_NEAR(0.0, tmp.displacement[ii], 5.0e-6);
+	}
 }
 
 TEST_F(ZeroConstraintZeroTraction, QuadQuad) {
@@ -217,6 +228,11 @@ TEST_F(ZeroConstraintZeroTraction, QuadQuad) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
+	/*now check the displacements*/
+	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
+		EXPECT_NEAR(0.0, tmp.displacement[ii], 5.0e-6);
+	}
 }
 
 TEST_F(ZeroConstraintZeroTraction, SerendipityQuad) {
@@ -243,6 +259,11 @@ TEST_F(ZeroConstraintZeroTraction, SerendipityQuad) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
+	/*now check the displacements*/
+	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
+		EXPECT_NEAR(0.0, tmp.displacement[ii], 5.0e-6);
+	}
 }
 
 TEST_F(ZeroConstraintZeroTraction, QuadTri) {
@@ -269,4 +290,9 @@ TEST_F(ZeroConstraintZeroTraction, QuadTri) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
+	/*now check the displacements*/
+	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
+		EXPECT_NEAR(0.0, tmp.displacement[ii], 5.0e-6);
+	}
 }

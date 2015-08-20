@@ -229,5 +229,8 @@ uint32_t ElasticAnalysis2D::recover()
 	this->strain.clear();
 	this->stress.clear();
 
+	this->linsys->extractDisplacement(this->displacement);
+	/*resize each elements and default construct that */
+
 	return 0;
 }

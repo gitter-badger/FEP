@@ -13,6 +13,8 @@
 #define SAMPLE_LOW_32_BITS ((uint32_t)(0xFFFFFFFF))
 #define UNMAPPED_VALUE ((uint64_t)-1)
 
+#define SOLVER_ABSOLUTE_TOLERANCE 1.0e-10
+
 class AlgebraicSystem
 {
 public:
@@ -22,9 +24,7 @@ public:
 	void addBoundaryConstraint(
 		std::vector<double> const& fixed,
 		std::vector<uint32_t> const& node_mapping);
-
 	void beginAssembly();
-
 	void assemble(
 		apf::DynamicMatrix const& ke,
 		apf::NewArray<int> const& node_mapping,
@@ -33,15 +33,16 @@ public:
 		std::vector<double> const& fe,
 		apf::NewArray<int> const& node_mapping,
 		uint32_t size);
-
 	PetscErrorCode synchronize();
 	PetscErrorCode solve();
+	void extractDisplacement(std::vector<double> & disp);
 	
+	/*these are exposed for unittesting*/
 	Mat K;
 	Vec F;
-
 private:
 	bool _allow_assembly;
+	bool _allow_displacement_extraction;
 	/*the key is the index in the global numbering of dofs,
 	* most significant bit of the value is 1 if the global dof
 	* is fixed, with the lower 32 bits being the only valid indices
@@ -49,9 +50,7 @@ private:
 	* size across platforms*/
 	std::map< std::size_t,uint64_t > masks;
 	std::vector< double > known_d;
-
     Vec d;
-
     KSP solver;
 
 	std::size_t nGlobalDOFs;
