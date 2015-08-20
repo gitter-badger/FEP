@@ -15,9 +15,6 @@
 
 #include "MeshBuilder.h"
 #include "MeshAdjReorder.h"
-
-#include "IntegrationHelper.h"
-#include "TestClass.h"
 #include "StiffnessContributor2D.h"
 
 

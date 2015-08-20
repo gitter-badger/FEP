@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <stdint.h>
 
 #include <apf.h>
 #include <apfMesh.h>
@@ -15,6 +16,9 @@ enum GeoMapOptions {
 	FIXED_XY = 1
 };
 
+typedef apf::Vector3(*neumann_fnc)(apf::Vector3 const& );
+typedef void(*bound_gen)(apf::MeshEntity* , std::vector< uint64_t >&, std::vector < double > & );
+
 class GeometryMappings
 {
 	/*manually configured in the .cc file, this applies
@@ -25,11 +29,11 @@ public:
 	GeometryMappings();
 	~GeometryMappings();
 
-	addNeumannMapping(uint64_t key, apf::Vector3(*neumann_fnc)(apf::Vector3 const& p));
-	addDircheletMapping(uint64_t key, void(*fnc_ptr)(apf::MeshEntity* e, std::vector< uint64_t > & nodes, std::vector < double > & d));
+	void addNeumannMapping(uint64_t key, apf::Vector3(*neumann_fnc)(apf::Vector3 const& ));
+	void addDircheletMapping(uint64_t key, void(*fnc_ptr)(apf::MeshEntity* , std::vector< uint64_t > & nodes, std::vector < double > & d));
 
-	std::map< uint64_t, apf::Vector3(*neumann_fnc)(apf::Vector3 const& p) > neumann_map;
-	std::map< uint64_t, void(*fnc_ptr)(apf::MeshEntity* e, std::vector< uint64_t > &, std::vector < double > &) > dirchelet_map;
+	std::map< uint64_t,neumann_fnc > neumann_map;
+	std::map< uint64_t,bound_gen > dirchelet_map;
 
 private:
 	std::set< uint64_t > nuemann_keys;

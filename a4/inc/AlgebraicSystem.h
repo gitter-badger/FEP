@@ -9,8 +9,6 @@
 
 #include <petscksp.h>
 
-#include "BandedSymmetricMatrix.h"
-
 #define KNOWN_DOF_MASK ((uint64_t)1<<63)
 #define SAMPLE_LOW_32_BITS ((uint32_t)(0xFFFFFFFF))
 #define UNMAPPED_VALUE ((uint64_t)-1)

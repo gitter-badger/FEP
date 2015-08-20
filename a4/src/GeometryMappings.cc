@@ -14,14 +14,14 @@ GeometryMappings::~GeometryMappings()
 
 }
 
-GeometryMappings::addNeumannMapping(
+void GeometryMappings::addNeumannMapping(
 	uint64_t key,
 	apf::Vector3(*neumann_fnc)(apf::Vector3 const& p))
 {
 
 }
 
-GeometryMappings::addDircheletMapping(
+void GeometryMappings::addDircheletMapping(
 	uint64_t key,
 	void(*fnc_ptr)(apf::MeshEntity* e,
 					std::vector< uint64_t > & nodes,

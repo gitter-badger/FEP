@@ -14,6 +14,7 @@
 
 #include "ElasticAnalysis2D.h"
 #include "MeshBuilder.h"
+#include "GeometryMappings.h"
 
 class ElasticAnalysisTest : public testing::Test
 {
@@ -43,14 +44,16 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	uint32_t polynomial_order = 1;
 	apf::changeMeshShape(mesh, apf::getLagrange(polynomial_order));
 	/*physical parameters*/
-
 	double E, Nu;
 	E = 1e8;
 	Nu = 0.35;
 	uint32_t integration_order = 4;
 	bool reorder_flag = true;
+	/*currently unused*/
+	GeometryMappings* geo_map = new GeometryMappings();
 	struct ElasticAnalysisInput input = {
 			mesh,
+			geo_map,
 			integration_order,
 			polynomial_order,
 			E,

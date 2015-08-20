@@ -122,15 +122,6 @@ $(ODIR)/ShapeFunctionOrdering_unittest.o : 	$(SDIR)/ShapeFunctionOrdering_unitte
 										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
-$(ODIR)/IntegrationHelper.o : 	$(SDIR)/IntegrationHelper.cc \
-								$(IDIR)/IntegrationHelper.h \
-								$(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
-
-$(ODIR)/TestClass.o : 	$(SDIR)/TestClass.cc \
-								$(IDIR)/TestClass.h \
-								$(GTEST_HEADERS)
-	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
 
 $(ODIR)/StiffnessContributor2D.o : 	$(SDIR)/StiffnessContributor2D.cc \
 								$(IDIR)/StiffnessContributor2D.h \
@@ -152,6 +143,11 @@ $(ODIR)/AlgebraicSystem_unittest.o : 	$(SDIR)/AlgebraicSystem_unittest.cc \
 										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
+$(ODIR)/GeometryMappings.o : 	$(SDIR)/GeometryMappings.cc \
+								$(IDIR)/GeometryMappings.h \
+								$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PUMI_INC) -c $< -o $@
+
 #pumi library is no longer rebuilt every time
 $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
@@ -163,12 +159,11 @@ $(BDIR)/a4 : 	$(ODIR)/a4.o $(ODIR)/MeshBuilder.o $(ODIR)/MeshBuilder_unittest.o 
 				$(ODIR)/ElasticAnalysis_unittest.o \
 				$(ODIR)/ElasticAnalysis2D.o \
 				$(ODIR)/ShapeFunctionOrdering_unittest.o \
-				$(ODIR)/TestClass.o \
-				$(ODIR)/IntegrationHelper.o \
 				$(ODIR)/StiffnessContributor2D.o \
 				$(ODIR)/ForceContributor2D.o \
 				$(ODIR)/AlgebraicSystem.o \
 				$(ODIR)/AlgebraicSystem_unittest.o \
+				$(ODIR)/GeometryMappings.o \
 				$(LDIR)/gtest.a 				
 	mpicxx $(CPPFLAGS) $(CXXFLAGS) $(PETSC_LIB) $(PUMI_LIBS) $^ -lpetsc -lmds -lapf -lgmi -lpcu -lpthread  -o $@
 
