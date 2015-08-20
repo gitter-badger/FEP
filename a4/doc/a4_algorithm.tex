@@ -40,7 +40,31 @@
 %\date{}   
 \author{Isaiah Bell} 
 \maketitle
-  
+
+\section{Methods}
+
+In this code we solve 2D linear elastic problems over isotropic materials.
+
+
+\section{Program Design}
+
+The Parallel Unstructured Mesh Infrastructure (PUMI) library was heavily plundered to develop this FE code.
+
+The class ElasticAnalysis2D is derived from the base FEAnalysis class and implements
+our specific linear elastics definition. This class accepts a PUMI mesh and makes
+several assumptions about the mesh structure to determine boundary conditions and
+tractions. The mesh is expected to have a series of  
+
+For memory efficiency the algebraric system is assembled as we iterate over all of the
+mesh elements. Assemly is simpilfied by the fact we are using isoparametric elements
+
+We extend the apf::Integrator class to implement each stiffnes contributor
+
+
+
+
+
+
 \section{Pseudo code}
 
 \begin{algorithm}
@@ -63,9 +87,25 @@
 
 \lstset{linewidth = 16cm, xrightmargin = 0cm}
 \lstlistoflistings
-\lstinputlisting[caption = {Test Driver}]{src/a4.cc}
-
-
-
+\lstinputlisting[caption = {Test Driver}]{../src/a4.cc}
+\lstinputlisting[caption = {Abstract Base FE Analysis class}]{../inc/FEAnalysis.h}
+\lstinputlisting[caption = {Elastic Analysis Class}]{../inc/ElasticAnalysis2D.h}
+\lstinputlisting[caption = {Force Contributor}]{../inc/ForceContributor2D.h}
+\lstinputlisting[caption = {Stiffness Constributor}]{../inc/StiffnessContributor2D.h}
+\lstinputlisting[caption = {Mesh Builder helper class}]{../inc/MeshBuilder.h}
+\lstinputlisting[caption = {Adjacency reordering routine}]{../inc/MeshAdjReorder.h}
+% \lstinputlisting[caption = {}]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
+% \lstinputlisting[]{}
 
 \end{document}
