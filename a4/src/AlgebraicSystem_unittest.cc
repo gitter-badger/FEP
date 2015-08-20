@@ -14,6 +14,9 @@
 class AlgebraicSystemTest : public testing::Test
 {
 protected:
+	std::size_t nGlobalDOFs;
+
+
 	apf::DynamicMatrix ke_1;
 	apf::NewArray<int> mapping_1;
 	uint32_t ke_1_size;
@@ -21,8 +24,14 @@ protected:
 	apf::DynamicMatrix ke_2;
 	apf::NewArray<int> mapping_2;
 	uint32_t ke_2_size;
+	/*fixture for some displacements testing*/
+	std::vector<double> local_disp;
+	std::vector<uint32_t> local_mapping;
+
 
 	virtual void SetUp() {
+		nGlobalDOFs = 12; /*must pick avalue above 4*/
+		/*================================*/
 		ke_1_size = 4;
 		mapping_1.allocate(ke_1_size);	
 		ke_1.setSize(ke_1_size, ke_1_size);
@@ -39,8 +48,8 @@ protected:
 		* all over the larger matrix*/
 		mapping_1[0] = 1;
 		mapping_1[1] = 3;
-		mapping_1[2] = 9;
-		mapping_1[3] = 11;
+		mapping_1[2] = nGlobalDOFs-3;
+		mapping_1[3] = nGlobalDOFs-1;
 		/*==================================*/
 		ke_2_size = 4;
 		mapping_2.allocate(ke_2_size);	
@@ -59,10 +68,19 @@ protected:
 		}
 		/*this structure will spread out the submatrix
 		* all over the larger matrix*/
-		mapping_2[0] = 8;
-		mapping_2[1] = 9;
-		mapping_2[2] = 10;
-		mapping_2[3] = 11;
+		mapping_2[0] = nGlobalDOFs-4;
+		mapping_2[1] = nGlobalDOFs-3;
+		mapping_2[2] = nGlobalDOFs-2;
+		mapping_2[3] = nGlobalDOFs-1;
+		/*================================*/
+		local_disp.clear();
+		local_disp.push_back(6.0);
+		local_disp.push_back(8.0);
+		local_disp.push_back(7.0);
+		local_mapping.clear();
+		local_mapping.push_back(nGlobalDOFs-4);
+		local_mapping.push_back(nGlobalDOFs-1);
+		local_mapping.push_back(0);
 	}
 
 	virtual void TearDown() {
@@ -78,7 +96,6 @@ TEST_F(AlgebraicSystemTest, AssembleInsertionTest) {
 	* additive. */
 
 	/*use nGlobalDOFs, no boundary conditions for this one*/
-	std::size_t nGlobalDOFs = 12;
 	AlgebraicSystem linsys(nGlobalDOFs);
 
 	linsys.beginAssembly();
@@ -209,25 +226,39 @@ TEST_F(AlgebraicSystemTest, AllowCorrectAssembly) {
 TEST_F(AlgebraicSystemTest, RepeatedConstraints) {
 	std::size_t nGlobalDOFs = 12;
 	AlgebraicSystem linsys(nGlobalDOFs);
-	std::vector<double> local_disp;
-	local_disp.clear();
-	local_disp.push_back(6.0);
-	local_disp.push_back(8.0);
-	local_disp.push_back(7.0);
 
-	std::vector<uint32_t> local_mapping;
-	local_mapping.clear();
-	local_mapping.push_back(4);
-	local_mapping.push_back(11);
-	local_mapping.push_back(0);
-
-	EXPECT_NO_THROW(linsys.addBoundaryConstraint(local_disp, local_mapping));
+	EXPECT_NO_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping));
 
 	/*over constraining the system is an exception, even if we add the same entity
 	* twice, so don't add the same entity twice*/
-	EXPECT_THROW(linsys.addBoundaryConstraint(local_disp, local_mapping), std::logic_error);
+	EXPECT_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping), std::logic_error);
 
 }
+
+TEST_F(AlgebraicSystemTest, OutOfRangeContraint) {
+	std::size_t nGlobalDOFs = 12;
+	AlgebraicSystem linsys(nGlobalDOFs);
+	/*this one is clearly out of range*/
+	std::vector<uint32_t> corrupt_mapping(this->local_mapping);
+	corrupt_mapping[1] = nGlobalDOFs+1;
+
+	EXPECT_THROW(linsys.addBoundaryConstraint(this->local_disp, corrupt_mapping), std::invalid_argument);
+}
+
+TEST_F(AlgebraicSystemTest, ExtraMappingsAreIgnored) {
+	std::size_t nGlobalDOFs = 12;
+	AlgebraicSystem linsys(nGlobalDOFs);
+	/*this one is clearly out of range but it will not be used since there are 
+	* fewer displacements than there are mappings, so this last one will not be used*/
+	local_mapping.push_back(nGlobalDOFs+1);
+	/*quick test for consitency, this should always pass, only included
+	* to prevent others from dicking with the test fixture and messing
+	* this up*/
+	ASSERT_EQ(this->local_mapping.size(), this->local_disp.size()+1);
+
+	EXPECT_NO_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping));
+}
+
 	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
 	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);

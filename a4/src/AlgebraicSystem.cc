@@ -53,7 +53,6 @@ void AlgebraicSystem::addBoundaryConstraint(
 	std::vector<double> const& fixed,
 	std::vector<uint32_t> const& node_mapping)
 {
-	std::cout << "ADDING BOUNDARY constraint" << std::endl;
 	/*do not add a constraint after assembly has begun*/
 	if(this->_allow_assembly == true) {
 		throw std::invalid_argument(
@@ -78,15 +77,14 @@ void AlgebraicSystem::addBoundaryConstraint(
 	* overwritten anything since there was not a corresponding displacement.
 	*/
 	std::set<uint64_t> all_possible_keys;
-	all_possible_keys.clear();
-	for(std::map<std::size_t,uint64_t>::iterator ii = this->masks.begin(); ii != this->masks.end(); ii++) {
-		std::cout << "key " << ii->first << " val: " << ii->second << std::endl;
-	}
-
 	for(std::size_t ii = 0; ii < fixed.size(); ++ii) {
 		uint64_t possible_key = node_mapping[ii];
+		/*remember that every valid key was already intialized, so
+		* we can also check if this is invalid*/
+		if(this->masks.count(possible_key) != 1) {
+			throw std::invalid_argument("Global dof mapped is out of range");
+		}
 		if(this->masks[possible_key] != UNMAPPED_VALUE) {
-			std::cout << "key conflicting is: " << possible_key << std::endl;
 			throw std::logic_error("Overconstrained error!");
 		}
 		/*create a set based on the elements of the node_mapping to check for
@@ -97,7 +95,6 @@ void AlgebraicSystem::addBoundaryConstraint(
 		throw std::logic_error(
 			"Overconstrained inside element mapping, repeated local keys!");
 	}
-
 	/*look up current index number of ndogs, we will start
 	* inserting each fixed dof at this index growing the vector
 	* of known displacements from here*/
