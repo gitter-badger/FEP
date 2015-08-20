@@ -52,6 +52,7 @@ void AlgebraicSystem::addBoundaryConstraint(
 	std::vector<double> const& fixed,
 	std::vector<uint32_t> const& node_mapping)
 {
+	std::cout << "ADDING BOUNDARY constraint" << std::endl;
 	/*do not add a constraint after assembly has begun*/
 	if(this->_allow_assembly == true) {
 		throw std::invalid_argument(
@@ -366,81 +367,79 @@ PetscErrorCode AlgebraicSystem::solve()
 
 void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 {
-	if(this->_allow_displacement_extraction) {
-		disp.resize(this->nGlobalDOFs, 0.0);
-		/*get values from vector in chunks*/
+	if(false == this->_allow_displacement_extraction) {
+		throw std::invalid_argument("must call Solve before extracting displacements");
+	}
+	disp.resize(this->nGlobalDOFs, 0.0);
+	/*get values from vector in chunks*/
 
-		PetscScalar *y = new PetscScalar[COPY_CHUNK_SIZE];
-		PetscInt *ix = new PetscInt[COPY_CHUNK_SIZE];
+	PetscScalar *y = new PetscScalar[COPY_CHUNK_SIZE];
+	PetscInt *ix = new PetscInt[COPY_CHUNK_SIZE];
 
-		/*iterate over the map, so we can fill in relevant known displacements
-		* as we get to them without having to break up the vector reading 
-		* stream into ireguarly sized chunks */
-		std::map< std::size_t,uint64_t >::iterator map_it = this->masks.begin();
+	/*iterate over the map, so we can fill in relevant known displacements
+	* as we get to them without having to break up the vector reading 
+	* stream into ireguarly sized chunks */
+	std::map< std::size_t,uint64_t >::iterator map_it = this->masks.begin();
 
-		for(std::size_t ii = 0; ii < this->nGlobalDOFs;) {
-			/*save a copy of where the map iterator was to fill it in*/
-			std::map< std::size_t,uint64_t >::iterator back_fill = map_it;
-			/*we do not assume that the map iterator is in order of keys*/
-			/*keep this counter globally visible so we can reuse it when filling
-			* in the output vector*/
-			std::size_t jj;
-			for(jj = 0; jj < COPY_CHUNK_SIZE;) {
-				/*attempt to find the next free degree, if the degree
-				* is actually fixed then just add it to correct place
-				* in output vector and move on to the next key in the
-				* map*/
-				uint64_t tmp_val = map_it->second;
-				/*test if dof is fixed or not*/
-				if(!(tmp_val & KNOWN_DOF_MASK)){
-					/*high bit not set means it is a free degree*/
-					/*extract the 32 bit number*/
-					ix[jj] = static_cast<PetscInt>((tmp_val & SAMPLE_LOW_32_BITS));
-					/*because a dof was found, add its index to be retrieved
-					* from the petsc vector*/
-					++jj;
-				}
-				/*increment to next key*/
-				map_it++;
-				if(map_it == this->masks.end()) {
-					/*when we run out of mappings we stop immediatly*/
-					break;
-				}
+	for(std::size_t ii = 0; ii < this->nGlobalDOFs;) {
+		/*save a copy of where the map iterator was to fill it in*/
+		std::map< std::size_t,uint64_t >::iterator back_fill = map_it;
+		/*we do not assume that the map iterator is in order of keys*/
+		/*keep this counter globally visible so we can reuse it when filling
+		* in the output vector*/
+		std::size_t jj;
+		for(jj = 0; jj < COPY_CHUNK_SIZE;) {
+			/*attempt to find the next free degree, if the degree
+			* is actually fixed then just add it to correct place
+			* in output vector and move on to the next key in the
+			* map*/
+			uint64_t tmp_val = map_it->second;
+			/*test if dof is fixed or not*/
+			if(!(tmp_val & KNOWN_DOF_MASK)){
+				/*high bit not set means it is a free degree*/
+				/*extract the 32 bit number*/
+				ix[jj] = static_cast<PetscInt>((tmp_val & SAMPLE_LOW_32_BITS));
+				/*because a dof was found, add its index to be retrieved
+				* from the petsc vector*/
+				++jj;
 			}
-			/*jj is now the number of free dofs transfered*/
-			VecGetValues(this->d, static_cast<PetscInt>(jj), ix, y);
-			/*now using the back fill iterator fill in the remaining values*/
-			for(std::size_t kk = 0; kk < jj;) {
+			/*increment to next key*/
+			map_it++;
+			if(map_it == this->masks.end()) {
+				/*when we run out of mappings we stop immediatly*/
+				break;
+			}
+		}
+		/*jj is now the number of free dofs transfered*/
+		VecGetValues(this->d, static_cast<PetscInt>(jj), ix, y);
+		/*now using the back fill iterator fill in the remaining values*/
+		for(std::size_t kk = 0; kk < jj;) {
 
-				std::size_t tmp_key = back_fill->first;
-				uint64_t tmp_val = map_it->second;
-				/*test if dof is fixed or not*/
-				if(!(tmp_val & KNOWN_DOF_MASK)){
-					/*high bit not set means it is a free degree*/
-					disp[tmp_key] = y[kk];
-					/*move on to the next element in the buffer retrived
-					* from the buffer vector*/
-					++kk;
-				} else {
-					std::cout << "filling a known dof: " << tmp_key << std::endl;
-					disp[tmp_key] = this->known_d[(tmp_val & SAMPLE_LOW_32_BITS)];
-				}
-				/*indicate that we wrote one dof*/
-				++ii;
-				/*increment to next key*/
-				back_fill++;
-				if(back_fill == this->masks.end()) {
-					/*when we run out of mappings we stop immediately*/
-					if(kk != jj) {
-						throw std::logic_error("unmapping went horribly wrong");
-					}
+			std::size_t tmp_key = back_fill->first;
+			uint64_t tmp_val = map_it->second;
+			/*test if dof is fixed or not*/
+			if(!(tmp_val & KNOWN_DOF_MASK)){
+				/*high bit not set means it is a free degree*/
+				disp[tmp_key] = y[kk];
+				/*move on to the next element in the buffer retrived
+				* from the buffer vector*/
+				++kk;
+			} else {
+				std::cout << "filling a known dof: " << tmp_key << std::endl;
+				disp[tmp_key] = this->known_d[(tmp_val & SAMPLE_LOW_32_BITS)];
+			}
+			/*indicate that we wrote one dof*/
+			++ii;
+			/*increment to next key*/
+			back_fill++;
+			if(back_fill == this->masks.end()) {
+				/*when we run out of mappings we stop immediately*/
+				if(kk != jj) {
+					throw std::logic_error("unmapping went horribly wrong");
 				}
 			}
 		}
-		delete[] ix;
-		delete[] y;
-
-	} else {
-		throw std::invalid_argument("must call Solve before extracting displacements");
 	}
+	delete[] ix;
+	delete[] y;
 }

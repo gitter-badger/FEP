@@ -184,18 +184,22 @@ uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 	int entity_type = this->m->getType(e);
 	apf::Vector3(*fnc_ptr)(apf::Vector3 const& p);
 	fnc_ptr = &dummy;
-	ForceContributor2D force(this->field, this->integration_order, fnc_ptr);
+	fnc_ptr = NULL;
+	if(NULL != fnc_ptr) {
 
-	apf::MeshElement* me = apf::createMeshElement(this->m, e);
-	force.process(me);
-	apf::destroyMeshElement(me);
+		ForceContributor2D force(this->field, this->integration_order, fnc_ptr);
 
-	/*view the intermediate matrix*/
-	uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
-	apf::NewArray< int > node_mapping(n_l_dofs);
-	apf::getElementNumbers(nodeNums, e, node_mapping);
+		apf::MeshElement* me = apf::createMeshElement(this->m, e);
+		force.process(me);
+		apf::destroyMeshElement(me);
 
-	this->linsys->assemble(force.fe, node_mapping, n_l_dofs);
+		/*view the intermediate matrix*/
+		uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
+		apf::NewArray< int > node_mapping(n_l_dofs);
+		apf::getElementNumbers(nodeNums, e, node_mapping);
+
+		this->linsys->assemble(force.fe, node_mapping, n_l_dofs);
+	}
 
 	return 0;
 }

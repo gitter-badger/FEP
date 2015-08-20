@@ -205,6 +205,29 @@ TEST_F(AlgebraicSystemTest, AllowCorrectAssembly) {
 	linsys.beginAssembly();
 	EXPECT_NO_THROW(linsys.assemble(ke_1, mapping_1, ke_1_size));
 }
+
+TEST_F(AlgebraicSystemTest, RepeatedConstraints) {
+	std::size_t nGlobalDOFs = 12;
+	AlgebraicSystem linsys(nGlobalDOFs);
+	std::vector<double> local_disp;
+	local_disp.clear();
+	local_disp.push_back(6.0);
+	local_disp.push_back(8.0);
+	local_disp.push_back(7.0);
+
+	std::vector<uint32_t> local_mapping;
+	local_mapping.clear();
+	local_mapping.push_back(4);
+	local_mapping.push_back(11);
+	local_mapping.push_back(0);
+
+	EXPECT_NO_THROW(linsys.addBoundaryConstraint(local_disp, local_mapping));
+
+	/*over constraining the system is an exception, even if we add the same entity
+	* twice, so don't add the same entity twice*/
+	EXPECT_THROW(linsys.addBoundaryConstraint(local_disp, local_mapping), std::logic_error);
+
+}
 	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
 	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
