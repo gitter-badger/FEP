@@ -38,22 +38,20 @@ apf::Matrix< 3,3 > buildD(double E, double Nu, bool use_plane_stress) {
 
 ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 	integration_order(in.integration_order),
-	polynomial_order(in.poly_order),
 	m(in.m)
 {
 	/*we create a 3 dimensional field but only will use 2 dimensions of that, (x & y)*/
-	this->field = createField(this->m, "Field_1", apf::VECTOR, this->m->getShape());
+	this->field = createField(this->m, SOLUTION_FIELD_NAME, apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
 
 	bool use_plane_stress = true;
 	this->D = buildD(in.E, in.Nu, use_plane_stress);
 
 	/*set up element numberings we will use for assembly*/
-	this->nodeNums = apf::createNumbering(this->m, "nodeNums", this->m->getShape(), NUM_COMPONENTS);
-    this->faceNums = apf::createNumbering(this->m, "faceNums", apf::getConstant(this->m->getDimension()), 1);
+	this->nodeNums = apf::createNumbering(this->m, NODE_NUM_TAG_NAME, this->m->getShape(), NUM_COMPONENTS);
+    this->faceNums = apf::createNumbering(this->m, FACE_NUM_TAG_NAME, apf::getConstant(this->m->getDimension()), 1);
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
-		apf::writeVtkFiles("test_els_quad", this->m);
 	}
 	/*compute the global degrees of freedom for the mesh*/
 	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
@@ -227,5 +225,9 @@ uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e)
 
 uint32_t ElasticAnalysis2D::recover()
 {
+	this->displacement.clear();
+	this->strain.clear();
+	this->stress.clear();
+
 	return 0;
 }

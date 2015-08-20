@@ -16,6 +16,9 @@
 #include "MeshBuilder.h"
 #include "GeometryMappings.h"
 
+#define YOUNGS_MODULUS  1e8
+#define POISSONS_RATIO 0.35
+
 class ElasticAnalysisTest : public testing::Test
 {
 protected:
@@ -41,12 +44,11 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	uint32_t polynomial_order = 1;
-	apf::changeMeshShape(mesh, apf::getLagrange(polynomial_order));
+	apf::changeMeshShape(mesh, apf::getLagrange(1));
 	/*physical parameters*/
 	double E, Nu;
-	E = 1e8;
-	Nu = 0.35;
+	E = YOUNGS_MODULUS;
+	Nu = POISSONS_RATIO;
 	uint32_t integration_order = 4;
 	bool reorder_flag = true;
 	/*currently unused*/
@@ -55,7 +57,6 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 			mesh,
 			geo_map,
 			integration_order,
-			polynomial_order,
 			E,
 			Nu,
 			reorder_flag};
@@ -68,9 +69,9 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 }
 
 TEST_F(ElasticAnalysisTest, PlaneStrainComputation) {
-	double E = 8e8;
+	double E = YOUNGS_MODULUS;
 	/*impossible for Nu to go over 0.5*/
-	double Nu = 0.35;
+	double Nu = POISSONS_RATIO;
 
 	/*manually compute D using different method*/
 	double mult_factor = E /((1+Nu)*(1- 2* Nu));
@@ -117,4 +118,155 @@ TEST_F(ElasticAnalysisTest, PlaneStressComputation) {
 	EXPECT_FLOAT_EQ(0.0, result_D[2][0]);
 	EXPECT_FLOAT_EQ(0.0, result_D[2][1]);
 	EXPECT_FLOAT_EQ(elm3, result_D[2][2]);
+}
+
+class ZeroConstraintZeroTraction : public testing::Test
+{
+protected:
+	apf::Mesh2* mesh;
+	MeshBuilder* mesh_builder;
+
+	virtual void SetUp() {
+		mesh_builder = new MeshBuilder();
+		mesh = NULL;
+	}
+
+	virtual void TearDown() {
+		if(mesh != NULL) {
+			mesh->destroyNative();
+			apf::destroyMesh(mesh);
+		}
+		delete mesh_builder;	
+	}
+
+};
+
+TEST_F(ZeroConstraintZeroTraction, LinearQuad) {
+	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
+	apf::changeMeshShape(mesh, apf::getLagrange(1));
+	/*physical parameters*/
+	double E, Nu;
+	E = YOUNGS_MODULUS;
+	Nu = POISSONS_RATIO;
+	uint32_t integration_order = 4;
+	bool reorder_flag = true;
+	/*currently unused*/
+	GeometryMappings* geo_map = new GeometryMappings();
+	struct ElasticAnalysisInput input = {
+			mesh,
+			geo_map,
+			integration_order,
+			E,
+			Nu,
+			reorder_flag};
+
+	ElasticAnalysis2D tmp(input);
+
+	EXPECT_EQ(0, tmp.setup());
+	EXPECT_EQ(0, tmp.solve());
+	EXPECT_EQ(0, tmp.recover());
+}
+
+TEST_F(ZeroConstraintZeroTraction, LinearTri) {
+	mesh_builder->build2DRectTriMesh(mesh, 2, 1, 0, 0, 2, 1);
+	apf::changeMeshShape(mesh, apf::getLagrange(1));
+	/*physical parameters*/
+	double E, Nu;
+	E = YOUNGS_MODULUS;
+	Nu = POISSONS_RATIO;
+	uint32_t integration_order = 4;
+	bool reorder_flag = true;
+	/*currently unused*/
+	GeometryMappings* geo_map = new GeometryMappings();
+	struct ElasticAnalysisInput input = {
+			mesh,
+			geo_map,
+			integration_order,
+			E,
+			Nu,
+			reorder_flag};
+
+	ElasticAnalysis2D tmp(input);
+
+	EXPECT_EQ(0, tmp.setup());
+	EXPECT_EQ(0, tmp.solve());
+	EXPECT_EQ(0, tmp.recover());
+}
+
+TEST_F(ZeroConstraintZeroTraction, QuadQuad) {
+	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
+	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	/*physical parameters*/
+	double E, Nu;
+	E = YOUNGS_MODULUS;
+	Nu = POISSONS_RATIO;
+	uint32_t integration_order = 4;
+	bool reorder_flag = true;
+	/*currently unused*/
+	GeometryMappings* geo_map = new GeometryMappings();
+	struct ElasticAnalysisInput input = {
+			mesh,
+			geo_map,
+			integration_order,
+			E,
+			Nu,
+			reorder_flag};
+
+	ElasticAnalysis2D tmp(input);
+
+	EXPECT_EQ(0, tmp.setup());
+	EXPECT_EQ(0, tmp.solve());
+	EXPECT_EQ(0, tmp.recover());
+}
+
+TEST_F(ZeroConstraintZeroTraction, SerendipityQuad) {
+	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
+	apf::changeMeshShape(mesh, apf::getSerendipity());
+	/*physical parameters*/
+	double E, Nu;
+	E = YOUNGS_MODULUS;
+	Nu = POISSONS_RATIO;
+	uint32_t integration_order = 4;
+	bool reorder_flag = true;
+	/*currently unused*/
+	GeometryMappings* geo_map = new GeometryMappings();
+	struct ElasticAnalysisInput input = {
+			mesh,
+			geo_map,
+			integration_order,
+			E,
+			Nu,
+			reorder_flag};
+
+	ElasticAnalysis2D tmp(input);
+
+	EXPECT_EQ(0, tmp.setup());
+	EXPECT_EQ(0, tmp.solve());
+	EXPECT_EQ(0, tmp.recover());
+}
+
+TEST_F(ZeroConstraintZeroTraction, QuadTri) {
+	mesh_builder->build2DRectTriMesh(mesh, 2, 1, 0, 0, 2, 1);
+	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	/*physical parameters*/
+	double E, Nu;
+	E = YOUNGS_MODULUS;
+	Nu = POISSONS_RATIO;
+	uint32_t integration_order = 4;
+	bool reorder_flag = true;
+	/*currently unused*/
+	GeometryMappings* geo_map = new GeometryMappings();
+	struct ElasticAnalysisInput input = {
+			mesh,
+			geo_map,
+			integration_order,
+			E,
+			Nu,
+			reorder_flag};
+
+	ElasticAnalysis2D tmp(input);
+
+	EXPECT_EQ(0, tmp.setup());
+	EXPECT_EQ(0, tmp.solve());
+	EXPECT_EQ(0, tmp.recover());
 }

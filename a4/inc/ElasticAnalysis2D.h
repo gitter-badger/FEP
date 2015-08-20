@@ -10,11 +10,14 @@
 #include "AlgebraicSystem.h"
 #include "GeometryMappings.h"
 
+#define NODE_NUM_TAG_NAME "nodeNums"
+#define FACE_NUM_TAG_NAME "faceNums"
+#define SOLUTION_FIELD_NAME "solutionField"
+
 struct ElasticAnalysisInput {
 	apf::Mesh* m;
 	GeometryMappings* geo_map;
 	uint32_t integration_order;
-	uint32_t poly_order;
 	double E;
 	double Nu;
 	bool reorder;
@@ -32,10 +35,12 @@ public:
 	virtual uint32_t makeForceContributor(apf::MeshEntity* e);
 	virtual uint32_t makeConstraint(apf::MeshEntity* e);
 	virtual uint32_t recover();
-
+	
+	std::vector<double> displacement;
+	std::vector<double> strain;
+	std::vector<double> stress;
 private:
 	uint32_t integration_order;
-	uint32_t polynomial_order;
 	apf::Mesh* m;
 	apf::Field* field;
 	apf::Matrix< 3,3> D;
