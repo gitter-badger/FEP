@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <climits>
 #include <assert.h>
+#include <set>
 
 #include <petscmat.h>
 
@@ -66,6 +67,36 @@ void AlgebraicSystem::addBoundaryConstraint(
 		throw std::range_error(
 			"local force vector rows size exceeded mapping size");
 	}
+	/*scan over all of the canidate keys for the number of displacements
+	* and check if they are already in the mapping. We only check the 
+	* displacements given since those are the only ones that actually are
+	* added. For example if there are only 3 displacments, but the mapping
+	* vector has 4 elements, we have assumed that the first three elements
+	* of the mapping correcpond to the first three elements of the mapping
+	* In this case if the 4th element of the mapping happens to be a repeated
+	* mapping then we actually don't care, since it would have never
+	* overwritten anything since there was not a corresponding displacement.
+	*/
+	std::set<uint64_t> all_possible_keys;
+	all_possible_keys.clear();
+	for(std::map<std::size_t,uint64_t>::iterator ii = this->masks.begin(); ii != this->masks.end(); ii++) {
+		std::cout << "key " << ii->first << " val: " << ii->second << std::endl;
+	}
+
+	for(std::size_t ii = 0; ii < fixed.size(); ++ii) {
+		uint64_t possible_key = node_mapping[ii];
+		if(this->masks[possible_key] != UNMAPPED_VALUE) {
+			std::cout << "key conflicting is: " << possible_key << std::endl;
+			throw std::logic_error("Overconstrained error!");
+		}
+		/*create a set based on the elements of the node_mapping to check for
+		* any repeated keys as well*/
+		all_possible_keys.insert(possible_key);
+	}
+	if(all_possible_keys.size() != fixed.size()) {
+		throw std::logic_error(
+			"Overconstrained inside element mapping, repeated local keys!");
+	}
 
 	/*look up current index number of ndogs, we will start
 	* inserting each fixed dof at this index growing the vector
@@ -126,7 +157,8 @@ void AlgebraicSystem::beginAssembly() {
 	* all of my problems and making the assembly code 10x less complex */
 	ierr = MatSetOption(this->K, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
 	ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
-	ierr = KSPSetTolerances(this->solver, 1.0e-10, SOLVER_ABSOLUTE_TOLERANCE, PETSC_DEFAULT, 100);
+	ierr = KSPSetTolerances(this->solver, 1.0e-10, SOLVER_ABSOLUTE_TOLERANCE,
+		PETSC_DEFAULT, 100);
 	ierr = VecDuplicate(this->F, &(this->d));
 }
 
@@ -368,7 +400,8 @@ PetscErrorCode AlgebraicSystem::solve()
 void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 {
 	if(false == this->_allow_displacement_extraction) {
-		throw std::invalid_argument("must call Solve before extracting displacements");
+		throw std::invalid_argument(
+			"must call Solve before extracting displacements");
 	}
 	disp.resize(this->nGlobalDOFs, 0.0);
 	/*get values from vector in chunks*/

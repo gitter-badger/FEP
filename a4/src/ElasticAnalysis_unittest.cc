@@ -289,17 +289,16 @@ TEST_F(ZeroConstraintZeroTraction, QuadTri) {
 	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
 	EXPECT_EQ(0, tmp.setup());
-	//VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
+	// VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
 
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
 
 	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
-	//VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
+	// VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
 
 	/*now check the displacements*/
 	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
-		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
 }
