@@ -39,6 +39,8 @@ public:
 	std::vector<double> displacement;
 	std::vector<double> strain;
 	std::vector<double> stress;
+
+	AlgebraicSystem* linsys;
 private:
 	uint32_t integration_order;
 	apf::Mesh* m;
@@ -46,7 +48,7 @@ private:
 	apf::Matrix< 3,3> D;
 	apf::Numbering* nodeNums;
 	apf::Numbering* faceNums;
-	AlgebraicSystem* linsys;
+
 
 };
 
