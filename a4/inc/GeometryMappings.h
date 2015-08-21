@@ -9,11 +9,28 @@
 #include <apf.h>
 #include <apfMesh.h>
 
+#define VERT_BC_TAG_NAME "vertBCtag"
+#define EDGE_BC_TAG_NAME "edgeBCtag"
+#define FACE_BC_TAG_NAME "faceBCtag"
+
+
 /*include some simple defaults*/
 enum GeoMapOptions {
-	FIXED_X = 0,
-	FIXED_Y = 1,
-	FIXED_XY = 1
+	NONE = 0,
+	FIXED_X = 1,
+	FIXED_Y = 2,
+	FIXED_XY = 3,
+	GRAVITY_BODY_FORCE = 4,
+	TRACTION_1 = 5,
+	TRACTION_2 = 6,
+	LEFT_EDGE = 100, /*these are for 2D rectangle meshes*/
+	RIGHT_EDGE = 101,
+	TOP_EDGE = 102,
+	BOT_EDGE = 103,
+	VERT_X0Y0 = 104,
+	VERT_X1Y0 = 105,
+	VERT_X0Y1 = 106,
+	VERT_X1Y1 = 107
 };
 
 typedef apf::Vector3(*neumann_fnc)(apf::Vector3 const& );

@@ -2,8 +2,13 @@
 #define TEST_MESH_BUILDER
 #include <stdint.h>
 
+#include <apf.h>
 #include <apfMesh2.h>
 
+/*this numbering is left on the mesh for the purpose of unittesting
+* the edge boundary conditions end up where they are supposed to
+* this is for DEVELOPEMENT ONLY*/
+#define SECRET_BUILDER_NUMBERING "SecretBuilderNumbering"
 
 class MeshBuilder
 {
@@ -22,6 +27,23 @@ public:
 	void AdjReorder(apf::Mesh2* & mesh);
 
 private:
+
+};
+
+class EntityNumberer : public apf::BuildCallback
+{
+public:
+	EntityNumberer(apf::Mesh* mesh);
+	~EntityNumberer();
+
+	void call(apf::MeshEntity *e);
+
+	/*one must configure these two below before using the call back object
+	* this is a hacky way to make sure we numbe the one we want*/
+	int number_to_apply;	
+	apf::MeshTag* tag;
+private:
+	apf::Mesh* mesh;
 
 };
 
