@@ -33,7 +33,7 @@ enum GeoMapOptions {
 	VERT_X1Y1 = 107
 };
 
-/*add some default functions*/
+/*add a default zero constraint option*/
 
 
 

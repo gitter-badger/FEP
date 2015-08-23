@@ -244,7 +244,6 @@ TEST_F(ZeroConstraintZeroTraction, QuadQuad) {
 }
 
 TEST_F(ZeroConstraintZeroTraction, SerendipityQuad) {
-	std::cout << "SerendipityQuad" << std::endl;
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0);
 	apf::changeMeshShape(mesh, apf::getSerendipity());
 	/*physical parameters*/
