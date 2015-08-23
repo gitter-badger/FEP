@@ -75,20 +75,16 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 	left_edge.insert(2);
 	right_edge.insert((2*X_ELMS + 1));
 	for(std::size_t ii = 2*(X_ELMS+1); ii <= ((X_ELMS+1) * (Y_ELMS+1)); ii+=(X_ELMS+1)) {
-		std::cout << "inserting right: " << ii << std::endl;
 		right_edge.insert(ii);
 	}
 
 	for(std::size_t ii = 1; ii <= (2*X_ELMS +1); ii+=2) {
-		std::cout << "inserting bot: " << ii << std::endl;
 		bot_edge.insert(ii);
 	}
 	for(std::size_t ii = (2* X_ELMS + 3); ii <= ((X_ELMS+1)* Y_ELMS +1); ii+=(X_ELMS+1)) {
-		std::cout << "inserting left: " << ii << std::endl;
 		left_edge.insert(ii);
 	}
 	for(std::size_t ii = ((X_ELMS+1)* Y_ELMS +1); ii <= ((X_ELMS+1) * (Y_ELMS+1)); ++ii) {
-		std::cout << "inserting top: " << ii << std::endl;
 		top_edge.insert(ii);
 	}
 
