@@ -20,11 +20,50 @@
 #include "GeometryMappings.h"
 
 
-class RectMeshTest : public testing::Test
+#define LINEAR_QUAD 0
+#define QUAD_QUAD 1
+#define LINEAR_TRI 2
+#define QUAD_TRI 3
+#define SERENDIPITY_QUAD 4
+
+class RectMeshTest : public ::testing::Test,
+	public ::testing::WithParamInterface<int> 
 {
 protected:
 	apf::Mesh2* mesh;
 	MeshBuilder* mesh_builder;
+
+	apf::Mesh2* getMeshFromIndex(int index, int X_ELMS, int Y_ELMS) {
+		apf::Mesh2* tmp = NULL;
+		switch(index) {
+			case LINEAR_QUAD:
+				this->mesh_builder->build2DRectQuadMesh(tmp, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				break;
+			case QUAD_QUAD:
+				this->mesh_builder->build2DRectQuadMesh(tmp, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				apf::changeMeshShape(tmp, apf::getLagrange(2));
+				break;
+			case LINEAR_TRI:
+				this->mesh_builder->build2DRectTriMesh(tmp, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				break;
+			case QUAD_TRI:
+				this->mesh_builder->build2DRectTriMesh(tmp, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				apf::changeMeshShape(tmp, apf::getLagrange(2));
+				break;
+			case SERENDIPITY_QUAD:
+				this->mesh_builder->build2DRectTriMesh(tmp, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				apf::changeMeshShape(tmp, apf::getSerendipity());
+			default:
+				/*mesh should stay null*/
+				break;
+		}
+		return tmp;
+	} 
 
 	virtual void SetUp() {
 		/*use mesh builder to abstract mesh creations*/
@@ -48,26 +87,43 @@ TEST_F(RectMeshTest, Rectangle) {
 	EXPECT_TRUE(mesh != NULL);
 }
 
-TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
+TEST_F(RectMeshTest, Triangle) {
+	mesh_builder->build2DRectTriMesh(mesh, 2, 1, 0, 0, 2, 1);
+	//apf::writeVtkFiles("outTri", mesh);
+	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	//apf::changeMeshShape(mesh, apf::getSerendipity());
+	apf::writeVtkFiles("secondTri", mesh);
+}
+
+
+INSTANTIATE_TEST_CASE_P(GeometryTags, RectMeshTest,
+	::testing::Values( SERENDIPITY_QUAD, LINEAR_QUAD, QUAD_QUAD, LINEAR_TRI,
+						QUAD_TRI));
+
+TEST_P(RectMeshTest, CheckBoundaryEdgeTags) {
+	int index = GetParam();
 	int X_ELMS = 4;
 	int Y_ELMS = 3;
-	EXPECT_NO_THROW(mesh_builder->build2DRectQuadMesh(mesh, X_ELMS, Y_ELMS, 0.0, 0.0, 2.0, 2.0));
-	EXPECT_TRUE(mesh != NULL);
-	/*keeping this as a linear mesh is important*/
-	apf::writeVtkFiles("testQuad", mesh);
+	apf::Mesh2* specific_mesh = this->getMeshFromIndex(index, X_ELMS, Y_ELMS);
+	ASSERT_TRUE(specific_mesh != NULL);
 	/*we do a bad thing and use undocumented numbering
 	* that the mesh_builder creates to verify that numberings
 	* are in the right place*/
-	apf::MeshTag* edge_tag = mesh->findTag(EDGE_BC_TAG_NAME);
-	apf::Numbering* secret_numbering = mesh->findNumbering(SECRET_BUILDER_NUMBERING);
+	apf::MeshTag* edge_tag = specific_mesh->findTag(EDGE_BC_TAG_NAME);
+	apf::Numbering* secret_numbering = specific_mesh->findNumbering(SECRET_BUILDER_NUMBERING);
 	EXPECT_TRUE(secret_numbering != NULL);
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
-	/*generate sets of the node numberings for the linear mesh*/
+	/*generate sets of the node numberings for the linear specific_mesh*/
 	std::set<int> left_edge;
 	std::set<int> right_edge;
 	std::set<int> top_edge;
 	std::set<int> bot_edge;
+	uint32_t counter_left_edge = 0;
+	uint32_t counter_right_edge = 0;
+	uint32_t counter_top_edge = 0;
+	uint32_t counter_bot_edge = 0;
+
 	/*since there must always be at least one element in Y, and
 	* there is special numbering behaviour for the bottom left 
 	* element */
@@ -88,13 +144,13 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 		top_edge.insert(ii);
 	}
 
-	it = mesh->begin(1);
-	while((e = mesh->iterate(it))) {
+	it = specific_mesh->begin(1);
+	while((e = specific_mesh->iterate(it))) {
 		apf::Downward down;
 		int data;
-		if(mesh->hasTag(e, edge_tag)) {
+		if(specific_mesh->hasTag(e, edge_tag)) {
 			/*find the vertices bounding that edge*/
-			int n_verts = mesh->getDownward(e, 0, down);
+			int n_verts = specific_mesh->getDownward(e, 0, down);
 			EXPECT_TRUE(n_verts == 2);
 			std::set<int> edge_verts;
 			edge_verts.clear();
@@ -110,10 +166,11 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 				edge_verts.begin(), edge_verts.end(), 
 				std::inserter(intersect, intersect.begin()));
 			if(intersect.size() == n_verts) {
-				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
-				if(mesh->hasTag(e, edge_tag)) {
-					mesh->getIntTag(e, edge_tag, &data);
+				EXPECT_TRUE(specific_mesh->hasTag(e, edge_tag));
+				if(specific_mesh->hasTag(e, edge_tag)) {
+					specific_mesh->getIntTag(e, edge_tag, &data);
 					EXPECT_EQ(LEFT_EDGE, data);
+					++counter_left_edge;
 				}
 			}
 			/*check right edge*/
@@ -122,10 +179,11 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 				edge_verts.begin(), edge_verts.end(), 
 				std::inserter(intersect, intersect.begin()));
 			if(intersect.size() == n_verts) {
-				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
-				if(mesh->hasTag(e, edge_tag)) {
-					mesh->getIntTag(e, edge_tag, &data);
+				EXPECT_TRUE(specific_mesh->hasTag(e, edge_tag));
+				if(specific_mesh->hasTag(e, edge_tag)) {
+					specific_mesh->getIntTag(e, edge_tag, &data);
 					EXPECT_EQ(RIGHT_EDGE, data);
+					++counter_right_edge;
 				}
 			}
 			/*check bot edge*/
@@ -134,10 +192,11 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 				edge_verts.begin(), edge_verts.end(), 
 				std::inserter(intersect, intersect.begin()));
 			if(intersect.size() == n_verts) {
-				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
-				if(mesh->hasTag(e, edge_tag)) {
-					mesh->getIntTag(e, edge_tag, &data);
+				EXPECT_TRUE(specific_mesh->hasTag(e, edge_tag));
+				if(specific_mesh->hasTag(e, edge_tag)) {
+					specific_mesh->getIntTag(e, edge_tag, &data);
 					EXPECT_EQ(BOT_EDGE, data);
+					++counter_bot_edge;
 				}
 			}
 			/*check top edge*/
@@ -146,36 +205,43 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 				edge_verts.begin(), edge_verts.end(), 
 				std::inserter(intersect, intersect.begin()));
 			if(intersect.size() == n_verts) {
-				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
-				if(mesh->hasTag(e, edge_tag)) {
-					mesh->getIntTag(e, edge_tag, &data);
+				EXPECT_TRUE(specific_mesh->hasTag(e, edge_tag));
+				if(specific_mesh->hasTag(e, edge_tag)) {
+					specific_mesh->getIntTag(e, edge_tag, &data);
 					EXPECT_EQ(TOP_EDGE, data);
+					++counter_top_edge;
 				}
 			}
 		}
 	}
-	mesh->end(it);
+	specific_mesh->end(it);
+	/*make sure that we see appropriate number of edges*/
+	EXPECT_EQ(X_ELMS, counter_top_edge);
+	EXPECT_EQ(X_ELMS, counter_bot_edge);
+	EXPECT_EQ(Y_ELMS, counter_right_edge);
+	EXPECT_EQ(Y_ELMS, counter_left_edge);	
 }
 
-TEST_F(RectMeshTest, CheckBoundaryVertexTags) {
+TEST_P(RectMeshTest, CheckBoundaryVertexTags) {
+	int index = GetParam();
 	int X_ELMS = 3;
 	int Y_ELMS = 3;
-	EXPECT_NO_THROW(mesh_builder->build2DRectQuadMesh(mesh, X_ELMS, Y_ELMS, 0.0, 0.0, 2.0, 2.0));
-	EXPECT_TRUE(mesh != NULL);
-	apf::writeVtkFiles("testQuad", mesh);
+
+	apf::Mesh2* specific_mesh = this->getMeshFromIndex(index, X_ELMS, Y_ELMS);
+	ASSERT_TRUE(specific_mesh != NULL);
 	/*we do a bad thing and use undocumented numbering
 	* that the mesh_builder creates to verify that numberings
 	* are in the right place*/
-	apf::MeshTag* vert_tag = mesh->findTag(VERT_BC_TAG_NAME);
-	apf::Numbering* secret_numbering = mesh->findNumbering(SECRET_BUILDER_NUMBERING);
+	apf::MeshTag* vert_tag = specific_mesh->findTag(VERT_BC_TAG_NAME);
+	apf::Numbering* secret_numbering = specific_mesh->findNumbering(SECRET_BUILDER_NUMBERING);
 	EXPECT_TRUE(secret_numbering != NULL);
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
-	it = mesh->begin(0);
-	while((e = mesh->iterate(it))) {
+	it = specific_mesh->begin(0);
+	while((e = specific_mesh->iterate(it))) {
 		int data;
-		if(mesh->hasTag(e, vert_tag)) {
-			mesh->getIntTag(e, vert_tag, &data);
+		if(specific_mesh->hasTag(e, vert_tag)) {
+			specific_mesh->getIntTag(e, vert_tag, &data);
 			int node_label = apf::getNumber(secret_numbering, e, 0,0);
 			/*we make sure that each corner of the rectangle is identifiable*/
 			if( ((X_ELMS+1)*(Y_ELMS+1))== node_label) {
@@ -189,14 +255,5 @@ TEST_F(RectMeshTest, CheckBoundaryVertexTags) {
 			}
 		}
 	}
-	mesh->end(it);
-}
-
-
-TEST_F(RectMeshTest, Triangle) {
-	mesh_builder->build2DRectTriMesh(mesh, 2, 1, 0, 0, 2, 1);
-	//apf::writeVtkFiles("outTri", mesh);
-	apf::changeMeshShape(mesh, apf::getLagrange(2));
-	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::writeVtkFiles("secondTri", mesh);
+	specific_mesh->end(it);
 }

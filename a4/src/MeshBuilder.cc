@@ -109,20 +109,11 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 			vert_index = y_c*(x_elms+1) + x_c;
 			mesh->setPoint(vertices[vert_index],0,*(temp_vec));
 			apf::number(numbers,vertices[vert_index],0,0,++node_number);
-			//print the location of the vertex
-			//create the quad element
-			
-
+			/*create the quad element*/
 			quad_verts[0] = vertices[vert_index];
 			quad_verts[1] = vertices[(vert_index - 1)];
 			quad_verts[2] = vertices[(vert_index - x_elms - 2)];
 			quad_verts[3] = vertices[(vert_index - x_elms - 1)];
-
-			// std::cout << "QUAD: " << apf::getNumber(numbers, quad_verts[0],0,0) << ", " 
-			// 	<< apf::getNumber(numbers, quad_verts[1],0,0) << ", " 
-			// 	<< apf::getNumber(numbers, quad_verts[2],0,0) << ", " 
-			// 	<< apf::getNumber(numbers, quad_verts[3],0,0) 
-			// 	<< std::endl;
 			/*with a one element mesh these conditions are not mutally exclusive*/
 			if(x_c == x_elms) {
 				/*the quad we are making is on the right edge*/
@@ -248,6 +239,7 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	}
 	//create a pointer to pass in quad vertices
 	apf::MeshEntity* tri_verts[3];
+	apf::MeshEntity* edge_verts[2];
 
 	//rather than test for that zero,zero element every time
 	//just instantiate it manually once
@@ -297,6 +289,76 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 			tri_verts[1] = vertices[(vert_index - x_elms - 1)];
 			tri_verts[2] = vertices[vert_index];
 			apf::buildElement(mesh, 0, apf::Mesh::TRIANGLE, tri_verts);
+			/*with a one element mesh these conditions are not mutally exclusive*/
+			if(x_c == x_elms) {
+				/*the quad we are making is on the right edge*/
+				if(y_c == y_elms) {
+					/*this means we know where the x1y1 vertex is now*/
+					int tmp_number_to_apply = VERT_X1Y1;
+					// std::cout << "vert x1y1: " << apf::getNumber(numbers, vertices[(vert_index)],0,0) << std::endl;
+
+					mesh->setIntTag(vertices[(vert_index)], vertBCtag, &tmp_number_to_apply);
+				}
+				if(1 == y_c) {
+					int tmp_number_to_apply = VERT_X1Y0;
+					// std::cout << "vert x1y0: " << apf::getNumber(numbers, vertices[(vert_index - x_elms -1)],0,0) << std::endl;
+
+					mesh->setIntTag(vertices[(vert_index - x_elms -1)], vertBCtag, &tmp_number_to_apply);
+				}
+				// std::cout << "Right: " << apf::getNumber(numbers, vertices[(vert_index)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index - x_elms -1)],0,0) << ", " 
+				// 	<< std::endl;
+
+				ent_number_functor.number_to_apply = RIGHT_EDGE;
+				ent_number_functor.tag = edgeBCtag;
+				edge_verts[0] = vertices[(vert_index)];
+				edge_verts[1] = vertices[(vert_index - x_elms -1)];
+				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
+
+			} 
+			if( x_c == 1) {
+				if(y_c == y_elms) {
+					/*this means we know where the x1y1 vertex is now*/
+					int tmp_number_to_apply = VERT_X0Y1;
+					// std::cout << "vert x0y1: " << apf::getNumber(numbers, vertices[(vert_index-1)],0,0) << std::endl;
+
+					mesh->setIntTag(vertices[(vert_index-1)], vertBCtag, &tmp_number_to_apply);
+				}
+				if(1 == y_c) {
+					int tmp_number_to_apply = VERT_X0Y0;
+					// std::cout << "vert x0y0: " << apf::getNumber(numbers, vertices[(vert_index- x_elms -2)],0,0) << std::endl;
+
+					mesh->setIntTag(vertices[(vert_index- x_elms -2)], vertBCtag, &tmp_number_to_apply);
+				}
+				// std::cout << "Left: " << apf::getNumber(numbers, vertices[(vert_index-1)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index- x_elms -2)],0,0)
+				// 	<< std::endl;
+				ent_number_functor.number_to_apply = LEFT_EDGE;
+				ent_number_functor.tag = edgeBCtag;
+				edge_verts[0] = vertices[(vert_index-1)];
+				edge_verts[1] = vertices[(vert_index- x_elms -2)];
+				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
+			}
+			if(y_c == y_elms) {
+				// std::cout << "Top: " << apf::getNumber(numbers, vertices[(vert_index)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index-1)],0,0)
+				// 	<< std::endl;
+				ent_number_functor.number_to_apply = TOP_EDGE;
+				ent_number_functor.tag = edgeBCtag;
+				edge_verts[0] = vertices[(vert_index)];
+				edge_verts[1] = vertices[(vert_index-1)];
+				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
+			}
+			if(1 == y_c) {
+				// std::cout << "Bot: " << apf::getNumber(numbers, vertices[(vert_index- x_elms -2)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index - x_elms -1)],0,0)
+				// 	<< std::endl;
+				ent_number_functor.number_to_apply = BOT_EDGE;
+				ent_number_functor.tag = edgeBCtag;
+				edge_verts[0] = vertices[(vert_index- x_elms -2)];
+				edge_verts[1] = vertices[(vert_index - x_elms -1)];
+				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
+			}
 		}
 	}
 	apf::deriveMdsModel(mesh);//this makes CAD model for classification
