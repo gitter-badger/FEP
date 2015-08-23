@@ -55,7 +55,7 @@ protected:
 				apf::changeMeshShape(tmp, apf::getLagrange(2));
 				break;
 			case SERENDIPITY_QUAD:
-				this->mesh_builder->build2DRectTriMesh(tmp, X_ELMS, Y_ELMS,
+				this->mesh_builder->build2DRectQuadMesh(tmp, X_ELMS, Y_ELMS,
 					0.0, 0.0, 2.0, 2.0);
 				apf::changeMeshShape(tmp, apf::getSerendipity());
 			default:
@@ -97,8 +97,8 @@ TEST_F(RectMeshTest, Triangle) {
 
 
 INSTANTIATE_TEST_CASE_P(GeometryTags, RectMeshTest,
-	::testing::Values( SERENDIPITY_QUAD, LINEAR_QUAD, QUAD_QUAD, LINEAR_TRI,
-						QUAD_TRI));
+	::testing::Values(LINEAR_QUAD, QUAD_QUAD, LINEAR_TRI,
+						QUAD_TRI, SERENDIPITY_QUAD));
 
 TEST_P(RectMeshTest, CheckBoundaryEdgeTags) {
 	int index = GetParam();
@@ -111,8 +111,6 @@ TEST_P(RectMeshTest, CheckBoundaryEdgeTags) {
 	* are in the right place*/
 	apf::MeshTag* edge_tag = specific_mesh->findTag(EDGE_BC_TAG_NAME);
 	EXPECT_TRUE(NULL != edge_tag);
-	std::cout << "EdgeTag address" << edge_tag << std::endl;
-
 	apf::Numbering* secret_numbering = specific_mesh->findNumbering(SECRET_BUILDER_NUMBERING);
 	EXPECT_TRUE(secret_numbering != NULL);
 	apf::MeshIterator* it;
@@ -240,8 +238,6 @@ TEST_P(RectMeshTest, CheckBoundaryVertexTags) {
 	* are in the right place*/
 	apf::MeshTag* vert_tag = specific_mesh->findTag(VERT_BC_TAG_NAME);
 	EXPECT_TRUE(NULL != vert_tag);
-	std::cout << "VertTag address" << vert_tag << std::endl;
-
 	apf::Numbering* secret_numbering = specific_mesh->findNumbering(SECRET_BUILDER_NUMBERING);
 	EXPECT_TRUE(NULL != secret_numbering);
 	apf::MeshIterator* it;
