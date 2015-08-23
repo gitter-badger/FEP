@@ -230,9 +230,6 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	apf::MeshTag* vertBCtag = mesh->createIntTag(VERT_BC_TAG_NAME, 1);
 	apf::MeshTag* edgeBCtag = mesh->createIntTag(EDGE_BC_TAG_NAME, 1);
 
-	std::cout << "VertTag address" << vertBCtag << std::endl;
-	std::cout << "EdgeTag address" << edgeBCtag << std::endl;
-
 	EntityNumberer ent_number_functor(mesh);
 	int node_number = 0;
 	//create an array to hold all our vertices
@@ -282,16 +279,6 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 			vert_index = y_c*(x_elms+1) + x_c;
 			mesh->setPoint(vertices[vert_index],0,*(temp_vec));
 			apf::number(numbers,vertices[vert_index],0,0,++node_number);
-			//print the location of the vertex
-			//creat two triangular elements from quad
-			tri_verts[0] = vertices[vert_index];
-			tri_verts[1] = vertices[(vert_index - 1)];
-			tri_verts[2] = vertices[(vert_index - x_elms - 2)];
-			apf::buildElement(mesh, 0, apf::Mesh::TRIANGLE, tri_verts);
-			tri_verts[0] = vertices[(vert_index - x_elms - 2)];
-			tri_verts[1] = vertices[(vert_index - x_elms - 1)];
-			tri_verts[2] = vertices[vert_index];
-			apf::buildElement(mesh, 0, apf::Mesh::TRIANGLE, tri_verts);
 			/*with a one element mesh these conditions are not mutally exclusive*/
 			if(x_c == x_elms) {
 				/*the quad we are making is on the right edge*/
@@ -362,6 +349,16 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 				edge_verts[1] = vertices[(vert_index - x_elms -1)];
 				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
 			}
+			//print the location of the vertex
+			//creat two triangular elements from quad
+			tri_verts[0] = vertices[vert_index];
+			tri_verts[1] = vertices[(vert_index - 1)];
+			tri_verts[2] = vertices[(vert_index - x_elms - 2)];
+			apf::buildElement(mesh, 0, apf::Mesh::TRIANGLE, tri_verts);
+			tri_verts[0] = vertices[(vert_index - x_elms - 2)];
+			tri_verts[1] = vertices[(vert_index - x_elms - 1)];
+			tri_verts[2] = vertices[vert_index];
+			apf::buildElement(mesh, 0, apf::Mesh::TRIANGLE, tri_verts);
 		}
 	}
 	apf::deriveMdsModel(mesh);//this makes CAD model for classification
