@@ -1,7 +1,11 @@
 #include "ElasticAnalysis2D.h"
 #include "StiffnessContributor2D.h"
 #include "ForceContributor2D.h"
-#include "MeshAdjReorder.h"
+#include "MeshAdjReorder.h" 
+
+#include "MeshBuilder.h"/*gives us the entity tags used find constraints
+						* and boundary conditions */
+#include "GeometryMappings.h" /*gives us the special enity tags enum*/
 
 #include <fstream>
 
@@ -75,19 +79,28 @@ uint32_t ElasticAnalysis2D::setup()
 	* all vertices classified on model vertex*/
 	bool _arb_flag = true;
 
+	apf::MeshTag* edge_tag = this->m->findTag(EDGE_BC_TAG_NAME);
+	apf::MeshTag* vert_tag = this->m->findTag(VERT_BC_TAG_NAME);
+	/*this should exist to use geomery based definition*/
+	assert(NULL != edge_tag);
+	assert(NULL != vert_tag);
+
+	int tag_data;
+
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
-		if(_arb_flag){ 
-			// this->makeConstraint(e);
-			_arb_flag = false;
+		if(this->m->hasTag(e, edge_tag)) {
+			this->m->getIntTag(e, edge_tag, &tag_data);
+			std::cout << "has edge tag: " << tag_data << std::endl;
 		}
 	}
-	/*randomly fix only the last edge*/
-
 	this->m->end(it);
 	it = this->m->begin(0);
 	while((e = this->m->iterate(it))) {
-
+		if(this->m->hasTag(e,vert_tag)) {
+			this->m->getIntTag(e, vert_tag, &tag_data);
+			std::cout << "has vert tag" << tag_data << std::endl;
+		}
 	}
 	this->m->end(it);
 
