@@ -67,6 +67,8 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
+
+	delete geo_map;
 }
 
 TEST_F(ElasticAnalysisTest, PlaneStrainComputation) {
@@ -171,6 +173,8 @@ TEST_F(ZeroConstraintZeroTraction, LinearQuad) {
 		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
+
+	delete geo_map;
 }
 
 TEST_F(ZeroConstraintZeroTraction, LinearTri) {
@@ -202,6 +206,8 @@ TEST_F(ZeroConstraintZeroTraction, LinearTri) {
 		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
+
+	delete geo_map;
 }
 
 TEST_F(ZeroConstraintZeroTraction, QuadQuad) {
@@ -233,6 +239,8 @@ TEST_F(ZeroConstraintZeroTraction, QuadQuad) {
 		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
+
+	delete geo_map;
 }
 
 TEST_F(ZeroConstraintZeroTraction, SerendipityQuad) {
@@ -264,6 +272,8 @@ TEST_F(ZeroConstraintZeroTraction, SerendipityQuad) {
 		/*this is a resolution of displacements to the 0.005mm or 5 microns*/
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
+
+	delete geo_map;
 }
 
 TEST_F(ZeroConstraintZeroTraction, QuadTri) {
@@ -301,4 +311,6 @@ TEST_F(ZeroConstraintZeroTraction, QuadTri) {
 	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
+
+	delete geo_map;
 }
