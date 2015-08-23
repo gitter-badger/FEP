@@ -1,5 +1,5 @@
 application: linear-elastostatics
-version: 0.1
+version: 0.2
 language: C++
 processes: 1
 
@@ -11,12 +11,12 @@ requirements:
 	- name: GoogleTest
 	  version: "1.7.0"
 	  repo: https://github.com/YetAnotherMinion/googletest.git
-	- name: OpenMPI
-	  version: "1.8.4"
+	- name: MPICH
+	  version: "3.1"
+	  release: "4.fc21"
+	  repo: "fedora/21/x86_64"
 	- name: Xerces-C++
 	  version: "3.1.2"
-	- name: armadillo
-	  version: "5.300.4"
-	  depends: 
-	  	name: SuperLU
-	  	version: "4.3"
+	- name: "PETSc"
+	  version: "3.6.1.0"
+	  repo: "git clone -b maint https://bitbucket.org/petsc/petsc petsc"
