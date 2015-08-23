@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <iomanip>
+#include <set>
+#include <algorithm>
 
 #include <gtest/gtest.h>
 
@@ -37,27 +39,59 @@ protected:
 		}	
 		delete mesh_builder;
 	}
-
 };
 
 TEST_F(RectMeshTest, Rectangle) {
-	EXPECT_NO_THROW(mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 2.0));
+	int X_ELMS = 2;
+	int Y_ELMS = 1;
+	EXPECT_NO_THROW(mesh_builder->build2DRectQuadMesh(mesh, X_ELMS, Y_ELMS, 0.0, 0.0, 2.0, 2.0));
 	EXPECT_TRUE(mesh != NULL);
 }
 
 TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
-	int X_ELMS = 3;
+	int X_ELMS = 4;
 	int Y_ELMS = 3;
 	EXPECT_NO_THROW(mesh_builder->build2DRectQuadMesh(mesh, X_ELMS, Y_ELMS, 0.0, 0.0, 2.0, 2.0));
 	EXPECT_TRUE(mesh != NULL);
-	apf::changeMeshShape(mesh, apf::getLagrange(1));
+	/*keeping this as a linear mesh is important*/
 	apf::writeVtkFiles("testQuad", mesh);
 	/*we do a bad thing and use undocumented numbering
 	* that the mesh_builder creates to verify that numberings
 	* are in the right place*/
 	apf::MeshTag* edge_tag = mesh->findTag(EDGE_BC_TAG_NAME);
+	apf::Numbering* secret_numbering = mesh->findNumbering(SECRET_BUILDER_NUMBERING);
+	EXPECT_TRUE(secret_numbering != NULL);
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
+	/*generate sets of the node numberings for the linear mesh*/
+	std::set<int> left_edge;
+	std::set<int> right_edge;
+	std::set<int> top_edge;
+	std::set<int> bot_edge;
+	/*since there must always be at least one element in Y, and
+	* there is special numbering behaviour for the bottom left 
+	* element */
+	left_edge.insert(1);
+	left_edge.insert(2);
+	right_edge.insert((2*X_ELMS + 1));
+	for(std::size_t ii = 2*(X_ELMS+1); ii <= ((X_ELMS+1) * (Y_ELMS+1)); ii+=(X_ELMS+1)) {
+		std::cout << "inserting right: " << ii << std::endl;
+		right_edge.insert(ii);
+	}
+
+	for(std::size_t ii = 1; ii <= (2*X_ELMS +1); ii+=2) {
+		std::cout << "inserting bot: " << ii << std::endl;
+		bot_edge.insert(ii);
+	}
+	for(std::size_t ii = (2* X_ELMS + 3); ii <= ((X_ELMS+1)* Y_ELMS +1); ii+=(X_ELMS+1)) {
+		std::cout << "inserting left: " << ii << std::endl;
+		left_edge.insert(ii);
+	}
+	for(std::size_t ii = ((X_ELMS+1)* Y_ELMS +1); ii <= ((X_ELMS+1) * (Y_ELMS+1)); ++ii) {
+		std::cout << "inserting top: " << ii << std::endl;
+		top_edge.insert(ii);
+	}
+
 	it = mesh->begin(1);
 	while((e = mesh->iterate(it))) {
 		apf::Downward down;
@@ -65,7 +99,63 @@ TEST_F(RectMeshTest, CheckBoundaryEdgeTags) {
 		if(mesh->hasTag(e, edge_tag)) {
 			/*find the vertices bounding that edge*/
 			int n_verts = mesh->getDownward(e, 0, down);
-
+			EXPECT_TRUE(n_verts == 2);
+			std::set<int> edge_verts;
+			edge_verts.clear();
+			for(std::size_t ii = 0; ii < n_verts; ++ii) {
+				/*create a set of the edge vertices, this
+				* really should only be two elements*/
+				edge_verts.insert(apf::getNumber(secret_numbering, down[ii], 0,0));
+			}
+			std::set<int> intersect;
+			intersect.clear();
+			/*test left side*/
+			set_intersection(left_edge.begin(), left_edge.end(), 
+				edge_verts.begin(), edge_verts.end(), 
+				std::inserter(intersect, intersect.begin()));
+			if(intersect.size() == n_verts) {
+				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
+				if(mesh->hasTag(e, edge_tag)) {
+					mesh->getIntTag(e, edge_tag, &data);
+					EXPECT_EQ(LEFT_EDGE, data);
+				}
+			}
+			/*check right edge*/
+			intersect.clear();
+			set_intersection(right_edge.begin(), right_edge.end(), 
+				edge_verts.begin(), edge_verts.end(), 
+				std::inserter(intersect, intersect.begin()));
+			if(intersect.size() == n_verts) {
+				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
+				if(mesh->hasTag(e, edge_tag)) {
+					mesh->getIntTag(e, edge_tag, &data);
+					EXPECT_EQ(RIGHT_EDGE, data);
+				}
+			}
+			/*check bot edge*/
+			intersect.clear();
+			set_intersection(bot_edge.begin(), bot_edge.end(), 
+				edge_verts.begin(), edge_verts.end(), 
+				std::inserter(intersect, intersect.begin()));
+			if(intersect.size() == n_verts) {
+				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
+				if(mesh->hasTag(e, edge_tag)) {
+					mesh->getIntTag(e, edge_tag, &data);
+					EXPECT_EQ(BOT_EDGE, data);
+				}
+			}
+			/*check top edge*/
+			intersect.clear();
+			set_intersection(top_edge.begin(), top_edge.end(), 
+				edge_verts.begin(), edge_verts.end(), 
+				std::inserter(intersect, intersect.begin()));
+			if(intersect.size() == n_verts) {
+				EXPECT_TRUE(mesh->hasTag(e, edge_tag));
+				if(mesh->hasTag(e, edge_tag)) {
+					mesh->getIntTag(e, edge_tag, &data);
+					EXPECT_EQ(TOP_EDGE, data);
+				}
+			}
 		}
 	}
 	mesh->end(it);
@@ -76,7 +166,6 @@ TEST_F(RectMeshTest, CheckBoundaryVertexTags) {
 	int Y_ELMS = 3;
 	EXPECT_NO_THROW(mesh_builder->build2DRectQuadMesh(mesh, X_ELMS, Y_ELMS, 0.0, 0.0, 2.0, 2.0));
 	EXPECT_TRUE(mesh != NULL);
-	apf::changeMeshShape(mesh, apf::getLagrange(1));
 	apf::writeVtkFiles("testQuad", mesh);
 	/*we do a bad thing and use undocumented numbering
 	* that the mesh_builder creates to verify that numberings
