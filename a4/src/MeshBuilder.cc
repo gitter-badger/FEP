@@ -233,8 +233,13 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
   	long double y_size = yf - y0;
 
   	//create an empty numbering
-	apf::Numbering* numbers = apf::createNumbering(mesh,"my_numbers", 
+	apf::Numbering* numbers = apf::createNumbering(mesh,SECRET_BUILDER_NUMBERING, 
 												   mesh->getShape(), 1);
+
+	apf::MeshTag* vertBCtag = mesh->createIntTag(VERT_BC_TAG_NAME, 1);
+	apf::MeshTag* edgeBCtag = mesh->createIntTag(EDGE_BC_TAG_NAME, 1);
+
+	EntityNumberer ent_number_functor(mesh);
 	int node_number = 0;
 	//create an array to hold all our vertices
 	apf::MeshEntity** vertices = new apf::MeshEntity*[total_elms];
