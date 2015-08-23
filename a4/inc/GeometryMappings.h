@@ -33,6 +33,10 @@ enum GeoMapOptions {
 	VERT_X1Y1 = 107
 };
 
+/*add some default functions*/
+
+
+
 typedef apf::Vector3(*neumann_fnc)(apf::Vector3 const& );
 typedef void(*bound_gen)(apf::MeshEntity* , std::vector< uint64_t >&, std::vector < double > & );
 
@@ -46,8 +50,8 @@ public:
 	GeometryMappings();
 	~GeometryMappings();
 
-	void addNeumannMapping(uint64_t key, apf::Vector3(*neumann_fnc)(apf::Vector3 const& ));
-	void addDircheletMapping(uint64_t key, void(*fnc_ptr)(apf::MeshEntity* , std::vector< uint64_t > & nodes, std::vector < double > & d));
+	void addNeumannMapping(uint64_t key, neumann_fnc);
+	void addDircheletMapping(uint64_t key, bound_gen);
 
 	std::map< uint64_t,neumann_fnc > neumann_map;
 	std::map< uint64_t,bound_gen > dirchelet_map;
