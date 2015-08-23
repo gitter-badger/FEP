@@ -129,24 +129,24 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 				if(y_c == y_elms) {
 					/*this means we know where the x1y1 vertex is now*/
 					int tmp_number_to_apply = VERT_X1Y1;
-					// std::cout << "vert x1y1: " << apf::getNumber(numbers, quad_verts[0],0,0) << std::endl;
+					// std::cout << "vert x1y1: " << apf::getNumber(numbers, vertices[(vert_index)],0,0) << std::endl;
 
-					mesh->setIntTag(quad_verts[0], vertBCtag, &tmp_number_to_apply);
+					mesh->setIntTag(vertices[(vert_index)], vertBCtag, &tmp_number_to_apply);
 				}
 				if(1 == y_c) {
 					int tmp_number_to_apply = VERT_X1Y0;
-					// std::cout << "vert x1y0: " << apf::getNumber(numbers, quad_verts[3],0,0) << std::endl;
+					// std::cout << "vert x1y0: " << apf::getNumber(numbers, vertices[(vert_index - x_elms -1)],0,0) << std::endl;
 
-					mesh->setIntTag(quad_verts[3], vertBCtag, &tmp_number_to_apply);
+					mesh->setIntTag(vertices[(vert_index - x_elms -1)], vertBCtag, &tmp_number_to_apply);
 				}
-				// std::cout << "Right: " << apf::getNumber(numbers, quad_verts[0],0,0) << ", "
-				// 	<< apf::getNumber(numbers, quad_verts[3],0,0) << ", " 
+				// std::cout << "Right: " << apf::getNumber(numbers, vertices[(vert_index)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index - x_elms -1)],0,0) << ", " 
 				// 	<< std::endl;
 
 				ent_number_functor.number_to_apply = RIGHT_EDGE;
 				ent_number_functor.tag = edgeBCtag;
-				edge_verts[0] = quad_verts[0];
-				edge_verts[1] = quad_verts[3];
+				edge_verts[0] = vertices[(vert_index)];
+				edge_verts[1] = vertices[(vert_index - x_elms -1)];
 				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
 
 			} 
@@ -154,43 +154,43 @@ void MeshBuilder::build2DRectQuadMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 				if(y_c == y_elms) {
 					/*this means we know where the x1y1 vertex is now*/
 					int tmp_number_to_apply = VERT_X0Y1;
-					// std::cout << "vert x0y1: " << apf::getNumber(numbers, quad_verts[1],0,0) << std::endl;
+					// std::cout << "vert x0y1: " << apf::getNumber(numbers, vertices[(vert_index-1)],0,0) << std::endl;
 
-					mesh->setIntTag(quad_verts[1], vertBCtag, &tmp_number_to_apply);
+					mesh->setIntTag(vertices[(vert_index-1)], vertBCtag, &tmp_number_to_apply);
 				}
 				if(1 == y_c) {
 					int tmp_number_to_apply = VERT_X0Y0;
-					// std::cout << "vert x0y0: " << apf::getNumber(numbers, quad_verts[2],0,0) << std::endl;
+					// std::cout << "vert x0y0: " << apf::getNumber(numbers, vertices[(vert_index- x_elms -2)],0,0) << std::endl;
 
-					mesh->setIntTag(quad_verts[2], vertBCtag, &tmp_number_to_apply);
+					mesh->setIntTag(vertices[(vert_index- x_elms -2)], vertBCtag, &tmp_number_to_apply);
 				}
-				// std::cout << "Left: " << apf::getNumber(numbers, quad_verts[1],0,0) << ", "
-				// 	<< apf::getNumber(numbers, quad_verts[2],0,0)
+				// std::cout << "Left: " << apf::getNumber(numbers, vertices[(vert_index-1)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index- x_elms -2)],0,0)
 				// 	<< std::endl;
 				ent_number_functor.number_to_apply = LEFT_EDGE;
 				ent_number_functor.tag = edgeBCtag;
-				edge_verts[0] = quad_verts[1];
-				edge_verts[1] = quad_verts[2];
+				edge_verts[0] = vertices[(vert_index-1)];
+				edge_verts[1] = vertices[(vert_index- x_elms -2)];
 				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
 			}
 			if(y_c == y_elms) {
-				// std::cout << "Top: " << apf::getNumber(numbers, quad_verts[0],0,0) << ", "
-				// 	<< apf::getNumber(numbers, quad_verts[1],0,0)
+				// std::cout << "Top: " << apf::getNumber(numbers, vertices[(vert_index)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index-1)],0,0)
 				// 	<< std::endl;
 				ent_number_functor.number_to_apply = TOP_EDGE;
 				ent_number_functor.tag = edgeBCtag;
-				edge_verts[0] = quad_verts[0];
-				edge_verts[1] = quad_verts[1];
+				edge_verts[0] = vertices[(vert_index)];
+				edge_verts[1] = vertices[(vert_index-1)];
 				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
 			}
 			if(1 == y_c) {
-				// std::cout << "Bot: " << apf::getNumber(numbers, quad_verts[2],0,0) << ", "
-				// 	<< apf::getNumber(numbers, quad_verts[3],0,0)
+				// std::cout << "Bot: " << apf::getNumber(numbers, vertices[(vert_index- x_elms -2)],0,0) << ", "
+				// 	<< apf::getNumber(numbers, vertices[(vert_index - x_elms -1)],0,0)
 				// 	<< std::endl;
 				ent_number_functor.number_to_apply = BOT_EDGE;
 				ent_number_functor.tag = edgeBCtag;
-				edge_verts[0] = quad_verts[2];
-				edge_verts[1] = quad_verts[3];
+				edge_verts[0] = vertices[(vert_index- x_elms -2)];
+				edge_verts[1] = vertices[(vert_index - x_elms -1)];
 				apf::buildElement(mesh, NULL, apf::Mesh::EDGE, edge_verts, &ent_number_functor);
 			}
 
