@@ -110,6 +110,9 @@ TEST_P(RectMeshTest, CheckBoundaryEdgeTags) {
 	* that the mesh_builder creates to verify that numberings
 	* are in the right place*/
 	apf::MeshTag* edge_tag = specific_mesh->findTag(EDGE_BC_TAG_NAME);
+	EXPECT_TRUE(NULL != edge_tag);
+	std::cout << "EdgeTag address" << edge_tag << std::endl;
+
 	apf::Numbering* secret_numbering = specific_mesh->findNumbering(SECRET_BUILDER_NUMBERING);
 	EXPECT_TRUE(secret_numbering != NULL);
 	apf::MeshIterator* it;
@@ -133,7 +136,6 @@ TEST_P(RectMeshTest, CheckBoundaryEdgeTags) {
 	for(std::size_t ii = 2*(X_ELMS+1); ii <= ((X_ELMS+1) * (Y_ELMS+1)); ii+=(X_ELMS+1)) {
 		right_edge.insert(ii);
 	}
-
 	for(std::size_t ii = 1; ii <= (2*X_ELMS +1); ii+=2) {
 		bot_edge.insert(ii);
 	}
@@ -219,7 +221,11 @@ TEST_P(RectMeshTest, CheckBoundaryEdgeTags) {
 	EXPECT_EQ(X_ELMS, counter_top_edge);
 	EXPECT_EQ(X_ELMS, counter_bot_edge);
 	EXPECT_EQ(Y_ELMS, counter_right_edge);
-	EXPECT_EQ(Y_ELMS, counter_left_edge);	
+	EXPECT_EQ(Y_ELMS, counter_left_edge);
+
+	/*clean up the generated mesh*/
+	specific_mesh->destroyNative();
+	apf::destroyMesh(specific_mesh);	
 }
 
 TEST_P(RectMeshTest, CheckBoundaryVertexTags) {
@@ -233,8 +239,11 @@ TEST_P(RectMeshTest, CheckBoundaryVertexTags) {
 	* that the mesh_builder creates to verify that numberings
 	* are in the right place*/
 	apf::MeshTag* vert_tag = specific_mesh->findTag(VERT_BC_TAG_NAME);
+	EXPECT_TRUE(NULL != vert_tag);
+	std::cout << "VertTag address" << vert_tag << std::endl;
+
 	apf::Numbering* secret_numbering = specific_mesh->findNumbering(SECRET_BUILDER_NUMBERING);
-	EXPECT_TRUE(secret_numbering != NULL);
+	EXPECT_TRUE(NULL != secret_numbering);
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
 	it = specific_mesh->begin(0);
@@ -256,4 +265,7 @@ TEST_P(RectMeshTest, CheckBoundaryVertexTags) {
 		}
 	}
 	specific_mesh->end(it);
+	/*clean up the generated mesh*/
+	specific_mesh->destroyNative();
+	apf::destroyMesh(specific_mesh);	
 }

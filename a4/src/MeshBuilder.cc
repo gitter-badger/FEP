@@ -230,6 +230,9 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	apf::MeshTag* vertBCtag = mesh->createIntTag(VERT_BC_TAG_NAME, 1);
 	apf::MeshTag* edgeBCtag = mesh->createIntTag(EDGE_BC_TAG_NAME, 1);
 
+	std::cout << "VertTag address" << vertBCtag << std::endl;
+	std::cout << "EdgeTag address" << edgeBCtag << std::endl;
+
 	EntityNumberer ent_number_functor(mesh);
 	int node_number = 0;
 	//create an array to hold all our vertices
