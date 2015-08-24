@@ -228,13 +228,35 @@ TEST_F(AlgebraicSystemTest, PreventMutltipleAssembly) {
 
 TEST_F(AlgebraicSystemTest, RepeatedConstraints) {
 	AlgebraicSystem linsys(this->nGlobalDOFs);
-
 	EXPECT_NO_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping));
+	/*over constraining the system is allowed, even if we add the same entity
+	* twice, it is expected to overwrite the exisiting displacements. So to 
+	* verify we change one of the displacements*/
+	this->local_disp[0] += 27.0;
+	EXPECT_NO_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping));
+	/*the known displacements are private, so we must go ahead and solve
+	* the empty system to then extract the solution vector in order to check
+	* if the overwriting was sucessful. We are only solving a tiny system,
+	* so this behaviour is acceptable*/
+	linsys.beginAssembly();
+	linsys.synchronize();
+	linsys.solve();
 
-	/*over constraining the system is an exception, even if we add the same entity
-	* twice, so don't add the same entity twice*/
-	EXPECT_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping), std::logic_error);
-
+	std::vector<double> solution;
+	solution.clear();
+	linsys.extractDisplacement(solution);
+	EXPECT_EQ(nGlobalDOFs, solution.size());
+	for(std::size_t ii = 0; ii < nGlobalDOFs; ++ii) {
+		if(ii == this->local_mapping[0]) {
+			EXPECT_EQ(this->local_disp[0], solution[ii]);
+		} else if(ii == this->local_mapping[1]) {
+			EXPECT_EQ(this->local_disp[1], solution[ii]);
+		} else if(ii == this->local_mapping[2]) {
+			EXPECT_EQ(this->local_disp[2], solution[ii]);
+		} else {
+			EXPECT_FLOAT_EQ(0.0, solution[ii]);
+		}
+	}
 }
 
 TEST_F(AlgebraicSystemTest, OutOfRangeContraint) {

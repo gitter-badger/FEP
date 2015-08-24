@@ -78,20 +78,30 @@ void AlgebraicSystem::addBoundaryConstraint(
 	* overwritten anything since there was not a corresponding displacement.
 	*/
 	std::set<uint64_t> all_possible_keys;
-	for(std::size_t ii = 0; ii < fixed.size(); ++ii) {
+	for(std::size_t ii = 0; ii < input_size; ++ii) {
 		uint64_t possible_key = node_mapping[ii];
 		/*remember that every valid key was already intialized, so
 		* we can also check if this is invalid*/
 		if(this->masks.count(possible_key) != 1) {
 			throw std::invalid_argument("Global dof mapped is out of range");
 		}
-		if(this->masks[possible_key] != UNMAPPED_VALUE) {
-			throw std::logic_error("Overconstrained error!");
-		}
+		/*TODO FIX: in order to enable the same boundary conditions to be 
+		* applied to more than one mesh edge, we need some kind of contention
+		* strategy to determine which of the multiple boundary conditions
+		* sharing the edge vertex node determine what the dofs endup on that
+		* vertex node in question. The easiest thing to do right now is to
+		* have every single edge bondary constrain overwrite any exisiting
+		* nodes on shared dofs.*/
+
+		// if(this->masks[possible_key] != UNMAPPED_VALUE) {
+		// 	throw std::logic_error("Overconstrained error!");
+		// }
+
 		/*create a set based on the elements of the node_mapping to check for
 		* any repeated keys as well*/
 		all_possible_keys.insert(possible_key);
 	}
+	/*set is used to find duplicate keys*/
 	if(all_possible_keys.size() != fixed.size()) {
 		throw std::logic_error(
 			"Overconstrained inside element mapping, repeated local keys!");
@@ -102,15 +112,28 @@ void AlgebraicSystem::addBoundaryConstraint(
 	uint64_t cur_ndogs = this->known_d.size();
 
 	for(std::size_t ii = 0; ii < input_size; ++ii) {
+		/*TODO FIX: see above, but now it is possible to overwrite mappings
+		* so we need to check each key to see if it is already mapped,
+		* if so then only change the value of displacement associated instead
+		* of pushing a new displacement to the vector */
+
 		/*convert values to fixed width, discarding extra precision
 		* if so necessary by using Cs type promotion rules*/
 		uint64_t key = node_mapping[ii];
-		/*look up key an convert it */
-		this->masks[key] = cur_ndogs | (KNOWN_DOF_MASK);
-		printf("key %lx \n", this->masks[key]);
-		++cur_ndogs;
-		/*add the proscribed displacements to our known_d(isplacement) store*/
-		this->known_d.push_back(fixed[ii]);
+		if(this->masks[key] != UNMAPPED_VALUE) {
+			/*find the index in known_d*/
+			uint32_t tmp_indx = (this->masks[key] & SAMPLE_LOW_32_BITS);
+			std::cout << "key: " << tmp_indx << " already written, !!OVERWRITING" << std::endl;
+			this->known_d[tmp_indx] = fixed[ii];
+
+		} else {
+			/*look up key an convert it */
+			this->masks[key] = cur_ndogs | (KNOWN_DOF_MASK);
+			printf("key %lx \n", this->masks[key]);
+			++cur_ndogs;
+			/*add the proscribed displacements to our known_d(isplacement) store*/
+			this->known_d.push_back(fixed[ii]);
+		}
 	}
 
 }
