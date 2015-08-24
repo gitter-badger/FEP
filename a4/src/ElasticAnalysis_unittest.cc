@@ -47,10 +47,10 @@ apf::Vector3 LinearLoad_X(apf::Vector3 const & p)
 }
 
 TEST_F(ElasticAnalysisTest, AppRunTest) {
-	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
-	EXPECT_TRUE(mesh != NULL);
+	mesh_builder->build2DRectQuadMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
+	EXPECT_TRUE(this->mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::changeMeshShape(mesh, apf::getLagrange(1));
+	apf::changeMeshShape(this->mesh, apf::getLagrange(1));
 	/*physical parameters*/
 	double E, Nu;
 	E = YOUNGS_MODULUS;
@@ -71,7 +71,7 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	geo_map->addNeumannMapping(RIGHT_EDGE, traction_ptr);
 
 	struct ElasticAnalysisInput input = {
-			mesh,
+			this->mesh,
 			geo_map,
 			integration_order,
 			E,
@@ -83,7 +83,11 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	EXPECT_EQ(0, tmp.setup());
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
-
+	std::cout << "=========== Solution ============" << std::endl;
+	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+		std::cout << "d_" << ii << " = " << (tmp.displacement[ii]) << std::endl;
+	}
+	apf::writeVtkFiles("solution_mesh", this->mesh);
 	delete geo_map;
 }
 

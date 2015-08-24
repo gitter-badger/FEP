@@ -50,7 +50,6 @@ private:
 	apf::Numbering* nodeNums;
 	apf::Numbering* faceNums;
 
-
 };
 
 /*expose this internal method for testing purposes*/
