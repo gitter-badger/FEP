@@ -41,6 +41,11 @@ protected:
 
 };
 
+apf::Vector3 LinearLoad_X(apf::Vector3 const & p)
+{
+	return apf::Vector3(10.0, 0, 0);
+}
+
 TEST_F(ElasticAnalysisTest, AppRunTest) {
 	mesh_builder->build2DRectQuadMesh(mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(mesh != NULL);
@@ -52,8 +57,19 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	Nu = POISSONS_RATIO;
 	uint32_t integration_order = 4;
 	bool reorder_flag = true;
-	/*currently unused*/
+	/*Fix the bottom edge in the Y direction only, and the
+	* left side in the X direction only*/
 	GeometryMappings* geo_map = new GeometryMappings();
+	void (*cnstr_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
+	cnstr_ptr = &zeroDisplacementX_2D;
+	geo_map->addDircheletMapping(LEFT_EDGE, cnstr_ptr);
+	cnstr_ptr = &zeroDisplacementY_2D;
+	geo_map->addDircheletMapping(BOT_EDGE, cnstr_ptr);
+
+	apf::Vector3 (*traction_ptr)(apf::Vector3 const &);
+	traction_ptr = &LinearLoad_X;
+	geo_map->addNeumannMapping(RIGHT_EDGE, traction_ptr);
+
 	struct ElasticAnalysisInput input = {
 			mesh,
 			geo_map,

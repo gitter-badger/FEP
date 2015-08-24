@@ -77,8 +77,6 @@ public:
 	std::map< uint64_t,bound_gen > dirchelet_map;
 
 private:
-	std::set< uint64_t > nuemann_keys;
-	std::set< uint64_t > dirchelet_keys;
 
 };
 

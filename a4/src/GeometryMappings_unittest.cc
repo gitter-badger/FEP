@@ -13,10 +13,9 @@
 #include <apfMDS.h>
 
 #include "MeshAdjReorder.h"
-#include "ElasticAnalysis2D.h"
+#include "ElasticAnalysis2D.h" /*provides NODE_NUM_TAG_NAME and FACE_NUM_TAG_NAME constants*/
 #include "MeshBuilder.h"
 #include "GeometryMappings.h"
-#include "AlgebraicSystem.h" /*provides SOLVER_ABSOLUTE_TOLERANCE constant*/
 
 #define CONSTANT_DISPLACEMENT 3.5
 void ConstantDisplacementX_2D(
@@ -48,6 +47,11 @@ void ConstantDisplacementX_2D(
 	assert(curs_indx == nnodes);
 }
 
+#define ARBITRARY_DOUBLE_1 312.9
+apf::Vector3 LinearLoadX_1(apf::Vector3 const & p)
+{
+	return apf::Vector3(ARBITRARY_DOUBLE_1, 0.0, 0.0);
+}
 
 class GeometryMappingTest : public testing::Test
 {
@@ -75,14 +79,72 @@ protected:
 	}
 };
 
-TEST_F(GeometryMappingTest, NoneConstraint) {
+TEST_F(GeometryMappingTest, AddFunction) {
 	/*we do need to generate a mesh for this to work properly*/
 	GeometryMappings geo_map;
 	EXPECT_EQ(0, geo_map.dirchelet_map.count(LEFT_EDGE));
-	
 	void (*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
 	fnc_ptr = &noConstraint;
-
 	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
 	EXPECT_EQ(1, geo_map.dirchelet_map.count(LEFT_EDGE));
+}
+
+TEST_F(GeometryMappingTest, RetrieveFunction) {
+	/*we do need to generate a mesh for this to work properly*/
+	GeometryMappings geo_map;
+	void (*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
+	fnc_ptr = &noConstraint;
+	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
+	fnc_ptr = NULL;
+	EXPECT_EQ(1, geo_map.dirchelet_map.count(LEFT_EDGE));
+	fnc_ptr = geo_map.dirchelet_map[LEFT_EDGE];
+	EXPECT_EQ(&noConstraint, fnc_ptr);
+
+
+}
+
+TEST_F(GeometryMappingTest, DeleteFunction) {
+	GeometryMappings geo_map;
+	void (*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
+	fnc_ptr = &noConstraint;
+	EXPECT_EQ(0, geo_map.dirchelet_map.count(LEFT_EDGE));
+	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
+	EXPECT_EQ(1, geo_map.dirchelet_map.count(LEFT_EDGE));
+	/*use a null pointer to erase the key value*/
+	fnc_ptr = NULL;
+	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
+	EXPECT_EQ(0, geo_map.dirchelet_map.count(LEFT_EDGE));
+}
+
+TEST_F(GeometryMappingTest, NoneConstraint) {
+	/*we do need to generate a mesh for this to work properly*/
+	GeometryMappings geo_map;
+	void (*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
+	fnc_ptr = &noConstraint;
+	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
+	fnc_ptr = NULL;
+	/*initialize these vectors with some garbage values to make sure
+	* the method actually returns the */
+	std::vector<uint64_t> fixed_mapping(10, 13);
+	std::vector<double> disp_mapped(10, 67.92);
+	fnc_ptr = geo_map.dirchelet_map[LEFT_EDGE];
+
+}
+
+TEST_F(GeometryMappingTest, ZeroDispInX) {
+	/*we do need to generate a mesh for this to work properly*/
+	GeometryMappings geo_map;
+	void (*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
+	fnc_ptr = &zeroDisplacementX_2D;
+	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
+
+}
+
+TEST_F(GeometryMappingTest, ZeroDispInY) {
+	/*we do need to generate a mesh for this to work properly*/
+	GeometryMappings geo_map;
+	void (*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector<uint64_t> &, std::vector<double> &);
+	fnc_ptr = &zeroDisplacementY_2D;
+	geo_map.addDircheletMapping(LEFT_EDGE, fnc_ptr);
+
 }
