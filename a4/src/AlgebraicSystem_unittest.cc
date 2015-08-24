@@ -269,25 +269,19 @@ TEST_F(AlgebraicSystemTest, ExtractSolutionWithConstraints) {
 
 	std::vector<double> solution;
 	solution.clear();
-	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
-
-	MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
-	VecView(linsys.F, PETSC_VIEWER_STDOUT_WORLD);
-
-
 	linsys.extractDisplacement(solution);
-	// EXPECT_EQ(nGlobalDOFs, solution.size());
-	// for(std::size_t ii = 0; ii < nGlobalDOFs; ++ii) {
-	// 	if(ii == this->local_mapping[0]) {
-	// 		EXPECT_EQ(this->local_disp[0], solution[ii]);
-	// 	} else if(ii == this->local_mapping[1]) {
-	// 		EXPECT_EQ(this->local_disp[1], solution[ii]);
-	// 	} else if(ii == this->local_mapping[2]) {
-	// 		EXPECT_EQ(this->local_disp[2], solution[ii]);
-	// 	} else {
-	// 		EXPECT_FLOAT_EQ(0.0, solution[ii]);
-	// 	}
-	// }
+	EXPECT_EQ(nGlobalDOFs, solution.size());
+	for(std::size_t ii = 0; ii < nGlobalDOFs; ++ii) {
+		if(ii == this->local_mapping[0]) {
+			EXPECT_EQ(this->local_disp[0], solution[ii]);
+		} else if(ii == this->local_mapping[1]) {
+			EXPECT_EQ(this->local_disp[1], solution[ii]);
+		} else if(ii == this->local_mapping[2]) {
+			EXPECT_EQ(this->local_disp[2], solution[ii]);
+		} else {
+			EXPECT_FLOAT_EQ(0.0, solution[ii]);
+		}
+	}
 }
 
 	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
