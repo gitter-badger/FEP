@@ -78,8 +78,6 @@ uint32_t ElasticAnalysis2D::setup()
 	/*find all of the boundary conditions fixed,
 	* chech all edges classified on model edge and
 	* all vertices classified on model vertex*/
-	bool _arb_flag = true;
-
 	apf::MeshTag* face_tag = this->m->findTag(FACE_BC_TAG_NAME);
 	apf::MeshTag* edge_tag = this->m->findTag(EDGE_BC_TAG_NAME);
 	apf::MeshTag* vert_tag = this->m->findTag(VERT_BC_TAG_NAME);
@@ -195,12 +193,11 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		/*view the intermediate matrix*/
 		uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
 		apf::NewArray< int > node_mapping(n_l_dofs);
-		apf::getElementNumbers(nodeNums, e, node_mapping);
-		// std::cout  << "length of numbering: " << length << std::endl;
-		// for(uint32_t ii = 0; ii < nnodes; ++ii){
-		// 	std::cout << "Node " << ii << ": " << node_mapping[ii] << std::endl;
-		// }
-		this->linsys->assemble(stiff.ke, node_mapping, n_l_dofs);
+		int tmp_sz = apf::getElementNumbers(nodeNums, e, node_mapping);
+		/*we want to make sure that our guess for the vector was the right size
+		* so we know how many degress of freedom our nodes have*/
+		assert(tmp_sz == n_l_dofs);
+		this->linsys->assemble(stiff.ke, node_mapping, tmp_sz);
 
 	} else {
 		/*only accepts faces, so indicate improper input*/
