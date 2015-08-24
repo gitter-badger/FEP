@@ -404,32 +404,29 @@ PetscErrorCode AlgebraicSystem::synchronize()
 	if(false == this->_allow_assembly) {
 		throw std::invalid_argument("must call beginAssembly before synchronize");
 	}
+	PetscErrorCode ierr;
 	/*allocate a buffer of rows that the main diagonal
 	* must be initialized to zero*/
 	PetscInt numRows = this->_row_has_been_initialized.size()
 						- this->_num_rows_initialized;
-	PetscInt *rows_to_zero = new PetscInt[numRows]; 
-	PetscScalar *values = new PetscScalar[numRows];
+	PetscInt rows_to_zero; 
+	PetscScalar values;
 	std::size_t curs_indx = 0;
 	for(std::size_t ii = 0; ii < this->_row_has_been_initialized.size(); ++ii) {
 		if(false == this->_row_has_been_initialized[ii]) {
-			rows_to_zero[curs_indx] = ii;
-			values[curs_indx] = 0.0;
+			rows_to_zero = ii;
+			values = 0.0;
+			/*TODO: FIX: right now just set the value to zero of the diagonal 
+			* element, so that other tests pass because they do not set the 
+			* the other rows, and removing all of the rows which are not set messes
+			* these tests up bu shrinking matrix size to zero*/
+			MatSetValues(this->K, 1, &rows_to_zero, 1, &rows_to_zero,
+				&values, ADD_VALUES);
+			// ierr = MatZeroRows(this->K, numRows, rows_to_zero, 0.0, this->d, this->F);
 			curs_indx++;
 		}
 	}
 	assert(curs_indx == numRows);
-	PetscErrorCode ierr;
-
-	/*TODO: FIX: right now just set the value to zero of the diagonal 
-	* element, so that other tests pass because they do not set the 
-	* the other rows, and removing all of the rows which are not set messes
-	* these tests up bu shrinking matrix size to zero*/
-	MatSetValues(this->K, numRows, rows_to_zero, numRows, rows_to_zero,
-		values, ADD_VALUES);
-	// ierr = MatZeroRows(this->K, numRows, rows_to_zero, 0.0, this->d, this->F);
-	delete[] rows_to_zero;
-	delete[] values;
 
 	ierr = VecAssemblyBegin(this->F);
   	CHKERRQ(ierr);
