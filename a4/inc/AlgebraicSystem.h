@@ -43,6 +43,12 @@ public:
 private:
 	bool _allow_assembly;
 	bool _allow_displacement_extraction;
+	/*keep track of which rows have been initialized, this will be
+	* used after all assembly is finished to fill zero on the main
+	* diagonal of all uninitailized rows which is required by the
+	* PETSc solvers we are using */
+	std::size_t _num_rows_initialized;
+	std::vector<bool> _row_has_been_initialized;
 	/*the key is the index in the global numbering of dofs,
 	* most significant bit of the value is 1 if the global dof
 	* is fixed, with the lower 32 bits being the only valid indices

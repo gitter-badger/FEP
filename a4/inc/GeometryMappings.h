@@ -23,6 +23,8 @@ enum GeoMapOptions {
 	GRAVITY_BODY_FORCE = 4,
 	TRACTION_1 = 5,
 	TRACTION_2 = 6,
+	TRACTION_3 = 7,
+	ALL_FACES = 99,
 	LEFT_EDGE = 100, /*these are for 2D rectangle meshes*/
 	RIGHT_EDGE = 101,
 	TOP_EDGE = 102,

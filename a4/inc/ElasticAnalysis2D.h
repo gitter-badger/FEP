@@ -42,6 +42,7 @@ public:
 
 	AlgebraicSystem* linsys;
 private:
+	GeometryMappings* geometry_map;
 	uint32_t integration_order;
 	apf::Mesh* m;
 	apf::Field* field;

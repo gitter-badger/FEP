@@ -41,6 +41,7 @@ apf::Matrix< 3,3 > buildD(double E, double Nu, bool use_plane_stress) {
 }
 
 ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
+	geometry_map(in.geo_map),
 	integration_order(in.integration_order),
 	m(in.m)
 {
@@ -79,9 +80,11 @@ uint32_t ElasticAnalysis2D::setup()
 	* all vertices classified on model vertex*/
 	bool _arb_flag = true;
 
+	apf::MeshTag* face_tag = this->m->findTag(FACE_BC_TAG_NAME);
 	apf::MeshTag* edge_tag = this->m->findTag(EDGE_BC_TAG_NAME);
 	apf::MeshTag* vert_tag = this->m->findTag(VERT_BC_TAG_NAME);
 	/*this should exist to use geomery based definition*/
+	assert(NULL != face_tag);
 	assert(NULL != edge_tag);
 	assert(NULL != vert_tag);
 
@@ -91,7 +94,12 @@ uint32_t ElasticAnalysis2D::setup()
 	while((e = this->m->iterate(it))) {
 		if(this->m->hasTag(e, edge_tag)) {
 			this->m->getIntTag(e, edge_tag, &tag_data);
-			std::cout << "has edge tag: " << tag_data << std::endl;
+			if(1 == this->geometry_map->dirchelet_map.count(tag_data))
+			{
+				std::cout << "found key" << std::endl;
+			} else {
+				std::cout << "key not found " << std::endl;
+			}
 		}
 	}
 	this->m->end(it);
@@ -99,7 +107,12 @@ uint32_t ElasticAnalysis2D::setup()
 	while((e = this->m->iterate(it))) {
 		if(this->m->hasTag(e,vert_tag)) {
 			this->m->getIntTag(e, vert_tag, &tag_data);
-			std::cout << "has vert tag" << tag_data << std::endl;
+			if(1 == this->geometry_map->dirchelet_map.count(tag_data))
+			{
+				std::cout << "found key" << std::endl;
+			} else {
+				std::cout << "key not found " << std::endl;
+			}
 		}
 	}
 	this->m->end(it);
@@ -112,7 +125,12 @@ uint32_t ElasticAnalysis2D::setup()
 	it = this->m->begin(2);
 	while((e = this->m->iterate(it))) {
 		this->makeStiffnessContributor(e);
-		this->makeForceContributor(e);
+		/*chech for body forces*/
+		if(this->m->hasTag(e, face_tag)) {
+			this->m->getIntTag(e, face_tag, &tag_data);
+			this->makeForceContributor(e);
+		}
+		
 	}
 	this->m->end(it);
 	/*then pick up the edges*/
@@ -165,12 +183,12 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 	* As one can see. the difference between a triangular and quadrilateral
 	* element is a difference of ((50 dofs)^2 - (30 dofs)^2) is allocating
 	* 78% more storage than is actually required for processing the triangular
-	* element. Clearly a strong canidate for causing unneccesary cache
+	* element. Clearly a strong candidate for causing unneccesary cache
 	* misses.
 	**/
-	StiffnessContributor2D stiff(this->field, this->D, this->integration_order);
-
 	if(entity_type == apf::Mesh::QUAD || entity_type == apf::Mesh::TRIANGLE){
+
+		StiffnessContributor2D stiff(this->field, this->D, this->integration_order);
 		apf::MeshElement* me = apf::createMeshElement(this->m, e);
 		stiff.process(me);
 		apf::destroyMeshElement(me);
@@ -195,23 +213,57 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 {
 	int entity_type = this->m->getType(e);
-	apf::Vector3(*fnc_ptr)(apf::Vector3 const& p);
-	fnc_ptr = &dummy;
+	apf::Vector3(*fnc_ptr)(apf::Vector3 const &);
 	fnc_ptr = NULL;
+	/*there will be only one tag per element we consider*/
+	apf::MeshTag *mesh_tag;
+	int tag_data;
+
+	if(entity_type == apf::Mesh::QUAD || entity_type == apf::Mesh::TRIANGLE) {
+		/*lookup a specific tagname assumed to correspond to tractions
+		* via the GeometryMappings object*/
+		mesh_tag = this->m->findTag(FACE_BC_TAG_NAME);
+	} else if(entity_type == apf::Mesh::EDGE) {
+		/*lookup a specific tagname assumed to correspond to tractions
+		* via the GeometryMappings object*/
+		mesh_tag = this->m->findTag(EDGE_BC_TAG_NAME);
+	} else if(entity_type == apf::Mesh::VERTEX) {
+		/*lookup a specific tagname assumed to correspond to tractions
+		* via the GeometryMappings object*/
+		mesh_tag = this->m->findTag(VERT_BC_TAG_NAME);
+	} else {
+		/*bad entity*/
+		return 1;
+	}
+	if(false == this->m->hasTag(e, mesh_tag)){
+		/*nothing to be done if there is no traction*/
+		return 0;
+	}
+	/*if execution reaches this point after all of the returns above,
+	* then we know there is a tag on this entity*/
+	this->m->getIntTag(e, mesh_tag, &tag_data);
+	if(1 == this->geometry_map->neumann_map.count(tag_data)) {
+		/*if the mapping does exist, then retrieve the function
+		* pointer that represents the loadind over the domain*/
+		fnc_ptr = this->geometry_map->neumann_map[tag_data];
+	} else {
+		return 0;
+	}
 	if(NULL != fnc_ptr) {
-
 		ForceContributor2D force(this->field, this->integration_order, fnc_ptr);
-
+		/*below three lines are the simplest expression of a very complicated
+		* numerical integration routine*/
 		apf::MeshElement* me = apf::createMeshElement(this->m, e);
 		force.process(me);
 		apf::destroyMeshElement(me);
-
-		/*view the intermediate matrix*/
+		/*compute the mapping of the element dofs into global dofs*/
 		uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
 		apf::NewArray< int > node_mapping(n_l_dofs);
 		apf::getElementNumbers(nodeNums, e, node_mapping);
 
 		this->linsys->assemble(force.fe, node_mapping, n_l_dofs);
+	} else {
+		std::cout << "no contribution" << std::endl;
 	}
 
 	return 0;

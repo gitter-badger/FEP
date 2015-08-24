@@ -12,13 +12,14 @@
 * very small number, if so it is only for testing,
 * IN PRODCUTION change this number so buffer size is close 
 * to 1/4 size of cache*/
-#define COPY_CHUNK_SIZE 10
+#define COPY_CHUNK_SIZE 5
 
 AlgebraicSystem::AlgebraicSystem(std::size_t ngd)
 	: nGlobalDOFs(ngd)
 {
 	this->_allow_assembly = false;
 	this->_allow_displacement_extraction = false;
+	this->_num_rows_initialized = 0;
 	/*preallocate the map since its keys will run from [0, nGlobalDOFs-1]*/
 	for(std::size_t ii = 0; ii < this->nGlobalDOFs; ++ii) {
 		/* -1 is valid intializer for unsigned types since this puts us at
@@ -115,11 +116,20 @@ void AlgebraicSystem::addBoundaryConstraint(
 }
 
 void AlgebraicSystem::beginAssembly() {
+	/*allow beginAssembly to be called only once per object
+	* lifetime*/
+	if(this->_allow_assembly) {
+		throw std::logic_error(
+			"Inconsistant state, cannot call beginAssembly more than once");
+	}
 	_allow_assembly = true;
-
 	/*now compute the remaining degrees of freedom*/
 	std::size_t ndogs = this->known_d.size();
 	std::size_t n_eq = this->nGlobalDOFs - ndogs;
+	/*initialize the flag of */
+	this->_row_has_been_initialized.clear();
+	this->_row_has_been_initialized.resize(n_eq, false);
+	std::cout << "size of rows: " << this->_row_has_been_initialized.size() << std::endl;
 	/*go throught the map and map the free degrees of freedom
 	* to indicies that will be used with Petsc matricies and vectors
 	* to solve the remaining degrees of freedom*/
@@ -202,6 +212,8 @@ void AlgebraicSystem::assemble(
 	add_to_f_col.clear();
 	std::vector< double > local_displacements;
 	local_displacements.clear();
+	std::vector<uint32_t> rows_marked_valid;
+	rows_marked_valid.clear();
 
 	/*find the indices of the element stiffness we will keep*/
 	PetscInt idxM_size = 0;
@@ -219,7 +231,23 @@ void AlgebraicSystem::assemble(
 		/*test if dof is fixed or not*/
 		if(!(tmp_val & KNOWN_DOF_MASK)){
 			/*extract the 32 bit number*/
-			idxM[idxM_size] = (PetscInt) (tmp_val & SAMPLE_LOW_32_BITS);
+			uint32_t tmp_mapped_val = (tmp_val & SAMPLE_LOW_32_BITS);
+			idxM[idxM_size] = tmp_mapped_val;
+			/*mark this row as initialized, we must be careful with this
+			* because we must also make sure that at least one column is
+			* a contributor to the stiffness matrix, otherwise we could
+			* only be contributing to the force vector. */
+			if(this->_row_has_been_initialized[tmp_mapped_val]) {
+				/*do nothing if it has already been passed*/
+			} else {
+				this->_row_has_been_initialized[tmp_mapped_val] = true;
+				this->_num_rows_initialized++;
+				/*we save each row we marked as valid, so we can roll back
+				* any marked rows if it turns out there are no contributions
+				* to the stiffness matrix for this element*/
+				rows_marked_valid.push_back(tmp_mapped_val);
+			}
+			
 			//std::cout << "ii: " << ii << " maps to: " << idxM[idxM_size] << std::endl;
 			++idxM_size;
 			keep_rows.push_back(ii);
@@ -266,6 +294,14 @@ void AlgebraicSystem::assemble(
 	assert(idxN_size == keep_cols.size());
 	assert(ni == local_displacements.size());
 	assert(ni == add_to_f_col.size());
+	/*here is where we roll back any marked valid rows if in fact
+	* non contribute, aka when keep_cols.size == 0*/
+	if(0 == keep_cols.size()){
+		for(std::size_t ii = 0; ii < rows_marked_valid.size(); ++ii) {
+			this->_row_has_been_initialized[rows_marked_valid[ii]] = false;
+			this->_num_rows_initialized--;
+		}
+	}
 
 	/*allocate a two dimensional storage for stiffness matrix 
 	* using PetscInts which by the default options chosen elsewhere
@@ -364,7 +400,41 @@ void AlgebraicSystem::assemble(
 
 PetscErrorCode AlgebraicSystem::synchronize()
 {
+	/*CHECK if assembly is possible*/
+	if(false == this->_allow_assembly) {
+		throw std::invalid_argument("must call beginAssembly before synchronize");
+	}
+	/*allocate a buffer of rows that the main diagonal
+	* must be initialized to zero*/
+	PetscInt numRows = this->_row_has_been_initialized.size()
+						- this->_num_rows_initialized;
+	std::cout << "num rows not intialized: " << numRows << std::endl;
+	PetscInt *rows_to_zero = new PetscInt[numRows]; 
+	PetscScalar *values = new PetscScalar[numRows];
+	std::size_t curs_indx = 0;
+	for(std::size_t ii = 0; ii < this->_row_has_been_initialized.size(); ++ii) {
+		if(false == this->_row_has_been_initialized[ii]) {
+			rows_to_zero[curs_indx] = ii;
+			values[curs_indx] = 0.0;
+			curs_indx++;
+		}
+	}
+	assert(curs_indx == numRows);
 	PetscErrorCode ierr;
+	for(std::size_t ii = 0; ii < numRows; ++ii) {
+		std::cout << "row: " << rows_to_zero[ii] << " value: " << values[ii] << std::endl;
+	}
+
+	/*TODO: FIX: right now just set the value to zero of the diagonal 
+	* element, so that other tests pass because they do not set the 
+	* the other rows, and removing all of the rows which are not set messes
+	* these tests up bu shrinking matrix size to zero*/
+	MatSetValues(this->K, numRows, rows_to_zero, numRows, rows_to_zero, values, INSERT_VALUES);
+
+	// ierr = MatZeroRows(this->K, numRows, rows_to_zero, 0.0, this->d, this->F);
+	delete[] rows_to_zero;
+	delete[] values;
+
 	ierr = VecAssemblyBegin(this->F);
   	CHKERRQ(ierr);
   	ierr = VecAssemblyEnd(this->F);
@@ -378,6 +448,10 @@ PetscErrorCode AlgebraicSystem::synchronize()
 
 PetscErrorCode AlgebraicSystem::solve()
 {
+	/*CHECK if assembly is possible*/
+	if(false == this->_allow_assembly) {
+		throw std::invalid_argument("must call beginAssembly before solving");
+	}
 	std::cout << "Solving system of: "
 		<< this->masks.size() - this->known_d.size() 
 		<< " dofs" << std::endl;
@@ -412,6 +486,9 @@ void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 	std::map< std::size_t,uint64_t >::iterator map_it = this->masks.begin();
 
 	for(std::size_t ii = 0; ii < this->nGlobalDOFs;) {
+		if(this->masks.end() == map_it) {
+			throw std::logic_error("unmapping went horribly wrong");
+		}
 		/*save a copy of where the map iterator was to fill it in*/
 		std::map< std::size_t,uint64_t >::iterator back_fill = map_it;
 		/*we do not assume that the map iterator is in order of keys*/
@@ -419,6 +496,7 @@ void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 		* in the output vector*/
 		std::size_t jj;
 		for(jj = 0; jj < COPY_CHUNK_SIZE;) {
+			std::cout << "incrementing jj: " << jj << std::endl;
 			/*attempt to find the next free degree, if the degree
 			* is actually fixed then just add it to correct place
 			* in output vector and move on to the next key in the
@@ -429,27 +507,36 @@ void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 				/*high bit not set means it is a free degree*/
 				/*extract the 32 bit number*/
 				ix[jj] = static_cast<PetscInt>((tmp_val & SAMPLE_LOW_32_BITS));
+				std::cout << "global dof: " << map_it->first << " is local dof: " << ix[jj] << std::endl;
 				/*because a dof was found, add its index to be retrieved
 				* from the petsc vector*/
 				++jj;
+			} else {
+				std::cout << "global dof: " << map_it->first << " is fixed" << std::endl;
 			}
 			/*increment to next key*/
 			map_it++;
 			if(map_it == this->masks.end()) {
+				std::cout << "hit end of mapping, ending early" << std::endl;
 				/*when we run out of mappings we stop immediatly*/
 				break;
 			}
 		}
+		std::cout << "=====================================" << std::endl;
+		std::cout << "global number is: " << ii << std::endl;
+		std::cout << "=====================================" << std::endl;
+
 		/*jj is now the number of free dofs transfered*/
 		VecGetValues(this->d, static_cast<PetscInt>(jj), ix, y);
 		/*now using the back fill iterator fill in the remaining values*/
-		for(std::size_t kk = 0; kk < jj;) {
-
+		for(std::size_t kk = 0; back_fill != map_it;) {
+			std::cout << "local index of chunk: " << kk << std::endl;
 			std::size_t tmp_key = back_fill->first;
-			uint64_t tmp_val = map_it->second;
+			uint64_t tmp_val = back_fill->second;
 			/*test if dof is fixed or not*/
 			if(!(tmp_val & KNOWN_DOF_MASK)){
 				/*high bit not set means it is a free degree*/
+				assert(kk < jj);
 				disp[tmp_key] = y[kk];
 				/*move on to the next element in the buffer retrived
 				* from the buffer vector*/
@@ -460,6 +547,7 @@ void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 			}
 			/*indicate that we wrote one dof*/
 			++ii;
+			std::cout << "now on global dof: " << ii << std::endl;
 			/*increment to next key*/
 			back_fill++;
 			if(back_fill == this->masks.end()) {
@@ -469,6 +557,7 @@ void AlgebraicSystem::extractDisplacement(std::vector<double> & disp)
 				}
 			}
 		}
+		std::cout << "++++++++++++++++++++++++++++++++++++++++" << std::endl;
 	}
 	delete[] ix;
 	delete[] y;

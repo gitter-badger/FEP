@@ -158,8 +158,7 @@ TEST_F(AlgebraicSystemTest, IgnoreLowerDiagonals) {
 
 
 	/*use nGlobalDOFs, no boundary conditions for this one*/
-	std::size_t nGlobalDOFs = 12;
-	AlgebraicSystem linsys(nGlobalDOFs);
+	AlgebraicSystem linsys(this->nGlobalDOFs);
 
 	linsys.beginAssembly();
 	linsys.assemble(ke_2, mapping_2, ke_2_size);
@@ -206,8 +205,7 @@ TEST_F(AlgebraicSystemTest, IgnoreLowerDiagonals) {
 
 TEST_F(AlgebraicSystemTest, PreventPrematureAssembly) {
 	/*use nGlobalDOFs, no boundary conditions for this one*/
-	std::size_t nGlobalDOFs = 12;
-	AlgebraicSystem linsys(nGlobalDOFs);
+	AlgebraicSystem linsys(this->nGlobalDOFs);
 	/*try to call assemble before calling beginAssembly
 	* here we test for failure in form of execption*/
 	EXPECT_THROW(linsys.assemble(ke_1, mapping_1, ke_1_size), std::invalid_argument);
@@ -215,17 +213,21 @@ TEST_F(AlgebraicSystemTest, PreventPrematureAssembly) {
 
 TEST_F(AlgebraicSystemTest, AllowCorrectAssembly) {
 	/*use nGlobalDOFs, no boundary conditions for this one*/
-	std::size_t nGlobalDOFs = 12;
-	AlgebraicSystem linsys(nGlobalDOFs);
+	AlgebraicSystem linsys(this->nGlobalDOFs);
 	/*try to call assemble after calling beginAssembly
 	* here we do not want an exception*/
 	linsys.beginAssembly();
 	EXPECT_NO_THROW(linsys.assemble(ke_1, mapping_1, ke_1_size));
 }
 
+TEST_F(AlgebraicSystemTest, PreventMutltipleAssembly) {
+	AlgebraicSystem linsys(this->nGlobalDOFs);
+	EXPECT_NO_THROW(linsys.beginAssembly());
+	EXPECT_THROW(linsys.beginAssembly(), std::logic_error);
+}
+
 TEST_F(AlgebraicSystemTest, RepeatedConstraints) {
-	std::size_t nGlobalDOFs = 12;
-	AlgebraicSystem linsys(nGlobalDOFs);
+	AlgebraicSystem linsys(this->nGlobalDOFs);
 
 	EXPECT_NO_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping));
 
@@ -236,8 +238,7 @@ TEST_F(AlgebraicSystemTest, RepeatedConstraints) {
 }
 
 TEST_F(AlgebraicSystemTest, OutOfRangeContraint) {
-	std::size_t nGlobalDOFs = 12;
-	AlgebraicSystem linsys(nGlobalDOFs);
+	AlgebraicSystem linsys(this->nGlobalDOFs);
 	/*this one is clearly out of range*/
 	std::vector<uint32_t> corrupt_mapping(this->local_mapping);
 	corrupt_mapping[1] = nGlobalDOFs+1;
@@ -246,8 +247,7 @@ TEST_F(AlgebraicSystemTest, OutOfRangeContraint) {
 }
 
 TEST_F(AlgebraicSystemTest, ExtraMappingsAreIgnored) {
-	std::size_t nGlobalDOFs = 12;
-	AlgebraicSystem linsys(nGlobalDOFs);
+	AlgebraicSystem linsys(this->nGlobalDOFs);
 	/*this one is clearly out of range but it will not be used since there are 
 	* fewer displacements than there are mappings, so this last one will not be used*/
 	local_mapping.push_back(nGlobalDOFs+1);
@@ -257,6 +257,37 @@ TEST_F(AlgebraicSystemTest, ExtraMappingsAreIgnored) {
 	ASSERT_EQ(this->local_mapping.size(), this->local_disp.size()+1);
 
 	EXPECT_NO_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping));
+}
+
+TEST_F(AlgebraicSystemTest, ExtractSolutionWithConstraints) {
+	AlgebraicSystem linsys(this->nGlobalDOFs);
+
+	linsys.addBoundaryConstraint(this->local_disp, this->local_mapping);
+	linsys.beginAssembly();
+	linsys.synchronize();
+	linsys.solve();
+
+	std::vector<double> solution;
+	solution.clear();
+	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
+	MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
+	VecView(linsys.F, PETSC_VIEWER_STDOUT_WORLD);
+
+
+	linsys.extractDisplacement(solution);
+	// EXPECT_EQ(nGlobalDOFs, solution.size());
+	// for(std::size_t ii = 0; ii < nGlobalDOFs; ++ii) {
+	// 	if(ii == this->local_mapping[0]) {
+	// 		EXPECT_EQ(this->local_disp[0], solution[ii]);
+	// 	} else if(ii == this->local_mapping[1]) {
+	// 		EXPECT_EQ(this->local_disp[1], solution[ii]);
+	// 	} else if(ii == this->local_mapping[2]) {
+	// 		EXPECT_EQ(this->local_disp[2], solution[ii]);
+	// 	} else {
+	// 		EXPECT_FLOAT_EQ(0.0, solution[ii]);
+	// 	}
+	// }
 }
 
 	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
