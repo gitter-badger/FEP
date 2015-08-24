@@ -21,8 +21,8 @@
 /*include some simple defaults*/
 enum GeoMapOptions {
 	NONE = 0,
-	FIXED_X = 1,
-	FIXED_Y = 2,
+	ZERO_DISP_X = 1,
+	ZERO_DISP_Y = 2,
 	FIXED_XY = 3,
 	GRAVITY_BODY_FORCE = 4,
 	TRACTION_1 = 5,
@@ -45,11 +45,13 @@ void noConstraint(
 	apf::Numbering*,
 	std::vector<uint64_t> &,
 	std::vector<double> &);
-void zeroDisplacementX_2D(apf::MeshElement*,
+void zeroDisplacementX_2D(
+	apf::MeshElement*,
 	apf::Numbering*,
 	std::vector<uint64_t> &,
 	std::vector<double> &);
-void zeroDisplacementY_2D(apf::MeshElement*,
+void zeroDisplacementY_2D(
+	apf::MeshElement*,
 	apf::Numbering*,
 	std::vector<uint64_t> &,
 	std::vector<double> &);

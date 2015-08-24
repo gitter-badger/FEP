@@ -54,7 +54,7 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 
 	/*set up element numberings we will use for assembly*/
 	this->nodeNums = apf::createNumbering(this->m, NODE_NUM_TAG_NAME, this->m->getShape(), NUM_COMPONENTS);
-    this->faceNums = apf::createNumbering(this->m, FACE_NUM_TAG_NAME, apf::getConstant(this->m->getDimension()), 1);
+	this->faceNums = apf::createNumbering(this->m, FACE_NUM_TAG_NAME, apf::getConstant(this->m->getDimension()), 1);
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
 	}

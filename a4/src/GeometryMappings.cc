@@ -17,7 +17,6 @@ void zeroDisplacementX_2D(
 	std::vector<uint64_t> & dofs,
 	std::vector<double> & disp)
 {
-
 	int entity_type = me->getMesh()->getType(me->getEntity());
 	uint32_t nnodes = apf::countElementNodes(me->getMesh()->getShape(), entity_type);
 	/*in 2D we assume there are only 2 dofs per node*/
@@ -98,6 +97,6 @@ void GeometryMappings::addDircheletMapping(
 					std::vector< uint64_t > & nodes,
 					std::vector < double > & d))
 {
-
+	
 }
 
