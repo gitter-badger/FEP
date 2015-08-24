@@ -90,31 +90,14 @@ uint32_t ElasticAnalysis2D::setup()
 
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
-		if(this->m->hasTag(e, edge_tag)) {
-			this->m->getIntTag(e, edge_tag, &tag_data);
-			if(1 == this->geometry_map->dirchelet_map.count(tag_data))
-			{
-				std::cout << "found key" << std::endl;
-			} else {
-				std::cout << "key not found " << std::endl;
-			}
-		}
+		this->makeConstraint(e);
 	}
 	this->m->end(it);
 	it = this->m->begin(0);
 	while((e = this->m->iterate(it))) {
-		if(this->m->hasTag(e,vert_tag)) {
-			this->m->getIntTag(e, vert_tag, &tag_data);
-			if(1 == this->geometry_map->dirchelet_map.count(tag_data))
-			{
-				std::cout << "found key" << std::endl;
-			} else {
-				std::cout << "key not found " << std::endl;
-			}
-		}
+		this->makeConstraint(e);
 	}
 	this->m->end(it);
-
 	/*now that all fixed dofs have been accounted for,
 	* allow assembly of force and stiffness contributors*/
 	this->linsys->beginAssembly();
@@ -124,11 +107,7 @@ uint32_t ElasticAnalysis2D::setup()
 	while((e = this->m->iterate(it))) {
 		this->makeStiffnessContributor(e);
 		/*chech for body forces*/
-		if(this->m->hasTag(e, face_tag)) {
-			this->m->getIntTag(e, face_tag, &tag_data);
-			this->makeForceContributor(e);
-		}
-		
+		this->makeForceContributor(e);	
 	}
 	this->m->end(it);
 	/*then pick up the edges*/
@@ -145,10 +124,10 @@ uint32_t ElasticAnalysis2D::setup()
 
 uint32_t ElasticAnalysis2D::solve()
 {
-	std::fstream myfile;
-	myfile.open("K.txt");
-	myfile << this->linsys->K;
-	myfile.close();
+	// std::fstream myfile;
+	// myfile.open("K.txt");
+	// myfile << this->linsys->K;
+	// myfile.close();
 
 	double t0 = PCU_Time();
 	this->linsys->solve();
@@ -193,7 +172,7 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		/*view the intermediate matrix*/
 		uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
 		apf::NewArray< int > node_mapping(n_l_dofs);
-		int tmp_sz = apf::getElementNumbers(nodeNums, e, node_mapping);
+		int tmp_sz = apf::getElementNumbers(this->nodeNums, e, node_mapping);
 		/*we want to make sure that our guess for the vector was the right size
 		* so we know how many degress of freedom our nodes have*/
 		assert(tmp_sz == n_l_dofs);
@@ -243,10 +222,6 @@ uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 		/*if the mapping does exist, then retrieve the function
 		* pointer that represents the loadind over the domain*/
 		fnc_ptr = this->geometry_map->neumann_map[tag_data];
-	} else {
-		return 0;
-	}
-	if(NULL != fnc_ptr) {
 		ForceContributor2D force(this->field, this->integration_order, fnc_ptr);
 		/*below three lines are the simplest expression of a very complicated
 		* numerical integration routine*/
@@ -256,36 +231,54 @@ uint32_t ElasticAnalysis2D::makeForceContributor(apf::MeshEntity* e)
 		/*compute the mapping of the element dofs into global dofs*/
 		uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
 		apf::NewArray< int > node_mapping(n_l_dofs);
-		apf::getElementNumbers(nodeNums, e, node_mapping);
-
-		this->linsys->assemble(force.fe, node_mapping, n_l_dofs);
-	} else {
-		std::cout << "no contribution" << std::endl;
+		int tmp_sz = apf::getElementNumbers(this->nodeNums, e, node_mapping);
+		assert(tmp_sz == n_l_dofs);
+		this->linsys->assemble(force.fe, node_mapping, tmp_sz);
 	}
-
 	return 0;
 }
 
 uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e)
 {
 	int entity_type = this->m->getType(e);
-	uint32_t n_l_dofs = apf::countElementNodes(this->m->getShape(), entity_type) * NUM_COMPONENTS;
-	apf::NewArray< int > node_mapping(n_l_dofs);
-	apf::getElementNumbers(nodeNums, e, node_mapping);
+	apf::MeshTag *mesh_tag;
+	int tag_data;
 
-	std::vector< uint32_t > fixed_mapping(0);
-	std::vector< double > displacement(0);
-
-
-	/*right now all fixed nodes will have zero displacement in the x*/
-	for(uint32_t ii = 0; ii < n_l_dofs; ++ii) {
-		if(node_mapping[ii] % 2 == 0) {
-			fixed_mapping.push_back(node_mapping[ii]);
-			displacement.push_back(0.0);
-		}
+	if(entity_type == apf::Mesh::EDGE) {
+		/*lookup a specific tagname assumed to correspond to tractions
+		* via the GeometryMappings object*/
+		mesh_tag = this->m->findTag(EDGE_BC_TAG_NAME);
+	} else if(entity_type == apf::Mesh::VERTEX) {
+		/*lookup a specific tagname assumed to correspond to tractions
+		* via the GeometryMappings object*/
+		mesh_tag = this->m->findTag(VERT_BC_TAG_NAME);
+	} else {
+		/*bad entity*/
+		return 1;
 	}
-	this->linsys->addBoundaryConstraint(displacement, fixed_mapping);
+	if(false == this->m->hasTag(e, mesh_tag)){
+		/*nothing to be done if there is no traction*/
+		return 0;
+	}
+	/*if execution reaches this point after all of the returns above,
+	* then we know there is a tag on this entity*/
+	this->m->getIntTag(e, mesh_tag, &tag_data);
+	if(1 == this->geometry_map->dirchelet_map.count(tag_data))
+	{
+		std::cout << "found key" << std::endl;
+		/*retrieve the specifc boundary contion from the store and evaluate it*/
+		void(*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector< uint64_t >&, std::vector < double > & );
+		fnc_ptr = this->geometry_map->dirchelet_map[tag_data];
+		std::vector< uint64_t > fixed_mapping(0);
+		std::vector< double > displacement(0);
+		apf::MeshElement* me = apf::createMeshElement(this->m, e);
+		fnc_ptr(me, this->nodeNums, fixed_mapping, displacement);
 
+		this->linsys->addBoundaryConstraint(displacement, fixed_mapping);
+		
+	} else {
+		std::cout << "key not found" << std::endl;
+	}
 	return 0;
 }
 

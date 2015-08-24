@@ -52,7 +52,7 @@ AlgebraicSystem::~AlgebraicSystem()
 
 void AlgebraicSystem::addBoundaryConstraint(
 	std::vector<double> const& fixed,
-	std::vector<uint32_t> const& node_mapping)
+	std::vector<uint64_t> const& node_mapping)
 {
 	/*do not add a constraint after assembly has begun*/
 	if(this->_allow_assembly == true) {
@@ -129,7 +129,6 @@ void AlgebraicSystem::beginAssembly() {
 	/*initialize the flag of */
 	this->_row_has_been_initialized.clear();
 	this->_row_has_been_initialized.resize(n_eq, false);
-	std::cout << "size of rows: " << this->_row_has_been_initialized.size() << std::endl;
 	/*go throught the map and map the free degrees of freedom
 	* to indicies that will be used with Petsc matricies and vectors
 	* to solve the remaining degrees of freedom*/

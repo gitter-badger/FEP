@@ -26,7 +26,7 @@ protected:
 	uint32_t ke_2_size;
 	/*fixture for some displacements testing*/
 	std::vector<double> local_disp;
-	std::vector<uint32_t> local_mapping;
+	std::vector<uint64_t> local_mapping;
 
 
 	virtual void SetUp() {
@@ -239,11 +239,10 @@ TEST_F(AlgebraicSystemTest, RepeatedConstraints) {
 
 TEST_F(AlgebraicSystemTest, OutOfRangeContraint) {
 	AlgebraicSystem linsys(this->nGlobalDOFs);
-	/*this one is clearly out of range*/
-	std::vector<uint32_t> corrupt_mapping(this->local_mapping);
-	corrupt_mapping[1] = nGlobalDOFs+1;
+	/*corrupt by making this one clearly out of range*/
+	this->local_mapping[1] = nGlobalDOFs+1;
 
-	EXPECT_THROW(linsys.addBoundaryConstraint(this->local_disp, corrupt_mapping), std::invalid_argument);
+	EXPECT_THROW(linsys.addBoundaryConstraint(this->local_disp, this->local_mapping), std::invalid_argument);
 }
 
 TEST_F(AlgebraicSystemTest, ExtraMappingsAreIgnored) {

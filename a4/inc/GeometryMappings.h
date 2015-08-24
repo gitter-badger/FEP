@@ -8,6 +8,10 @@
 
 #include <apf.h>
 #include <apfMesh.h>
+#include <apfVectorElement.h>
+#include <apfElement.h>
+#include <apfNumbering.h>
+#include <apfElement.h>
 
 #define VERT_BC_TAG_NAME "vertBCtag"
 #define EDGE_BC_TAG_NAME "edgeBCtag"
@@ -36,11 +40,23 @@ enum GeoMapOptions {
 };
 
 /*add a default zero constraint option*/
-
+void noConstraint(
+	apf::MeshElement*,
+	apf::Numbering*,
+	std::vector<uint64_t> &,
+	std::vector<double> &);
+void zeroDisplacementX_2D(apf::MeshElement*,
+	apf::Numbering*,
+	std::vector<uint64_t> &,
+	std::vector<double> &);
+void zeroDisplacementY_2D(apf::MeshElement*,
+	apf::Numbering*,
+	std::vector<uint64_t> &,
+	std::vector<double> &);
 
 
 typedef apf::Vector3(*neumann_fnc)(apf::Vector3 const& );
-typedef void(*bound_gen)(apf::MeshEntity* , std::vector< uint64_t >&, std::vector < double > & );
+typedef void(*bound_gen)(apf::MeshElement*, apf::Numbering* nodeNums, std::vector< uint64_t >&, std::vector < double > & );
 
 class GeometryMappings
 {

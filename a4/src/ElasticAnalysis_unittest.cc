@@ -296,21 +296,17 @@ TEST_F(ZeroConstraintZeroTraction, QuadTri) {
 			reorder_flag};
 
 	ElasticAnalysis2D tmp(input);
-	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
-
 	EXPECT_EQ(0, tmp.setup());
-	// VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
-
 	EXPECT_EQ(0, tmp.solve());
 	EXPECT_EQ(0, tmp.recover());
-
-	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
-	// VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
-
 	/*now check the displacements*/
 	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
 		EXPECT_FLOAT_EQ(0.0, tmp.displacement[ii]);
 	}
-
 	delete geo_map;
 }
+
+	// PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
+	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
+	// VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);

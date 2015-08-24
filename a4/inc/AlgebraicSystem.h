@@ -23,7 +23,7 @@ public:
 
 	void addBoundaryConstraint(
 		std::vector<double> const& fixed,
-		std::vector<uint32_t> const& node_mapping);
+		std::vector<uint64_t> const& node_mapping);
 	void beginAssembly();
 	void assemble(
 		apf::DynamicMatrix const& ke,
