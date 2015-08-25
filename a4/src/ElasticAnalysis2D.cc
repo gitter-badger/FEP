@@ -46,8 +46,17 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 	m(in.m)
 {
 	/*we create a 3 dimensional field but only will use 2 dimensions of that, (x & y)*/
-	this->field = createField(this->m, SOLUTION_FIELD_NAME, apf::VECTOR, this->m->getShape());
+	this->field = createField(this->m, "dummyField", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
+	/*thisfield will store the resulting displacments*/
+	this->disp_field = apf::createFieldOn(this->m, DISPLACEMENT_FIELD_NAME, apf::VECTOR);
+	apf::zeroField(this->disp_field);
+	
+	// this->strain_field = apf::createField(this->m, STRAIN_FIELD_NAME, apf::VECTOR, apf::getIPShape(this->m->getDimension(), this->integration_order));
+	// apf::zeroField(this->strain_field);
+
+	// this->stress_field = createField(this->m, STRESS_FIELD_NAME, apf::VECTOR, apf::getIPShape(this->m->getDimension(), this->integration_order));
+	// apf::zeroField(this->stress_field);
 
 	bool use_plane_stress = true;
 	this->D = buildD(in.E, in.Nu, use_plane_stress);
@@ -58,6 +67,10 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
 	}
+
+	apf::Field* tmp_f = apf::getField(this->nodeNums);
+	printf("tmp_f = %p\n", tmp_f);
+
 	/*compute the global degrees of freedom for the mesh*/
 	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
 	/*initialize the linear system*/
@@ -85,8 +98,6 @@ uint32_t ElasticAnalysis2D::setup()
 	assert(NULL != face_tag);
 	assert(NULL != edge_tag);
 	assert(NULL != vert_tag);
-
-	int tag_data;
 
 	it = this->m->begin(1);
 	while((e = this->m->iterate(it))) {
@@ -265,7 +276,7 @@ uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e)
 	this->m->getIntTag(e, mesh_tag, &tag_data);
 	if(1 == this->geometry_map->dirchelet_map.count(tag_data))
 	{
-		std::cout << "found key" << std::endl;
+		// std::cout << "found key" << std::endl;
 		/*retrieve the specifc boundary contion from the store and evaluate it*/
 		void(*fnc_ptr)(apf::MeshElement*, apf::Numbering*, std::vector< uint64_t >&, std::vector < double > & );
 		fnc_ptr = this->geometry_map->dirchelet_map[tag_data];
@@ -273,11 +284,12 @@ uint32_t ElasticAnalysis2D::makeConstraint(apf::MeshEntity* e)
 		std::vector< double > displacement(0);
 		apf::MeshElement* me = apf::createMeshElement(this->m, e);
 		fnc_ptr(me, this->nodeNums, fixed_mapping, displacement);
+		apf::destroyMeshElement(me);
 
 		this->linsys->addBoundaryConstraint(displacement, fixed_mapping);
 		
 	} else {
-		std::cout << "key not found" << std::endl;
+		// std::cout << "key not found" << std::endl;
 	}
 	return 0;
 }
@@ -289,7 +301,37 @@ uint32_t ElasticAnalysis2D::recover()
 	this->stress.clear();
 
 	this->linsys->extractDisplacement(this->displacement);
-	/*resize each elements and default construct that */
+	/*set the values of the solution field by iterating over the
+	* faces. We will overwrite values several times by this method
+	* but we consider the loss of efficiency acceptable to avoid
+	* some tedious bookkeeping. ENHANCEMENT Can always add this 
+	* later */
+	apf::MeshIterator* it;
+	apf::MeshEntity* e;
+	/*reuse the same vector since the third componenet never changes
+	* for this 2D problem*/
+	double tmp_arry[3] = {0.0, 0.0, 0.0};
+	assert(NUM_COMPONENTS <= 3);
+	apf::FieldShape* fs = apf::getShape(this->disp_field);
+
+	for(std::size_t dim = 0; dim <= 2; ++dim) {
+		if(fs->hasNodesIn(dim)) {
+			it = this->m->begin(dim);
+			while((e = this->m->iterate(it))) {
+				for(std::size_t ii = 0; ii < this->disp_field->countNodesOn(e); ++ii) {
+					/*get each component*/
+					for(std::size_t jj = 0; jj < NUM_COMPONENTS; ++jj) {
+						uint64_t gdof_indx = apf::getNumber(this->nodeNums, e, ii, jj);
+						tmp_arry[jj] = this->displacement[gdof_indx];
+					}
+					apf::Vector3 tmp_vec(tmp_arry);
+					// std::cout << "setting: " << tmp_vec << std::endl;
+					apf::setVector(this->disp_field, e, ii, tmp_vec);
+				}
+			}
+			this->m->end(it);
+		}
+	}
 
 	return 0;
 }

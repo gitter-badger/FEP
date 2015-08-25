@@ -43,7 +43,7 @@ protected:
 
 apf::Vector3 LinearLoad_X(apf::Vector3 const & p)
 {
-	return apf::Vector3(10.0, 0, 0);
+	return apf::Vector3(1000.0, 0, 0);
 }
 
 TEST_F(ElasticAnalysisTest, AppRunTest) {
@@ -80,13 +80,23 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 
 	ElasticAnalysis2D tmp(input);
 
+	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
 	EXPECT_EQ(0, tmp.setup());
+
+	MatView(tmp.linsys->K, PETSC_VIEWER_STDOUT_WORLD);
+
+	//VecView(tmp.linsys->d, PETSC_VIEWER_STDOUT_WORLD);
+
+
 	EXPECT_EQ(0, tmp.solve());
+	// VecView(tmp.linsys->d, PETSC_VIEWER_STDOUT_WORLD);
+
 	EXPECT_EQ(0, tmp.recover());
-	std::cout << "=========== Solution ============" << std::endl;
-	for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
-		std::cout << "d_" << ii << " = " << (tmp.displacement[ii]) << std::endl;
-	}
+	// std::cout << "=========== Solution ============" << std::endl;
+	// for(std::size_t ii = 0; ii < tmp.displacement.size(); ++ii) {
+	// 	std::cout << "d_" << ii << " = " << (tmp.displacement[ii]) << std::endl;
+	// }
 	apf::writeVtkFiles("solution_mesh", this->mesh);
 	delete geo_map;
 }

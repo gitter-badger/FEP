@@ -12,7 +12,11 @@
 
 #define NODE_NUM_TAG_NAME "nodeNums"
 #define FACE_NUM_TAG_NAME "faceNums"
-#define SOLUTION_FIELD_NAME "solutionField"
+
+#define DISPLACEMENT_FIELD_NAME "DisplacementField"
+#define STRAIN_FIELD_NAME "StrainField"
+#define STRESS_FIELD_NAME "StressField"
+
 
 struct ElasticAnalysisInput {
 	apf::Mesh* m;
@@ -46,6 +50,9 @@ private:
 	uint32_t integration_order;
 	apf::Mesh* m;
 	apf::Field* field;
+	apf::Field* disp_field;
+	apf::Field* strain_field;
+	apf::Field* stress_field;
 	apf::Matrix< 3,3> D;
 	apf::Numbering* nodeNums;
 	apf::Numbering* faceNums;

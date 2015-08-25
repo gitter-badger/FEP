@@ -40,6 +40,7 @@ public:
 	/*these are exposed for unittesting*/
 	Mat K;
 	Vec F;
+	Vec d;
 private:
 	bool _allow_assembly;
 	bool _allow_displacement_extraction;
@@ -56,7 +57,7 @@ private:
 	* size across platforms*/
 	std::map< std::size_t,uint64_t > masks;
 	std::vector< double > known_d;
-    Vec d;
+    
     KSP solver;
 
 	std::size_t nGlobalDOFs;
