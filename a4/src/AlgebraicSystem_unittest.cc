@@ -467,7 +467,7 @@ TEST_F(MatrixMathTest, SolverTest) {
 	//VecView(this->xx, PETSC_VIEWER_STDOUT_WORLD);
 }
 
-TEST_F(MatrixMathTest, AssemblerTest) {
+TEST_F(MatrixMathTest, BulkAssemblerTest) {
 	AlgebraicSystem linsys(MATRIX_SIZE);
 	std::vector<double> force(MATRIX_SIZE);
 	for(uint32_t ii = 0; ii < MATRIX_SIZE; ++ii) {
@@ -484,4 +484,90 @@ TEST_F(MatrixMathTest, AssemblerTest) {
 	for(uint32_t ii = 0; ii < MATRIX_SIZE; ++ii) {
 		EXPECT_FLOAT_EQ(this->x[ii] , canidate_x[ii]);
 	}
+}
+
+TEST_F(MatrixMathTest, AnotherAssemblyInsertionTest) {
+	/*here we use the same matrix we have as above, but we 
+	* will renumber the degrees of freedom for the global system
+	* to simulate the existance of constraints. This way the entire
+	* assembly system is tested from end to end, verifying that 
+	* all of the mappings between local and global dofs are handled 
+	* correctly*/
+	uint32_t n_fixed_dofs = 10;
+	AlgebraicSystem linsys((MATRIX_SIZE+ n_fixed_dofs));
+
+	/*we choose to add 10 degrees of freedom to the global system that 
+	* will be constrained*/
+	std::vector<uint64_t> global_constrained_dofs;
+	/*the dofs we choose to constrain are arbitrary this test
+	* should not matter what dofs are constrained. The only reason
+	* we explicitly choose the fixed dofs is so that the test is
+	* deterministic*/
+	
+
+	global_constrained_dofs.push_back(0); /*make sure minimum is constrained*/
+	global_constrained_dofs.push_back(3);
+	global_constrained_dofs.push_back(27);	
+	global_constrained_dofs.push_back(13);
+	global_constrained_dofs.push_back(2);
+	global_constrained_dofs.push_back(11);
+	global_constrained_dofs.push_back(17);
+	global_constrained_dofs.push_back(18);
+	global_constrained_dofs.push_back(7);
+	global_constrained_dofs.push_back((MATRIX_SIZE + n_fixed_dofs -1)); /*make sure maximum is constrained*/
+	ASSERT_EQ(n_fixed_dofs, global_constrained_dofs.size());
+	for(uint32_t ii = 0; ii < n_fixed_dofs; ++ii) {
+		ASSERT_LT(global_constrained_dofs[ii], (n_fixed_dofs + MATRIX_SIZE));
+	}
+	/*create associate the fixed dofs with zero displacements*/
+	std::vector<double> given_displacements(n_fixed_dofs, 0.0);
+	/*relabel the dofs for the matrix, then assemble*/
+	linsys.addBoundaryConstraint(given_displacements, global_constrained_dofs);
+
+	linsys.beginAssembly();
+
+	/*relabel the matrix dofs to account for the new fixed members*/
+	std::set<PetscInt> taken_dofs;
+	for(uint32_t ii = 0; ii < n_fixed_dofs; ++ii) {
+		taken_dofs.insert(global_constrained_dofs[ii]);
+	}
+	/*make sure all of the constrained dofs were unique and 
+	* also allow us to test which dofs have already been assigned
+	* when relabeling the matrix*/
+	ASSERT_EQ(global_constrained_dofs.size(), taken_dofs.size());
+
+	uint32_t curs_indx = 0;
+	for(uint32_t ii = 0; ii < (MATRIX_SIZE+n_fixed_dofs); ++ii) {
+		if(0 == taken_dofs.count(ii)) {
+			/*this dof is not taken*/
+			this->ke_mapping[curs_indx] = ii;
+			curs_indx++;
+		}
+	}
+	ASSERT_EQ(MATRIX_SIZE, curs_indx);
+	/*change the format of the force vector into what method expects*/
+	std::vector<double> force(MATRIX_SIZE);
+	for(uint32_t ii = 0; ii < MATRIX_SIZE; ++ii) {
+		force[ii] = this->b[ii];
+	}
+
+	linsys.assemble(this->ke, this->ke_mapping, MATRIX_SIZE);
+	linsys.assemble(force, this->ke_mapping, MATRIX_SIZE);
+	linsys.synchronize();
+	linsys.solve();
+	std::vector<double> canidate_x;
+	linsys.extractDisplacement(canidate_x);
+	uint32_t taken_curs = 0;
+	uint32_t not_taken_curs = 0;
+	for(uint32_t ii = 0; ii < canidate_x.size(); ++ii) {
+		if(1 == taken_dofs.count(ii)) {
+			EXPECT_FLOAT_EQ(given_displacements[taken_curs], canidate_x[ii]);
+			taken_curs++;
+		} else {
+			EXPECT_FLOAT_EQ(this->x[not_taken_curs], canidate_x[ii]);
+			not_taken_curs++;
+		}
+	}
+	ASSERT_EQ(MATRIX_SIZE, not_taken_curs);
+	ASSERT_EQ(n_fixed_dofs, taken_curs);
 }
