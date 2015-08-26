@@ -561,6 +561,7 @@ TEST_F(MatrixMathTest, AnotherAssemblyInsertionTest) {
 	uint32_t not_taken_curs = 0;
 	for(uint32_t ii = 0; ii < canidate_x.size(); ++ii) {
 		if(1 == taken_dofs.count(ii)) {
+			/*make sure that the dofs we fixed have the displacements specified*/
 			EXPECT_FLOAT_EQ(given_displacements[taken_curs], canidate_x[ii]);
 			taken_curs++;
 		} else {

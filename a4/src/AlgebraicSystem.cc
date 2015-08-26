@@ -12,7 +12,7 @@
 * very small number, if so it is only for testing,
 * IN PRODCUTION change this number so buffer size is close 
 * to 1/4 size of cache*/
-#define COPY_CHUNK_SIZE 5
+#define COPY_CHUNK_SIZE 100
 
 AlgebraicSystem::AlgebraicSystem(std::size_t ngd)
 	: nGlobalDOFs(ngd)
