@@ -153,6 +153,10 @@ $(ODIR)/GeometryMappings_unittest.o : 	$(SDIR)/GeometryMappings_unittest.cc \
 										$(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@
 
+$(ODIR)/Solver_unittest.o : $(SDIR)/Solver_unittest.cc \
+							$(GTEST_HEADERS)
+	mpicxx $(CPPFLAGS) $(MPIFLAGS) -Wno-unused-value $(PETSC_INC) $(PUMI_INC) -c $< -o $@
+
 #pumi library is no longer rebuilt every time
 $(ODIR)/a4.o : $(SDIR)/a4.cc $(GTEST_HEADERS)
 	mpicxx $(CPPFLAGS) $(MPIFLAGS) $(PETSC_INC) $(PUMI_INC) -c $< -o $@

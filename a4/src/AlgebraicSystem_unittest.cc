@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <petscmat.h>
+#include <petscksp.h>
 
 #include "AlgebraicSystem.h"
 
@@ -309,3 +310,156 @@ TEST_F(AlgebraicSystemTest, ExtractSolutionWithConstraints) {
 
 	// MatView(linsys.K, PETSC_VIEWER_STDOUT_WORLD);
 	// VecView(linsys.F, PETSC_VIEWER_STDOUT_WORLD);
+
+#define MATRIX_SIZE 20
+
+class MatrixMathTest : public testing::Test
+{
+protected:
+	PetscScalar A[MATRIX_SIZE*MATRIX_SIZE];
+	PetscScalar b[MATRIX_SIZE];
+	PetscScalar x[MATRIX_SIZE];
+	PetscInt rows[MATRIX_SIZE];
+	Mat AA;
+	Vec bb;
+	Vec xx;
+	KSP solver;
+	apf::DynamicMatrix ke;
+	apf::NewArray<int> ke_mapping;
+
+	virtual void SetUp() {
+		/*obtained from matlab by:  round(gallery('randcorr',20).* 10^5))./10^5 to reduce the text length of the floats*/
+		PetscScalar tmp_A[MATRIX_SIZE*MATRIX_SIZE] = {1,0.11042,0.15975,0.07215,-0.16194,0.12573,0.16026,0.09704,-0.16321,0.09715,-0.24199,0.10886,0.09753,0.02425,-0.022,0.15892,0.20618,-0.23684,-0.14663,0.05369,
+0.11042,1,-0.12822,-0.19143,-0.18822,0.18943,0.09216,-0.31074,-0.18771,-0.0841,0.16604,0.10108,0.10738,-0.02912,0.11395,0.22398,-0.16085,0.13139,-0.15888,0.17561,
+0.15975,-0.12822,1,-0.04698,-0.22569,-0.07349,-0.17824,-0.19955,-0.0821,0.05437,0.02141,0.19926,-0.08384,-0.10899,0.33946,0.0788,0.0612,-0.03674,-0.09496,0.12271,
+0.07215,-0.19143,-0.04698,1,0.05679,-0.05363,-0.03523,0.27162,0.05889,-0.03422,-0.05202,0.24779,0.05109,-0.03347,-0.04865,-0.1377,-0.13698,0.14955,0.08548,-0.02599,
+-0.16194,-0.18822,-0.22569,0.05679,1,-0.19918,-0.01387,0.02249,-0.16517,-0.13269,-0.00939,0.1208,-0.00685,-0.24569,0.13685,-0.03491,-0.23599,-0.11713,0.00331,0.1729,
+0.12573,0.18943,-0.07349,-0.05363,-0.19918,1,0.00275,-0.19135,-0.00738,0.14971,0.02334,0.00178,-0.02642,-0.10979,-0.10028,-0.06943,0.01473,0.00926,0.312,-0.04077,
+0.16026,0.09216,-0.17824,-0.03523,-0.01387,0.00275,1,0.18428,-0.16484,-0.08476,0.03956,-0.19329,-0.17495,0.14818,0.11287,-0.10798,-0.17335,-0.07062,0.1189,-0.13947,
+0.09704,-0.31074,-0.19955,0.27162,0.02249,-0.19135,0.18428,1,-0.20639,0.0125,0.22883,0.09897,-0.18702,0.15289,-0.15701,-0.01498,0.01805,-0.20767,-0.0152,0.01258,
+-0.16321,-0.18771,-0.0821,0.05889,-0.16517,-0.00738,-0.16484,-0.20639,1,-0.21893,0.24765,-0.02113,-0.04481,0.14527,-0.15697,0.18969,0.0092,0.03446,-0.14277,-0.02189,
+0.09715,-0.0841,0.05437,-0.03422,-0.13269,0.14971,-0.08476,0.0125,-0.21893,1,-0.08147,0.05307,0.04591,0.08526,0.16868,0.18528,-0.05258,-0.01021,-0.07407,-0.03105,
+-0.24199,0.16604,0.02141,-0.05202,-0.00939,0.02334,0.03956,0.22883,0.24765,-0.08147,1,0.18587,0.0702,0.096,-0.09226,0.12658,-0.05114,-0.17574,-0.16458,-0.03645,
+0.10886,0.10108,0.19926,0.24779,0.1208,0.00178,-0.19329,0.09897,-0.02113,0.05307,0.18587,1,0.19834,0.09317,0.19145,0.06073,0.05403,0.10893,-0.10967,-0.08809,
+0.09753,0.10738,-0.08384,0.05109,-0.00685,-0.02642,-0.17495,-0.18702,-0.04481,0.04591,0.0702,0.19834,1,-0.12873,0.16739,-0.20469,-0.02687,0.14814,0.19918,-0.11058,
+0.02425,-0.02912,-0.10899,-0.03347,-0.24569,-0.10979,0.14818,0.15289,0.14527,0.08526,0.096,0.09317,-0.12873,1,-0.26324,0.03421,0.02759,-0.13292,0.0148,0.14492,
+-0.022,0.11395,0.33946,-0.04865,0.13685,-0.10028,0.11287,-0.15701,-0.15697,0.16868,-0.09226,0.19145,0.16739,-0.26324,1,0.11387,0.04268,0.03505,0.11692,0.38419,
+0.15892,0.22398,0.0788,-0.1377,-0.03491,-0.06943,-0.10798,-0.01498,0.18969,0.18528,0.12658,0.06073,-0.20469,0.03421,0.11387,1,-0.19631,-0.09071,0.21937,-0.00943,
+0.20618,-0.16085,0.0612,-0.13698,-0.23599,0.01473,-0.17335,0.01805,0.0092,-0.05258,-0.05114,0.05403,-0.02687,0.02759,0.04268,-0.19631,1,0.19802,-0.16292,0.07184,
+-0.23684,0.13139,-0.03674,0.14955,-0.11713,0.00926,-0.07062,-0.20767,0.03446,-0.01021,-0.17574,0.10893,0.14814,-0.13292,0.03505,-0.09071,0.19802,1,-0.05492,-0.1195,
+-0.14663,-0.15888,-0.09496,0.08548,0.00331,0.312,0.1189,-0.0152,-0.14277,-0.07407,-0.16458,-0.10967,0.19918,0.0148,0.11692,0.21937,-0.16292,-0.05492,1,-0.17777,
+0.05369,0.17561,0.12271,-0.02599,0.1729,-0.04077,-0.13947,0.01258,-0.02189,-0.03105,-0.03645,-0.08809,-0.11058,0.14492,0.38419,-0.00943,0.07184,-0.1195,-0.17777,1};
+		/*copy the values into the class memeber since direct intialization is not working*/
+		for(uint32_t ii = 0; ii < MATRIX_SIZE*MATRIX_SIZE; ++ii){
+			this->A[ii] = tmp_A[ii];
+		}
+		PetscScalar tmp_b[MATRIX_SIZE] = {   0.26965,
+				0.49429,
+			   -1.48312,
+			   -1.02026,
+			   -0.44700,
+			    0.10966,
+			    1.12874,
+			   -0.28996,
+			    1.26155,
+			    0.47542,
+			    1.17412,
+			    0.12695,
+			   -0.65682,
+			   -1.48140,
+			    0.15549,
+			    0.81855,
+			   -0.29259,
+			   -0.54079,
+			   -0.30864,
+			   -1.09659};
+
+		/*the expected solution to system, found with matlab 2014b,
+		* error is expected to be below 1e14 for all elements*/
+		PetscScalar tmp_x[MATRIX_SIZE] = {73.092608107005603,
+										  29.099797385625326,
+										 -18.433394494918982,
+										 -28.777646223545752,
+										   0.478368828160451,
+										 -57.825765573842588,
+										 -39.926582059511340,
+										  -3.547477024603023,
+										  35.954640510050552,
+										  35.151280818645233,
+										  44.057493464710831,
+										   8.362334243335667,
+										 -67.468535394663505,
+										 -17.617047573559240,
+										  11.134195015318230,
+										 -82.590733482380372,
+										 -26.277580602340770,
+										  28.729569579045425,
+										  81.752960379540212,
+										  -2.470184683686883};
+										
+
+
+
+		for(uint32_t ii = 0; ii < MATRIX_SIZE; ++ii) {
+			this->rows[ii] = ii;
+			this->b[ii] = tmp_b[ii];
+			this->x[ii] = tmp_x[ii];
+		}
+		/*setup the petsc versions of the marix*/
+		PetscErrorCode ierr;
+		ierr = VecCreateMPI(PETSC_COMM_WORLD, MATRIX_SIZE, MATRIX_SIZE, &(this->bb));
+		ierr = VecSetOption(this->bb, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+		ierr = MatCreateSBAIJ(PETSC_COMM_WORLD, 1, MATRIX_SIZE, MATRIX_SIZE, MATRIX_SIZE, MATRIX_SIZE,
+			300, PETSC_NULL, 300, PETSC_NULL, &(this->AA));
+		ierr = MatSetOption(this->AA, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+		ierr = MatSetOption(this->AA, MAT_SYMMETRIC, PETSC_TRUE);
+		/*this part will ignore any insertions in the lower triangular, solving
+		* all of my problems and making the assembly code 10x less complex */
+		ierr = MatSetOption(this->AA, MAT_IGNORE_LOWER_TRIANGULAR, PETSC_TRUE);
+		ierr = KSPCreate(PETSC_COMM_WORLD, &(this->solver));
+		ierr = KSPSetTolerances(this->solver, 1.0e-8, 1e-8,
+			PETSC_DEFAULT, 100);
+		ierr = VecDuplicate(this->bb, &(this->xx));
+	}
+
+	virtual void TearDown() {
+		MatDestroy(&(this->AA));
+		VecDestroy(&(this->xx));
+		VecDestroy(&(this->bb));
+		KSPDestroy(&(this->solver));
+	}
+
+};
+
+
+
+TEST_F(MatrixMathTest, SolverTest) {
+	PetscErrorCode ierr;
+
+	PetscInt nrows = MATRIX_SIZE;
+	MatSetValues(this->AA, nrows, this->rows, nrows, this->rows, this->A, ADD_VALUES);
+	VecSetValues(this->bb, nrows, this->rows, this->b, ADD_VALUES);
+
+	ierr = VecAssemblyBegin(this->bb);
+  	ierr = VecAssemblyEnd(this->bb);
+  	ierr = MatAssemblyBegin(this->AA, MAT_FINAL_ASSEMBLY);
+  	ierr = MatAssemblyEnd(this->AA, MAT_FINAL_ASSEMBLY);
+
+  	/*solve the matrix*/
+  	ierr = KSPSetOperators(this->solver, this->AA, this->AA);
+  	ierr = KSPSetFromOptions(this->solver);
+  	ierr = KSPSolve(this->solver, this->bb, this->xx);
+
+
+  	PetscScalar out_x[MATRIX_SIZE];
+
+  	VecGetValues(this->xx, nrows, this->rows, out_x);
+
+  	for(uint32_t ii = 0; ii < MATRIX_SIZE; ++ii) {
+  		EXPECT_FLOAT_EQ(this->x[ii], out_x[ii]);
+  	}
+  	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
+	//MatView(this->AA, PETSC_VIEWER_STDOUT_WORLD);
+	//VecView(this->xx, PETSC_VIEWER_STDOUT_WORLD);
+}
