@@ -70,7 +70,7 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 				/*skip the blocks on the main block diagonal*/
 				continue;
 			}
-			nodal_submatrix = transpose(B[ii]) * this->D * B[ii];
+			nodal_submatrix = (transpose(B[ii]) * this->D) * B[jj];
 			nodal_submatrix = nodal_submatrix * w * dV;
 			/*add the contribution to the element stiffness matrix,
 			* we unroll the element access loop since it is so small*/
@@ -88,7 +88,7 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 	* a generic symmetric matrix class*/
 
 	for(ii = 0; ii < this->nnodes; ++ii) {
-		nodal_submatrix = transpose(B[ii]) * this->D * B[ii];
+		nodal_submatrix = transpose(B[ii]) * this->D * B[jj];
 		nodal_submatrix = nodal_submatrix * w * dV;
 		/*add the contribution to the element stiffness matrix,
 		* we unroll the element access loop since it is so small
