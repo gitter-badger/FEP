@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <iomanip>
+#include <cmath>
 
 #include <gtest/gtest.h>
 
@@ -73,82 +74,76 @@ TEST_F(StiffnessTest, CheckStiffnessMatrix) {
 
 		apf::DynamicMatrix alt_ke;
 
- 		alt_ke.setSize(8,8);
- 		alt_ke.zero();
+		alt_ke.setSize(8,8);
+		alt_ke.zero();
 
- 		int entity_type = this->mesh->getType(e);
- 		uint32_t nIntPoints = apf::countGaussPoints(entity_type, this->integration_order);
+		int entity_type = this->mesh->getType(e);
+		uint32_t nIntPoints = apf::countGaussPoints(entity_type, this->integration_order);
 
- 		for(uint32_t ii = 0; ii < nIntPoints; ++ii) {
- 			apf::Vector3 p(0.0,0.0,0.0);
- 			apf::getGaussPoint(entity_type, this->integration_order, ii, p);
- 			double dV = me->getDV(p);
+		for(uint32_t ii = 0; ii < nIntPoints; ++ii) {
+			apf::Vector3 p(0.0,0.0,0.0);
+			apf::getGaussPoint(entity_type, this->integration_order, ii, p);
+			double dV = me->getDV(p);
 
- 			double weight = apf::getIntWeight(me, this->integration_order, ii);
+			double weight = apf::getIntWeight(me, this->integration_order, ii);
 
-	 		apf::NewArray<apf::Vector3> gradShape;
+			apf::NewArray<apf::Vector3> gradShape;
 
-	 		apf::getShapeGrads(f_elm, p, gradShape);
+			apf::getShapeGrads(f_elm, p, gradShape);
 
-	 		apf::Matrix<2,2> nodal_stiffness;
+			apf::Matrix<2,2> nodal_stiffness;
 
-	 		for(uint32_t A = 0; A < nnodes; ++A) {
-	 			for(uint32_t B = 0; B < nnodes; ++B) {
-	 				/* nodal_stiffness_11
-	 				* in reduced form we have N_A,x * D_11 * N_B,x
-	 										+ N_A,y * D_33 * N_B,y*/
-	 				double tmp = gradShape[A][0] * this->D[0][0] * gradShape[B][0];
-	 				tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][1];
-	 				tmp *= (dV * weight);
-	 				alt_ke(2*A,2*B) += tmp;
+			for(uint32_t A = 0; A < nnodes; ++A) {
+				for(uint32_t B = 0; B < nnodes; ++B) {
+					/* nodal_stiffness_11
+					* in reduced form we have N_A,x * D_11 * N_B,x
+											+ N_A,y * D_33 * N_B,y*/
+					double tmp = gradShape[A][0] * this->D[0][0] * gradShape[B][0];
+					tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][1];
+					tmp *= (dV * weight);
+					alt_ke(2*A,2*B) += tmp;
 
-	 				/* nodal_stiffness_12
-	 				* we have N_A,x * D_11 * N_B,x
-	 						+ N_A,y * D_33 * N_B,x*/
-	 				tmp = gradShape[A][0] * this->D[2][2] * gradShape[B][0];
-	 				tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][0];
-	 				tmp *= (dV * weight);
-	 				alt_ke(2*A, 2*B + 1) += tmp;
+					/* nodal_stiffness_12
+					* we have N_A,x * D_12 * N_B,y
+							+ N_A,y * D_33 * N_B,x*/
+					tmp = gradShape[A][0] * this->D[0][1] * gradShape[B][1];
+					tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][0];
+					tmp *= (dV * weight);
+					alt_ke(2*A, 2*B + 1) += tmp;
 
-	 				/* nodal_stiffness_21
-	 				*we have N_A,y * D_12 * N_B,x
-	 						+N_A,x * D_33 * N_B,y*/
-	 				tmp = gradShape[A][1] * this->D[0][1] * gradShape[B][0];
-	 				tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][1];
-	 				tmp *= (dV * weight);
-	 				alt_ke(2*A + 1, 2*B) += tmp;
+					/* nodal_stiffness_21
+					*we have N_A,y * D_12 * N_B,x
+							+N_A,x * D_33 * N_B,y*/
+					tmp = gradShape[A][1] * this->D[0][1] * gradShape[B][0];
+					tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][1];
+					tmp *= (dV * weight);
+					alt_ke(2*A + 1, 2*B) += tmp;
 
-	 				/* nodal_stiffness_22
-	 				*we have N_A,y * D_22 * N_B,y
-	 						+N_A,x * D_33 * N_B,x*/
-	 				tmp = gradShape[A][1] * this->D[1][1] * gradShape[B][1];
-	 				tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][0];
-	 				tmp *= (dV * weight);
-	 				alt_ke(2*A + 1, 2*B + 1) += tmp;
-	 			}
-	 		}
-	 	}
-	 	/*check that both are symmetric*/
-	 	for(uint32_t ii = 0; ii < 8; ++ii) {
-	 		for(uint32_t jj = ii; jj < 8; ++jj) {
-	 			if(ii != jj) {
-	 				EXPECT_FLOAT_EQ(stiff.ke(ii,jj), stiff.ke(jj,ii));
-	 				//EXPECT_FLOAT_EQ(alt_ke(ii,jj), alt_ke(jj,ii));
-	 			}
-	 		}
-	 	}
-
-
-	 	std::cout << "==============================" << std::endl;
-	 	std::cout << stiff.ke << std::endl;
-	 	std::cout << "--------------------------------" << std::endl;
-	 	std::cout << alt_ke << std::endl;
-	 	/*now check that we computed the same stiffness matrix*/
-	 	for(uint32_t ii = 0; ii < 8; ++ii) {
-	 		for(uint32_t jj = 0; jj < 8; ++jj) {
-	 			//EXPECT_FLOAT_EQ(alt_ke(ii,jj), stiff.ke(ii,jj));
-	 		}
-	 	}
- 		apf::destroyElement(f_elm);
+					/* nodal_stiffness_22
+					*we have N_A,y * D_22 * N_B,y
+							+N_A,x * D_33 * N_B,x*/
+					tmp = gradShape[A][1] * this->D[1][1] * gradShape[B][1];
+					tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][0];
+					tmp *= (dV * weight);
+					alt_ke(2*A + 1, 2*B + 1) += tmp;
+				}
+			}
+		}
+		/*check that both are symmetric*/
+		for(uint32_t ii = 0; ii < 8; ++ii) {
+			for(uint32_t jj = ii+1; jj < 8; ++jj) {
+				EXPECT_FLOAT_EQ(stiff.ke(ii,jj), stiff.ke(jj,ii));
+				EXPECT_FLOAT_EQ(alt_ke(ii,jj), alt_ke(jj,ii));
+			}
+		}
+		/*now check that we computed the same stiffness matrix*/
+		for(uint32_t ii = 0; ii < 8; ++ii) {
+			for(uint32_t jj = 0; jj < 8; ++jj) {
+				EXPECT_FLOAT_EQ(alt_ke(ii,jj), stiff.ke(ii,jj));
+			}
+		}
+		apf::destroyElement(f_elm);
+		apf::destroyMeshElement(me);
 	}
+	this->mesh->end(it);
 }
