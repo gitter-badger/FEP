@@ -28,9 +28,27 @@
     % N.B.: floatpagefraction MUST be less than topfraction !!
     \renewcommand{\dblfloatpagefraction}{0.7}   % require fuller float pages
 
+\usepackage{color}
+\usepackage{xcolor}
 \usepackage{listings}
 \lstset{
-  language              = C++
+  language= C++,
+        % basicstyle=\scriptsize,
+        % aboveskip={1.5\baselineskip},
+        % columns=fixed,
+        % showstringspaces=false,
+        % extendedchars=false,
+        % breaklines=true,
+        % prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        numbers=left,
+        % showtabs=false,
+        % showspaces=false,
+        % showstringspaces=false,
+        keywordstyle=\color[HTML]{89BDFF},
+        commentstyle=\color[rgb]{0.026,0.112,0.095},
+        stringstyle=\color[HTML]{E6DB74},
+        numberstyle= \color[rgb]{0.205, 0.142, 0.73}
 }
 
 \renewcommand{\algorithmicforall}{\textbf{for each}}
@@ -154,24 +172,36 @@ We extend the apf::Integrator class to implement each stiffnes contributor
 \lstset{linewidth = 16cm, xrightmargin = 0cm}
 \lstlistoflistings
 \lstinputlisting[caption = {Test Driver}]{../src/a4.cc}
-\lstinputlisting[caption = {Abstract Base FE Analysis class}]{../inc/FEAnalysis.h}
+%includes
+\lstinputlisting[caption = {Algebraic System container class}]{../inc/AlgebraicSystem.h}
 \lstinputlisting[caption = {Elastic Analysis Class}]{../inc/ElasticAnalysis2D.h}
+\lstinputlisting[caption = {Abstract Base FE Analysis class}]{../inc/FEAnalysis.h}
 \lstinputlisting[caption = {Force Contributor}]{../inc/ForceContributor2D.h}
-\lstinputlisting[caption = {Stiffness Constributor}]{../inc/StiffnessContributor2D.h}
 \lstinputlisting[caption = {Mesh Builder helper class}]{../inc/MeshBuilder.h}
 \lstinputlisting[caption = {Adjacency reordering routine}]{../inc/MeshAdjReorder.h}
-\lstinputlisting[caption = {Algebraic System container class}]{../inc/AlgebraicSystem.h}
+\lstinputlisting[caption = {Stiffness Constributor}]{../inc/StiffnessContributor2D.h}
+
+
+%sources
 \lstinputlisting[caption = {Algebraic System implementation}]{../src/AlgebraicSystem.cc}
-\lstinputlisting[caption = {Algebraic System tests}]{../src/AlgebraicSystem_unittest.cc}
 \lstinputlisting[caption = {Elastic Analysis implementation}]{../src/ElasticAnalysis2D.cc}
 \lstinputlisting[caption = {Force Contributor implementation}]{../src/ForceContributor2D.cc}
+
+\lstinputlisting[caption = {Stiffness contributor implementation}]{../src/StiffnessContributor2D.cc}
 \lstinputlisting[caption = {Geometry Mapping Implementation}]{../src/GeometryMappings.cc}
 \lstinputlisting[caption = {Mesh Adjacency reordering implementation}]{../src/MeshAdjReorder.cc}
 \lstinputlisting[caption = {Mesh builder scripts}]{../src/MeshBuilder.cc}
-\lstinputlisting[caption = {Mesh builder unittests}]{../src/MeshBuilder_unittest.cc}
+
+%tests
+
+%Mesh builder unittests are all empty right now and probably wont meaningfully change
+%\lstinputlisting[caption = {Mesh builder unittests}]{../src/MeshBuilder_unittest.cc}
+\lstinputlisting[caption = {Algebraic System tests}]{../src/AlgebraicSystem_unittest.cc}
 \lstinputlisting[caption = {Test node mapping functions}]{../src/ShapeFunctionOrdering_unittest.cc}
 \lstinputlisting[caption = {Test mesh generation scripts}]{../src/SimpleRectMesh_unittest.cc}
-\lstinputlisting[caption = {Stiffness contributor implementation}]{../src/StiffnessContributor2D.cc}
+\lstinputlisting[caption = {Geometry Mapping tests}]{../src/GeometryMappings_unittest.cc}
+
+%build files
 \lstinputlisting[caption = {configuration file}]{../config.mk}
 \lstinputlisting[caption = {Makefile}]{../Makefile}
 
