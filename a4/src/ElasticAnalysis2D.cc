@@ -48,10 +48,13 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 	/*we create a 3 dimensional field but only will use 2 dimensions of that, (x & y)*/
 	this->field = createField(this->m, "dummyField", apf::VECTOR, this->m->getShape());
 	apf::zeroField(this->field);
+	printf("field = %p\n", this->field);
+
 	/*thisfield will store the resulting displacments*/
 	this->disp_field = apf::createFieldOn(this->m, DISPLACEMENT_FIELD_NAME, apf::VECTOR);
 	apf::zeroField(this->disp_field);
-	
+	printf("disp_field = %p\n", this->disp_field);
+
 	// this->strain_field = apf::createField(this->m, STRAIN_FIELD_NAME, apf::VECTOR, apf::getIPShape(this->m->getDimension(), this->integration_order));
 	// apf::zeroField(this->strain_field);
 
@@ -67,10 +70,6 @@ ElasticAnalysis2D::ElasticAnalysis2D(struct ElasticAnalysisInput & in) :
 	if(in.reorder == true){
 		adjReorder(this->m, this->m->getShape(), NUM_COMPONENTS, this->nodeNums, this->faceNums);
 	}
-
-	apf::Field* tmp_f = apf::getField(this->nodeNums);
-	printf("tmp_f = %p\n", tmp_f);
-
 	/*compute the global degrees of freedom for the mesh*/
 	std::size_t n_global_dofs = apf::countNodes(this->nodeNums) * NUM_COMPONENTS;
 	/*initialize the linear system*/

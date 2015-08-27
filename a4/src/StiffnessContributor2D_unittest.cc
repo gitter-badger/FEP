@@ -17,7 +17,8 @@
 #include "MeshBuilder.h"
 #include "ElasticAnalysis2D.h"
 
-class StiffnessTest : public testing::Test
+class StiffnessTest : public testing::Test,
+	public ::testing::WithParamInterface<int>
 {
 protected:
 	apf::Mesh2* mesh;
@@ -28,19 +29,52 @@ protected:
 	double Nu;
 	int integration_order;
 
-	virtual void SetUp() {
-		mesh_builder = new MeshBuilder();
-		mesh = NULL;
-		mesh_builder->build2DRectQuadMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
-		//mesh_builder->build2DRectTriMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
-		//apf::changeMeshShape(mesh, apf::getSerendipity());
-		apf::changeMeshShape(this->mesh, apf::getLagrange(1));
-		this->E = 1e8;
-		this->Nu = 0.35;
+	void changeMeshFromIndex(int index) {
+		if(NULL != this->mesh) {
+			mesh->destroyNative();
+			apf::destroyMesh(mesh);
+		}
+		int X_ELMS = 2;
+		int Y_ELMS = 1;
+		switch(index) {
+			case 0:
+				mesh_builder->build2DRectQuadMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
+				apf::changeMeshShape(this->mesh, apf::getLagrange(1));
+				break;
+			case 1:
+				this->mesh_builder->build2DRectQuadMesh(this->mesh, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				apf::changeMeshShape(this->mesh, apf::getLagrange(2));
+				break;
+			case 2:
+				this->mesh_builder->build2DRectTriMesh(this->mesh, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				break;
+			case 3:
+				this->mesh_builder->build2DRectTriMesh(this->mesh, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				apf::changeMeshShape(this->mesh, apf::getLagrange(2));
+				break;
+			case 4:
+				this->mesh_builder->build2DRectQuadMesh(this->mesh, X_ELMS, Y_ELMS,
+					0.0, 0.0, 2.0, 2.0);
+				apf::changeMeshShape(this->mesh, apf::getSerendipity());
+			default:
+				/*mesh should stay null*/
+				break;
+		}
 		bool use_plane_stress = true;
 		this->D = buildD(this->E, this->Nu, use_plane_stress);
 		this->field = createField(this->mesh, "dummy", apf::VECTOR, this->mesh->getShape());
 		apf::zeroField(this->field); /*must zero the field to force writing of data*/
+
+	}
+
+	virtual void SetUp() {
+		mesh_builder = new MeshBuilder();
+		mesh = NULL;
+		this->E = 1e8;
+		this->Nu = 0.35;
 		this->integration_order = 4;
 	}
 
@@ -54,7 +88,13 @@ protected:
 
 };
 
-TEST_F(StiffnessTest, CheckStiffnessMatrix) {
+INSTANTIATE_TEST_CASE_P(DifferentMeshOrders, StiffnessTest,
+	::testing::Values(0,1,2,3,4));
+
+TEST_P(StiffnessTest, CheckLinearStiffnessMatrix) {
+	/*use a linear quad*/
+	changeMeshFromIndex(GetParam());
+
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
 	it = this->mesh->begin(2);
@@ -70,11 +110,11 @@ TEST_F(StiffnessTest, CheckStiffnessMatrix) {
 		apf::Element* f_elm = apf::createElement(this->field, me);
 
 		uint32_t nnodes = apf::countNodes(f_elm);
-		ASSERT_EQ(8, nnodes* this->mesh->getDimension());
+		uint32_t n_eqs = nnodes * this->mesh->getDimension();
 
 		apf::DynamicMatrix alt_ke;
 
-		alt_ke.setSize(8,8);
+		alt_ke.setSize(n_eqs,n_eqs);
 		alt_ke.zero();
 
 		int entity_type = this->mesh->getType(e);

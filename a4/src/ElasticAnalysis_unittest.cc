@@ -47,11 +47,11 @@ apf::Vector3 LinearLoad_X(apf::Vector3 const & p)
 }
 
 TEST_F(ElasticAnalysisTest, AppRunTest) {
-	// mesh_builder->build2DRectQuadMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
-	mesh_builder->build2DRectTriMesh(this->mesh, 4, 2, 0.0, 0.0, 2.0, 1.0);
+	mesh_builder->build2DRectQuadMesh(this->mesh, 6, 3, 0.0, 0.0, 2.0, 1.0);
+	// mesh_builder->build2DRectTriMesh(this->mesh, 4, 2, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(this->mesh != NULL);
-	//apf::changeMeshShape(mesh, apf::getSerendipity());
-	apf::changeMeshShape(this->mesh, apf::getLagrange(1));
+	apf::changeMeshShape(mesh, apf::getSerendipity());
+	//apf::changeMeshShape(this->mesh, apf::getLagrange(2));
 	/*physical parameters*/
 	double E, Nu;
 	E = YOUNGS_MODULUS;
