@@ -30,6 +30,7 @@ void StiffnessContributor2D::outElement()
 			this->ke(jj, ii) = this->ke(ii, jj);
 		}
 	}
+	// std::cout << this->ke << std::endl;
 
 	/*perform clean up and destroy specific field element*/
 	apf::destroyElement(this->field_element);
@@ -74,10 +75,10 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 			nodal_submatrix = nodal_submatrix * w * dV;
 			/*add the contribution to the element stiffness matrix,
 			* we unroll the element access loop since it is so small*/
-			this->ke(2*ii,2*jj) = nodal_submatrix[0][0];
-			this->ke(2*ii,2*jj+1) = nodal_submatrix[0][1];
-			this->ke(2*ii+1,2*jj) = nodal_submatrix[1][0];
-			this->ke(2*ii+1,2*jj+1) = nodal_submatrix[1][1];
+			this->ke(2*ii,2*jj) += nodal_submatrix[0][0];
+			this->ke(2*ii,2*jj+1) += nodal_submatrix[0][1];
+			this->ke(2*ii+1,2*jj) += nodal_submatrix[1][0];
+			this->ke(2*ii+1,2*jj+1) += nodal_submatrix[1][1];
 		}
 	}
 	/*now assemble the nodal contributors along the main diagonal
@@ -93,8 +94,8 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 		/*add the contribution to the element stiffness matrix,
 		* we unroll the element access loop since it is so small
 		*/
-		this->ke(2*ii,2*ii) = nodal_submatrix[0][0];
-		this->ke(2*ii,2*ii+1) = nodal_submatrix[0][1];
-		this->ke(2*ii+1,2*ii+1) = nodal_submatrix[1][1];
+		this->ke(2*ii,2*ii) += nodal_submatrix[0][0];
+		this->ke(2*ii,2*ii+1) += nodal_submatrix[0][1];
+		this->ke(2*ii+1,2*ii+1) += nodal_submatrix[1][1];
 	}
 }
