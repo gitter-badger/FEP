@@ -373,3 +373,58 @@ void MeshBuilder::build2DRectTriMesh(apf::Mesh2* & mesh, uint32_t x_elms,
 	delete temp_vec;
 	delete[] vertices;
 }
+
+void MeshBuilder::buildBatmanElementMesh(apf::Mesh2* & mesh)
+{
+		/*Batman element*/
+	gmi_register_null();
+	gmi_model* g = gmi_load(".null");
+	mesh = apf::makeEmptyMdsMesh(g, 2, false);
+
+	apf::Numbering* numbers = apf::createNumbering(mesh,SECRET_BUILDER_NUMBERING, 
+												   mesh->getShape(), 1);
+	apf::MeshEntity** vertices = new apf::MeshEntity*[4];
+	for(uint32_t counter = 0; counter < 4; counter++) {
+		vertices[counter] = mesh->createVert(0);
+		apf::number(numbers,vertices[counter],0,0,counter);
+	}
+
+
+	/*this element is flipped upside down around x axis*/
+	apf::Vector3 tmp_vec(1.35,2.36,0.0);
+	mesh->setPoint(vertices[0], 0, tmp_vec);
+	tmp_vec.x() = 2.57; tmp_vec.y() = 2.70;
+	mesh->setPoint(vertices[1], 0, tmp_vec);
+	tmp_vec.x() = 2.51; tmp_vec.y() = 1.75;
+	mesh->setPoint(vertices[2], 0, tmp_vec);
+	tmp_vec.x() = 1.64; tmp_vec.y() = 1.28;
+	mesh->setPoint(vertices[3], 0, tmp_vec);
+
+	apf::buildElement(mesh, NULL, apf::Mesh::QUAD, vertices);
+
+	apf::deriveMdsModel(mesh);
+	mesh->acceptChanges();
+	mesh->verify();
+
+	apf::changeMeshShape(mesh, apf::getLagrange(2));
+	apf::MeshIterator *it;
+	apf::MeshEntity* e;
+	it = mesh->begin(2);
+	e = mesh->iterate(it);
+
+	apf::Downward down;
+	uint32_t sz = mesh->getDownward(e, 1, down);
+	assert(4 == sz);
+	tmp_vec.x() = 2.09; tmp_vec.y() = 2.36;
+	mesh->setPoint(down[0], 0, tmp_vec);
+	tmp_vec.x() = 2.73; tmp_vec.y() = 2.25;
+	mesh->setPoint(down[1], 0, tmp_vec);
+	tmp_vec.x() = 2.01; tmp_vec.y() = 1.72;
+	mesh->setPoint(down[2], 0, tmp_vec);
+	tmp_vec.x() = 1.15; tmp_vec.y() = 1.77;
+	mesh->setPoint(down[3], 0, tmp_vec);
+	/*set the center node*/
+	tmp_vec.x() = 1.90; tmp_vec.y() = 2.05;
+	mesh->setPoint(e, 0, tmp_vec);
+	delete[] vertices;
+}

@@ -26,6 +26,8 @@ public:
 	
 	void AdjReorder(apf::Mesh2* & mesh);
 
+	void buildBatmanElementMesh(apf::Mesh2* & mesh);
+
 private:
 
 };
