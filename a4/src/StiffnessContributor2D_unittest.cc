@@ -170,15 +170,15 @@ TEST_P(StiffnessTest, CheckLinearStiffnessMatrix) {
 			}
 		}
 		/*check that both are symmetric*/
-		for(uint32_t ii = 0; ii < 8; ++ii) {
-			for(uint32_t jj = ii+1; jj < 8; ++jj) {
+		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
+			for(uint32_t jj = ii+1; jj < n_eqs; ++jj) {
 				EXPECT_FLOAT_EQ(stiff.ke(ii,jj), stiff.ke(jj,ii));
 				EXPECT_FLOAT_EQ(alt_ke(ii,jj), alt_ke(jj,ii));
 			}
 		}
 		/*now check that we computed the same stiffness matrix*/
-		for(uint32_t ii = 0; ii < 8; ++ii) {
-			for(uint32_t jj = 0; jj < 8; ++jj) {
+		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
+			for(uint32_t jj = 0; jj < n_eqs; ++jj) {
 				EXPECT_FLOAT_EQ(alt_ke(ii,jj), stiff.ke(ii,jj));
 			}
 		}
