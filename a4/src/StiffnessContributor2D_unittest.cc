@@ -107,9 +107,9 @@ TEST_P(StiffnessTest, StiffnessIsSymmetric) {
 		stiff.process(me);
 		apf::destroyMeshElement(me);
 
-		std::cout << "======================" << std::endl;
-		std::cout << stiff.ke << std::endl;
-		std::cout << "======================" << std::endl;
+		// std::cout << "======================" << std::endl;
+		// std::cout << stiff.ke << std::endl;
+		// std::cout << "======================" << std::endl;
 
 
 		apf::Element* f_elm = apf::createElement(this->field, me);
@@ -183,21 +183,25 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 
 			for(uint32_t A = 0; A < nnodes; ++A) {
 				for(uint32_t B = 0; B < nnodes; ++B) {
+					// if(A != B) {
+					// 	continue;
+					// }
 					/* nodal_stiffness_11
 					* in reduced form we have N_A,x * D_11 * N_B,x
 											+ N_A,y * D_33 * N_B,y*/
 					double tmp = gradShape[A][0] * this->D[0][0] * gradShape[B][0];
 					tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][1];
 					tmp *= (dV * weight);
-					alt_ke(2*A,2*B) += tmp;
-
+			//		alt_ke(2*A,2*B) += tmp;
+					
 					/* nodal_stiffness_12
 					* we have N_A,x * D_12 * N_B,y
 							+ N_A,y * D_33 * N_B,x*/
+					tmp = 0.0;
 					tmp = gradShape[A][0] * this->D[0][1] * gradShape[B][1];
 					tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][0];
 					tmp *= (dV * weight);
-					alt_ke(2*A, 2*B + 1) += tmp;
+			//		alt_ke(2*A, 2*B + 1) += tmp;
 
 					/* nodal_stiffness_21
 					*we have N_A,y * D_12 * N_B,x
@@ -205,7 +209,7 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 					tmp = gradShape[A][1] * this->D[0][1] * gradShape[B][0];
 					tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][1];
 					tmp *= (dV * weight);
-					alt_ke(2*A + 1, 2*B) += tmp;
+			//		alt_ke(2*A + 1, 2*B) += tmp;
 
 					/* nodal_stiffness_22
 					*we have N_A,y * D_22 * N_B,y
@@ -214,15 +218,61 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 					tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][0];
 					tmp *= (dV * weight);
 					alt_ke(2*A + 1, 2*B + 1) += tmp;
+
+					//alt_ke(2*A, 2*B) += 1e10;
+				//	alt_ke(2*A, 2*B + 1) += 1e10;
+					//alt_ke(2*A + 1, 2*B) += 1e10;
+					//alt_ke(2*A + 1, 2*B + 1) += 1e10;
 				}
 			}
 		}
 		/*check that altenate calculation of stiffness is symmetric*/
 		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
 			for(uint32_t jj = ii+1; jj < n_eqs; ++jj) {
-				// EXPECT_FLOAT_EQ(alt_ke(ii,jj), alt_ke(jj,ii));
+				//EXPECT_FLOAT_EQ(alt_ke(ii,jj), alt_ke(jj,ii));
 			}
 		}
+		std::cout << "=======================================" << std::endl;
+		std::cout << "=			Reference Matrix 			=" << std::endl;
+		std::cout << alt_ke << std::endl;
+		std::cout << "=======================================" << std::endl << std::endl;
+
+		/*visualization for the symmetry of the matrix*/
+		std::cout << std::setprecision(16);
+		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
+			for(uint32_t jj = 0; jj < n_eqs; ++jj) {
+				if(fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) > fabs(1e-10 * alt_ke(ii,jj))) {
+					// std::cout << "X ";
+					/*absolute error*/
+					if(fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) > 5e-9) {
+						std::cout << fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) << " ";
+					} else {
+						std::cout << "0 ";
+					}
+
+				} else {
+					std::cout << "0 ";
+				}
+			}
+			std::cout << std::endl;
+		}
+		std::cout << "-----------------------------------" << std::endl;
+		// std::cout << "=======================================" << std::endl;
+		// std::cout << "=			Difference between two		=" << std::endl;
+		// std::cout << "=======================================" << std::endl;
+		// for(uint32_t ii = 0; ii < n_eqs; ++ii) {
+		// 	for(uint32_t jj = 0; jj < n_eqs; ++jj) {
+		// 		if(fabs(alt_ke(ii,jj) - stiff.ke(ii,jj)) > 1e-13) {
+		// 			std::cout << "X ";
+		// 		} else {
+		// 			std::cout << "0 ";
+		// 		}
+		// 	}
+		// 	std::cout << std::endl;
+		// }
+
+
+
 		/*now check that we computed the same stiffness matrix*/
 		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
 			for(uint32_t jj = 0; jj < n_eqs; ++jj) {
@@ -235,10 +285,68 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 	this->mesh->end(it);
 }
 
+class MyUserFunction : public apf::Function
+{
+public:
+	MyUserFunction(apf::Field* f, apf::Mesh* m) : node_field(f), mesh(m) {}
+
+	void eval(apf::MeshEntity* e, double *result) {
+		if(NULL != node_field) {
+			apf::MeshElement* me = apf::createMeshElement(this->mesh, e);
+			apf::Element* f_elm = apf::createElement(this->node_field, me);
+			/*find the location of the single node on entity*/
+			apf::Vector3 tmp_vec;
+			apf::getVector(this->node_field, e, 0, tmp_vec);
+
+			apf::Vector3 x_vec;
+			apf::mapLocalToGlobal(me, tmp_vec, x_vec);
+			*result = (2*x_vec[0] + 5*x_vec[1]);
+		} else {
+			std::cout << "failed to set field" << std::endl;
+			*result = -1.0;
+		}
+
+	}
+
+protected:
+	apf::Field* node_field;
+	apf::Mesh* mesh;
+
+};
+
 TEST_F(StiffnessTest, ScratchPad) {
 	apf::Mesh2* m = NULL;
 	this->mesh_builder->buildBatmanElementMesh(m);
 
-	apf::writeVtkFiles("batman_elm", m);
+	apf::MeshIterator* it;
+	apf::MeshEntity* e;
+	it = m->begin(2);
+	e = m->iterate(it);
+	m->end(it);
 
+	apf::Field* node_f = apf::createField(m, "nodeField", apf::SCALAR, m->getShape());
+	apf::zeroField(node_f);
+	MyUserFunction test_fnc(node_f, m);
+	apf::Field* test_f = apf::createUserField(m, "testingField", apf::SCALAR, m->getShape(), &test_fnc);
+
+	apf::MeshElement* me = apf::createMeshElement(m, e);
+	apf::Element* f_elm = apf::createElement(test_f, me);
+
+	/*pick a random spot inside the element coordinates*/
+	apf::Vector3 sample_points[8] =
+	{apf::Vector3(-0.1241,    0.4889, 0.0),
+	 apf::Vector3( 0.4897,    0.0347, 0.0),
+	 apf::Vector3( 0.4090,    0.7269, 0.0),
+	 apf::Vector3( 0.4172,   -0.3034, 0.0),
+	 apf::Vector3( 0.6715,    0.2939, 0.0),
+	 apf::Vector3(-0.2075,   -0.7873, 0.0),
+	 apf::Vector3( 0.7172,    0.8884, 0.0),
+	 apf::Vector3( 0.6302,   -0.1471, 0.0)};
+	for(uint32_t ii = 0; ii < 8; ++ii) {
+		apf::Vector3 tmp_grad(0.0, 0.0, 0.0);
+		apf::getGrad(f_elm, sample_points[ii], tmp_grad);
+		EXPECT_FLOAT_EQ(2.0, tmp_grad[0]);
+		EXPECT_FLOAT_EQ(5.0, tmp_grad[1]);
+	} 
+	apf::writeVtkFiles("batman_elm", m);
 }
