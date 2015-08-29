@@ -143,12 +143,22 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 	/*use a linear quad*/
 	changeMeshFromIndex(GetParam());
 
+	std::cout << this->D << std::endl;
+
+	this->D[0][0] = 1e1;
+	this->D[0][1] = 1e1;
+	this->D[1][0] = 1e1;
+	this->D[1][1] = 1e1;
+	this->D[2][2] = 1e1;
+
+
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
 	it = this->mesh->begin(2);
 	while((e = this->mesh->iterate(it))) {
 		/*compute each of the nodal submatrices by different method, and
 		* do not explictly take advantage of symmetry*/
+
 		StiffnessContributor2D stiff(this->field, this->D, this->integration_order);
 
 		apf::MeshElement* me = apf::createMeshElement(this->mesh, e);
@@ -167,6 +177,13 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 
 		int entity_type = this->mesh->getType(e);
 		uint32_t nIntPoints = apf::countGaussPoints(entity_type, this->integration_order);
+		/*compute the differential volume once*/
+		double jac_det = me->getDV(apf::Vector3(0.0, 0.0, 0.0));
+
+		apf::Matrix< 3,3 > local_D = this->D * jac_det;
+		
+
+
 
 		for(uint32_t ii = 0; ii < nIntPoints; ++ii) {
 			apf::Vector3 p(0.0,0.0,0.0);
@@ -178,46 +195,68 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 			apf::NewArray<apf::Vector3> gradShape;
 
 			apf::getShapeGrads(f_elm, p, gradShape);
+			// std::cout << "###########shape gradients############" << std::endl;
+			// for(uint32_t ii = 0; ii < nnodes; ++ii) {
+			// 	std::cout << gradShape[ii] << std::endl;
+			// }
+			std::cout << std::endl;
 
 			apf::Matrix<2,2> nodal_stiffness;
 
+			std::cout << "*****************************************" << std::endl;
 			for(uint32_t A = 0; A < nnodes; ++A) {
-				for(uint32_t B = 0; B < nnodes; ++B) {
+				for(uint32_t B = A; B < nnodes; ++B) {
 					// if(A != B) {
 					// 	continue;
 					// }
 					/* nodal_stiffness_11
 					* in reduced form we have N_A,x * D_11 * N_B,x
 											+ N_A,y * D_33 * N_B,y*/
-					double tmp = gradShape[A][0] * this->D[0][0] * gradShape[B][0];
-					tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][1];
+					double c1 = local_D[0][0];
+					double c2 = local_D[2][2];
+
+					double tmp = gradShape[A][0] * c1 * gradShape[B][0];
+					tmp += gradShape[A][1] * c2 * gradShape[B][1];
 					tmp *= (dV * weight);
-			//		alt_ke(2*A,2*B) += tmp;
+					alt_ke(2*A,2*B) += tmp;
+					/*compute what the symmetric side must be*/
+					double mirror = gradShape[B][0] * c1 * gradShape[A][0];
+					mirror += gradShape[B][1] * c2 * gradShape[A][1];
+					mirror *= (dV * weight);
+					/*compute all on one line*/
+					double mirror2 = ((gradShape[B][0] * c1 * gradShape[A][0]) + (gradShape[B][1] * c2 * gradShape[A][1])) * weight * dV;
+					double tmp2 =    ((gradShape[A][0] * c1 * gradShape[B][0]) + (gradShape[A][1] * c2 * gradShape[B][1])) * weight * dV; 
+					std::cout << A << " , " << B << std::endl
+					<< "tmp - mirror: " << (tmp - mirror) << std::endl 
+					<< "tmp - mirror2: " << (tmp - mirror2) << std::endl
+					<< "tmp2 - mirror2: " << (tmp2 - mirror2) << std::endl
+					<< "==============================" << std::endl;
+
+
 					
 					/* nodal_stiffness_12
 					* we have N_A,x * D_12 * N_B,y
 							+ N_A,y * D_33 * N_B,x*/
-					tmp = 0.0;
-					tmp = gradShape[A][0] * this->D[0][1] * gradShape[B][1];
-					tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][0];
-					tmp *= (dV * weight);
+			//		tmp = gradShape[A][0] * this->D[0][1] * gradShape[B][1];
+			//		tmp += gradShape[A][1] * this->D[2][2] * gradShape[B][0];
+			//		tmp *= (dV * weight);
 			//		alt_ke(2*A, 2*B + 1) += tmp;
 
 					/* nodal_stiffness_21
 					*we have N_A,y * D_12 * N_B,x
 							+N_A,x * D_33 * N_B,y*/
-					tmp = gradShape[A][1] * this->D[0][1] * gradShape[B][0];
-					tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][1];
-					tmp *= (dV * weight);
+			//		tmp = gradShape[A][1] * this->D[0][1] * gradShape[B][0];
+			//		tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][1];
+			//		tmp *= (dV * weight);
 			//		alt_ke(2*A + 1, 2*B) += tmp;
 
 					/* nodal_stiffness_22
 					*we have N_A,y * D_22 * N_B,y
 							+N_A,x * D_33 * N_B,x*/
-					tmp = gradShape[A][1] * this->D[1][1] * gradShape[B][1];
-					tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][0];
-					tmp *= (dV * weight);
-					alt_ke(2*A + 1, 2*B + 1) += tmp;
+			//		tmp = gradShape[A][1] * this->D[1][1] * gradShape[B][1];
+			//		tmp += gradShape[A][0] * this->D[2][2] * gradShape[B][0];
+			//		tmp *= (dV * weight);
+			//		alt_ke(2*A + 1, 2*B + 1) += tmp;
 
 					//alt_ke(2*A, 2*B) += 1e10;
 				//	alt_ke(2*A, 2*B + 1) += 1e10;
@@ -232,31 +271,32 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 				//EXPECT_FLOAT_EQ(alt_ke(ii,jj), alt_ke(jj,ii));
 			}
 		}
-		std::cout << "=======================================" << std::endl;
-		std::cout << "=			Reference Matrix 			=" << std::endl;
-		std::cout << alt_ke << std::endl;
-		std::cout << "=======================================" << std::endl << std::endl;
+		//std::cout << "=======================================" << std::endl;
+		//std::cout << "=			Reference Matrix 			=" << std::endl;
+		//std::cout << alt_ke << std::endl;
+		//std::cout << "=======================================" << std::endl << std::endl;
 
 		/*visualization for the symmetry of the matrix*/
-		std::cout << std::setprecision(16);
-		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
-			for(uint32_t jj = 0; jj < n_eqs; ++jj) {
-				if(fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) > fabs(1e-10 * alt_ke(ii,jj))) {
-					// std::cout << "X ";
-					/*absolute error*/
-					if(fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) > 5e-9) {
-						std::cout << fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) << " ";
-					} else {
-						std::cout << "0 ";
-					}
-
-				} else {
-					std::cout << "0 ";
-				}
-			}
-			std::cout << std::endl;
-		}
-		std::cout << "-----------------------------------" << std::endl;
+//		std::cout << std::setprecision(16);
+//		for(uint32_t ii = 0; ii < n_eqs; ++ii) {
+//			for(uint32_t jj = 0; jj < n_eqs; ++jj) {
+//				if(fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) > fabs(1e-15 * alt_ke(ii,jj))) {
+//					/*absolute error*/
+//					if(fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) > 1e-15) {
+//						std::cout << fabs(alt_ke(ii,jj) - alt_ke(jj,ii)) << " ";
+//						//std::cout << "A ";
+//					} else {
+//						/*relative error*/
+//						std::cout << "R ";
+//					}
+//
+//				} else {
+//					std::cout << "_ ";
+//				}
+//			}
+//			std::cout << std::endl;
+//		}
+//		std::cout << "-----------------------------------" << std::endl;
 		// std::cout << "=======================================" << std::endl;
 		// std::cout << "=			Difference between two		=" << std::endl;
 		// std::cout << "=======================================" << std::endl;
@@ -283,6 +323,13 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 		apf::destroyMeshElement(me);
 	}
 	this->mesh->end(it);
+}
+
+TEST_F(StiffnessTest, IdentitcalElement) {
+	/*We create two quadratic elements of the same size, only
+	* difference is their location in global coordinates,
+	* Both element stiffness matrices should be identical*/
+
 }
 
 class MyUserFunction : public apf::Function

@@ -152,6 +152,10 @@ TEST_F(ElasticAnalysisTest, PlaneStressComputation) {
 	EXPECT_FLOAT_EQ(0.0, result_D[2][0]);
 	EXPECT_FLOAT_EQ(0.0, result_D[2][1]);
 	EXPECT_FLOAT_EQ(elm3, result_D[2][2]);
+
+	EXPECT_FLOAT_EQ(result_D[0][1], result_D[1][0]);
+	EXPECT_FLOAT_EQ(result_D[2][0], result_D[0][2]);
+	EXPECT_FLOAT_EQ(result_D[0][0], result_D[1][1]);
 }
 
 class ZeroConstraintZeroTraction : public testing::Test
