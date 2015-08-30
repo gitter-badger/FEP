@@ -17,8 +17,15 @@
 #include "MeshBuilder.h"
 #include "ElasticAnalysis2D.h"
 
+typedef struct test_parameters_wrapper {
+	test_parameters_wrapper(int mt, int intorder) 
+		: mesh_type(mt), integration_order(intorder) {}
+	int mesh_type;
+	int integration_order;
+} TPW;
+
 class StiffnessTest : public testing::Test,
-	public ::testing::WithParamInterface<int>
+	public ::testing::WithParamInterface<struct test_parameters_wrapper>
 {
 protected:
 	apf::Mesh2* mesh;
@@ -88,12 +95,17 @@ protected:
 
 };
 
+
+
 INSTANTIATE_TEST_CASE_P(DifferentMeshOrders, StiffnessTest,
-	::testing::Values(0,1,2,3,4));
+	::testing::Values(TPW(0,4),TPW(1,4)));
 
 TEST_P(StiffnessTest, StiffnessIsSymmetric) {
 	/*use a linear quad*/
-	changeMeshFromIndex(GetParam());
+	struct test_parameters_wrapper tmp_args = GetParam();
+	/*change the integration order away from the default of 4*/
+	this->integration_order = tmp_args.integration_order;
+	changeMeshFromIndex(tmp_args.mesh_type);
 
 	apf::MeshIterator* it;
 	apf::MeshEntity* e;
@@ -141,7 +153,10 @@ TEST_P(StiffnessTest, StiffnessIsSymmetric) {
 
 TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 	/*use a linear quad*/
-	changeMeshFromIndex(GetParam());
+	struct test_parameters_wrapper tmp_args = GetParam();
+	/*change the integration order away from the default of 4*/
+	this->integration_order = tmp_args.integration_order;
+	changeMeshFromIndex(tmp_args.mesh_type);
 
 	std::cout << this->D << std::endl;
 
