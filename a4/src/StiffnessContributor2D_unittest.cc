@@ -17,12 +17,20 @@
 #include "MeshBuilder.h"
 #include "ElasticAnalysis2D.h"
 
-typedef struct test_parameters_wrapper {
-	test_parameters_wrapper(int mt, int intorder) 
+enum MeshTypes {
+	LINEAR_QUAD,
+	QUADRATIC_QUAD,
+	LINEAR_TRI,
+	QUADRATIC_TRI,
+	SERENDIPITY_QUAD
+};
+
+struct test_parameters_wrapper {
+	test_parameters_wrapper(MeshTypes mt, int intorder) 
 		: mesh_type(mt), integration_order(intorder) {}
-	int mesh_type;
+	MeshTypes mesh_type;
 	int integration_order;
-} TPW;
+};
 
 class StiffnessTest : public testing::Test,
 	public ::testing::WithParamInterface<struct test_parameters_wrapper>
@@ -36,7 +44,7 @@ protected:
 	double Nu;
 	int integration_order;
 
-	void changeMeshFromIndex(int index) {
+	void changeMeshFromIndex(MeshTypes index) {
 		if(NULL != this->mesh) {
 			mesh->destroyNative();
 			apf::destroyMesh(mesh);
@@ -44,25 +52,25 @@ protected:
 		int X_ELMS = 2;
 		int Y_ELMS = 1;
 		switch(index) {
-			case 0:
+			case LINEAR_QUAD:
 				mesh_builder->build2DRectQuadMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 				apf::changeMeshShape(this->mesh, apf::getLagrange(1));
 				break;
-			case 1:
+			case QUADRATIC_QUAD:
 				this->mesh_builder->build2DRectQuadMesh(this->mesh, X_ELMS, Y_ELMS,
 					0.0, 0.0, 2.0, 2.0);
 				apf::changeMeshShape(this->mesh, apf::getLagrange(2));
 				break;
-			case 2:
+			case LINEAR_TRI:
 				this->mesh_builder->build2DRectTriMesh(this->mesh, X_ELMS, Y_ELMS,
 					0.0, 0.0, 2.0, 2.0);
 				break;
-			case 3:
+			case QUADRATIC_TRI:
 				this->mesh_builder->build2DRectTriMesh(this->mesh, X_ELMS, Y_ELMS,
 					0.0, 0.0, 2.0, 2.0);
 				apf::changeMeshShape(this->mesh, apf::getLagrange(2));
 				break;
-			case 4:
+			case SERENDIPITY_QUAD:
 				this->mesh_builder->build2DRectQuadMesh(this->mesh, X_ELMS, Y_ELMS,
 					0.0, 0.0, 2.0, 2.0);
 				apf::changeMeshShape(this->mesh, apf::getSerendipity());
@@ -83,6 +91,8 @@ protected:
 		this->E = 1e8;
 		this->Nu = 0.35;
 		this->integration_order = 4;
+
+		struct test_parameters_wrapper tmp_foo(LINEAR_QUAD, 7);
 	}
 
 	virtual void TearDown() {
@@ -96,9 +106,20 @@ protected:
 };
 
 
-
+/*C++ allows us to leave off the "struct" in a typename*/
 INSTANTIATE_TEST_CASE_P(DifferentMeshOrders, StiffnessTest,
-	::testing::Values(TPW(0,4),TPW(1,4)));
+	::testing::Values(  test_parameters_wrapper(LINEAR_QUAD, 2),
+					  	test_parameters_wrapper(LINEAR_QUAD,3),
+					  	test_parameters_wrapper(LINEAR_QUAD,4),
+					  	test_parameters_wrapper(QUADRATIC_QUAD,3),
+					  	test_parameters_wrapper(QUADRATIC_QUAD,4),
+					  	test_parameters_wrapper(LINEAR_TRI,2),
+					  	test_parameters_wrapper(LINEAR_TRI,3),
+					  	test_parameters_wrapper(LINEAR_TRI,4),
+					  	test_parameters_wrapper(QUADRATIC_TRI,3),
+					  	test_parameters_wrapper(QUADRATIC_TRI,4),
+					  	test_parameters_wrapper(SERENDIPITY_QUAD,3),
+					  	test_parameters_wrapper(SERENDIPITY_QUAD,4)));
 
 TEST_P(StiffnessTest, StiffnessIsSymmetric) {
 	/*use a linear quad*/
