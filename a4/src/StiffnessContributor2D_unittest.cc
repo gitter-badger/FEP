@@ -105,7 +105,6 @@ protected:
 
 };
 
-
 /*C++ allows us to leave off the "struct" in a typename*/
 INSTANTIATE_TEST_CASE_P(DifferentMeshOrders, StiffnessTest,
 	::testing::Values(  test_parameters_wrapper(LINEAR_QUAD, 2),
@@ -253,20 +252,31 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 
 					double tmp = gradShape[A][0] * c1 * gradShape[B][0];
 					tmp += gradShape[A][1] * c2 * gradShape[B][1];
-					tmp *= (dV * weight);
+					//tmp *= (dV * weight);
 					alt_ke(2*A,2*B) += tmp;
 					/*compute what the symmetric side must be*/
 					double mirror = gradShape[B][0] * c1 * gradShape[A][0];
 					mirror += gradShape[B][1] * c2 * gradShape[A][1];
-					mirror *= (dV * weight);
+					//mirror *= (dV * weight);
 					/*compute all on one line*/
 					double mirror2 = ((gradShape[B][0] * c1 * gradShape[A][0]) + (gradShape[B][1] * c2 * gradShape[A][1])) * weight * dV;
 					double tmp2 =    ((gradShape[A][0] * c1 * gradShape[B][0]) + (gradShape[A][1] * c2 * gradShape[B][1])) * weight * dV; 
-					std::cout << A << " , " << B << std::endl
-					<< "tmp - mirror: " << (tmp - mirror) << std::endl 
-					<< "tmp - mirror2: " << (tmp - mirror2) << std::endl
-					<< "tmp2 - mirror2: " << (tmp2 - mirror2) << std::endl
-					<< "==============================" << std::endl;
+					//	<< "tmp - mirror: " << (tmp - mirror) << std::endl 
+					//	<< "tmp - mirror2: " << (tmp - mirror2) << std::endl
+					//	<< "tmp2 - mirror2: " << (tmp2 - mirror2) << std::endl
+					if(tmp - mirror != 0.0) {
+						std::cout << std::setprecision(100);
+						std::cout << A << " , " << B << std::endl;
+						std::cout << "tmp - mirror: " << (tmp - mirror) << std::endl
+							<< gradShape[A][0] << " / " << c1 << " / " << gradShape[B][0] << std::endl
+							<< gradShape[A][1] << " / " << c2 << " / " << gradShape[B][2] << std::endl;
+						double a0 = gradShape[A][0];
+						double b0 = gradShape[B][0];
+						double a1 = gradShape[A][1];
+						double b1 = gradShape[B][1];
+						std::cout << "==============================" << std::endl;
+					}
+					
 
 
 					
