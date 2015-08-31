@@ -25,7 +25,13 @@ void StiffnessContributor2D::inElement(apf::MeshElement* me)
 void StiffnessContributor2D::outElement()
 {
 	// std::cout << this->ke << std::endl;
-
+	for(uint32_t ii = 0; ii < this->ndofs; ++ii) {
+		for(uint32_t jj = ii; jj < this->ndofs; ++jj) {
+			if(ii != jj) {
+				this->ke(jj,ii) = this->ke(ii, jj);
+			}
+		}
+	}
 	/*perform clean up and destroy specific field element*/
 	apf::destroyElement(this->field_element);
 }
@@ -58,14 +64,16 @@ void StiffnessContributor2D::atPoint(apf::Vector3 const& p, double w, double dV)
 	* only above main diagonal*/
 	apf::Matrix< 2,2 > nodal_submatrix;
 	for(ii = 0; ii < this->nnodes; ++ii) {
-		for(jj = 0; jj < this->nnodes; ++jj) {
+		for(jj = ii; jj < this->nnodes; ++jj) {
 			nodal_submatrix = (transpose(B[ii]) * (this->D) * B[jj]);
 			nodal_submatrix = nodal_submatrix * w * dV;
 			/*add the contribution to the element stiffness matrix,
 			* we unroll the element access loop since it is so small*/
 			this->ke(2*ii,(2*jj)) += nodal_submatrix[0][0];
 			this->ke(2*ii,(2*jj) + 1) += nodal_submatrix[0][1];
-			this->ke((2*ii) + 1,2*jj) += nodal_submatrix[1][0];
+			if(ii != jj) {
+				this->ke((2*ii) + 1,2*jj) += nodal_submatrix[1][0];
+			}
 			this->ke((2*ii) + 1,2*jj + 1) += nodal_submatrix[1][1];
 		}
 	}
