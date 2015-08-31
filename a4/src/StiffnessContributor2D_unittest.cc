@@ -264,6 +264,8 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 					//	<< "tmp - mirror: " << (tmp - mirror) << std::endl 
 					//	<< "tmp - mirror2: " << (tmp - mirror2) << std::endl
 					//	<< "tmp2 - mirror2: " << (tmp2 - mirror2) << std::endl
+					double k1,k2;
+					k1 = k2 = 0;
 					if(tmp - mirror != 0.0) {
 						std::cout << std::setprecision(100);
 						std::cout << A << " , " << B << std::endl;
@@ -274,8 +276,13 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 						double b0 = gradShape[B][0];
 						double a1 = gradShape[A][1];
 						double b1 = gradShape[B][1];
+						k1 = a1 * c2 * b1;
+						k2 = b1 * c2 * a1;
+						std::cout << k2 - k1 << std::endl; 
 						std::cout << "==============================" << std::endl;
 					}
+					/*use the k1 and k2 so compiler does not optimize it away*/
+					alt_ke(0,0) = k1 + k2;
 					
 
 
