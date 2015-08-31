@@ -250,13 +250,13 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 					double c1 = local_D[0][0];
 					double c2 = local_D[2][2];
 
-					double tmp = gradShape[A][0] * c1 * gradShape[B][0];
-					tmp += gradShape[A][1] * c2 * gradShape[B][1];
+					double tmp = gradShape[A][0] * c1 * gradShape[B][0] ;
+					tmp += gradShape[A][1] * c2 * gradShape[B][1] ;
 					//tmp *= (dV * weight);
 					alt_ke(2*A,2*B) += tmp;
 					/*compute what the symmetric side must be*/
-					double mirror = gradShape[B][0] * c1 * gradShape[A][0];
-					mirror += gradShape[B][1] * c2 * gradShape[A][1];
+					double mirror = gradShape[B][0] * gradShape[A][0] * c1;
+					mirror += gradShape[B][1] * gradShape[A][1] * c2;
 					//mirror *= (dV * weight);
 					/*compute all on one line*/
 					double mirror2 = ((gradShape[B][0] * c1 * gradShape[A][0]) + (gradShape[B][1] * c2 * gradShape[A][1])) * weight * dV;
@@ -271,14 +271,15 @@ TEST_P(StiffnessTest, CheckStiffnessMatrix) {
 						std::cout << A << " , " << B << std::endl;
 						std::cout << "tmp - mirror: " << (tmp - mirror) << std::endl
 							<< gradShape[A][0] << " / " << c1 << " / " << gradShape[B][0] << std::endl
-							<< gradShape[A][1] << " / " << c2 << " / " << gradShape[B][2] << std::endl;
+							<< gradShape[A][1] << " / " << c2 << " / " << gradShape[B][1] << std::endl;
 						double a0 = gradShape[A][0];
 						double b0 = gradShape[B][0];
 						double a1 = gradShape[A][1];
 						double b1 = gradShape[B][1];
-						k1 = a1 * c2 * b1;
-						k2 = b1 * c2 * a1;
+						k1 = (a1 * c2) * b1;
+						k2 = (b1 * c2) * a1;
 						std::cout << k2 - k1 << std::endl; 
+						std::cout << a1 << ", " << b1 << " , " << c2 << std::endl;
 						std::cout << "==============================" << std::endl;
 					}
 					/*use the k1 and k2 so compiler does not optimize it away*/
