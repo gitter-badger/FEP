@@ -69,56 +69,44 @@ y_offset = 4.0
 
 cell_size = 1.0
 
-coordinates = (
-        (   (x_offset, y_offset),
-            (x_offset+cell_size, y_offset),
-            (x_offset+cell_size, y_offset+cell_size),
-            (x_offset, y_offset+cell_size),
-            (x_offset+cell_size/2, y_offset),
-            (x_offset+cell_size, y_offset+cell_size/2),
-            (x_offset+cell_size/2, y_offset+cell_size),
-            (x_offset, y_offset+cell_size/2),
-            (x_offset+cell_size/2, y_offset+cell_size/2)
-        ), (
-            (x_offset+cell_size, y_offset),
-            (x_offset+2*cell_size, y_offset),
-            (x_offset+2*cell_size, y_offset+cell_size),
-            (x_offset+cell_size, y_offset+cell_size),
-            (x_offset+ 1.5*cell_size, y_offset),
-            (x_offset+2*cell_size, y_offset+cell_size/2),
-            (x_offset+1.5*cell_size, y_offset+cell_size),
-            (x_offset, y_offset+cell_size/2),
-            (x_offset+1,5*cell_size, y_offset+cell_size/2)
-        )
+coordinates = (x_offset+cell_size*2,    y_offset+cell_size,
+                x_offset+1.5*cell_size, y_offset+cell_size,
+                x_offset+1.5*cell_size, y_offset+cell_size/2,
+                x_offset+2*cell_size,   y_offset+cell_size/2,
+                x_offset+2*cell_size,   y_offset,
+                x_offset+1.5*cell_size, y_offset,
+                x_offset+cell_size,     y_offset+cell_size,
+                x_offset+cell_size/2,   y_offset+cell_size,
+                x_offset+cell_size/2,   y_offset+cell_size/2,
+                x_offset+cell_size,     y_offset+cell_size/2,
+                x_offset+cell_size,     y_offset,
+                x_offset,               y_offset+cell_size,
+                x_offset,               y_offset+cell_size/2,
+                x_offset+cell_size/2,   y_offset,
+                x_offset,               y_offset
     )
-#find the total number of dofs
-nGlobalDOFs = sum([sum([len(node) for node in elm]) for elm in IEN])
+#we know the global number of dofs for this toy problem
+nGlobalDOFs = 30
 K = numpy.zeros((nGlobalDOFs,nGlobalDOFs))
 F = numpy.zeros((nGlobalDOFs,1))
 #plot the mesh coordinates for visual check of numbering order
 elm_x = numpy.zeros(nGlobalDOFs/2)
 elm_y = numpy.zeros(nGlobalDOFs/2)
 #prepare the shape functions and prepare the plot at the same time
-x_insert_curs = 0
-y_insert_curs = 0
+
 for elm_indx, elm in enumerate(IEN):
     for node_indx, node in enumerate(elm):
         for dim_indx, dim in enumerate(node):
             #convention assumes that first dimension is x
             if 0 == dim_indx:
-                elm_x[x_insert_curs] = coordinates[elm_indx][node_indx][dim_indx]
-                x_insert_curs += 1
+                elm_x[dim/2] = coordinates[dim]
             elif 1 == dim_indx:
-                elm_y[y_insert_curs] = coordinates[elm_indx][node_indx][dim_indx]
-                y_insert_curs += 1
+                elm_y[(dim-1)/2] = coordinates[dim]
             else:
                 #should never reach her
                 raise(RuntimeError)
 
             #print elm_indx, node_indx, dim_indx, ":",dim
-
-assert x_insert_curs == nGlobalDOFs/2
-assert y_insert_curs == nGlobalDOFs/2
 
 matplotlib.pyplot.scatter(elm_x, elm_y)
 matplotlib.pyplot.show()
