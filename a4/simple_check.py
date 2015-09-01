@@ -39,7 +39,7 @@
 
 import scipy
 import numpy
-import matplotlib
+import matplotlib.pyplot
 
 IEN=(
         (   (28, 29),
@@ -93,14 +93,32 @@ coordinates = (
     )
 #find the total number of dofs
 nGlobalDOFs = sum([sum([len(node) for node in elm]) for elm in IEN])
-
-#prepare the shape functions and setup
-for elm in IEN:
-    for node in elm:
-        for dim in node:
-            pass 
-
-
 K = numpy.zeros((nGlobalDOFs,nGlobalDOFs))
+F = numpy.zeros((nGlobalDOFs,1))
+#plot the mesh coordinates for visual check of numbering order
+elm_x = numpy.zeros(nGlobalDOFs/2)
+elm_y = numpy.zeros(nGlobalDOFs/2)
+#prepare the shape functions and prepare the plot at the same time
+x_insert_curs = 0
+y_insert_curs = 0
+for elm_indx, elm in enumerate(IEN):
+    for node_indx, node in enumerate(elm):
+        for dim_indx, dim in enumerate(node):
+            #convention assumes that first dimension is x
+            if 0 == dim_indx:
+                elm_x[x_insert_curs] = coordinates[elm_indx][node_indx][dim_indx]
+                x_insert_curs += 1
+            elif 1 == dim_indx:
+                elm_y[y_insert_curs] = coordinates[elm_indx][node_indx][dim_indx]
+                y_insert_curs += 1
+            else:
+                #should never reach her
+                raise(RuntimeError)
 
-print K
+            #print elm_indx, node_indx, dim_indx, ":",dim
+
+assert x_insert_curs == nGlobalDOFs/2
+assert y_insert_curs == nGlobalDOFs/2
+
+matplotlib.pyplot.scatter(elm_x, elm_y)
+matplotlib.pyplot.show()
