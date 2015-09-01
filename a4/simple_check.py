@@ -92,6 +92,29 @@ F = numpy.zeros((nGlobalDOFs,1))
 elm_x = numpy.zeros(nGlobalDOFs/2)
 elm_y = numpy.zeros(nGlobalDOFs/2)
 #prepare the shape functions and prepare the plot at the same time
+shapeVals = (
+    lambda e,n : (e*n)*(e-1)*(n-1)/4.0,
+    lambda e,n : (e*n)*(e+1)*(n-1)/4.0,
+    lambda e,n : (e*n)*(e+1)*(n+1)/4.0,
+    lambda e,n : (e*n)*(e-1)*(n+1)/4.0,
+    lambda e,n : (1-(e*e))*(n-1)*n/2.0,
+    lambda e,n : (e+1)*(1-(n*n))*e/2.0,
+    lambda e,n : (1-(e*e))*(n+1)*n/2.0,
+    lambda e,n : (e-1)*(1-(n*n))*e/2.0,
+    lambda e,n : (1-(e*e))*(1-(n*n))
+    )
+
+shapeGrads = (
+    lambda e,n : ( (e - 0.5)*(n*(n-1))/2.0, (n - 0.5)*(e*(e-1))/2.0, 0.0),
+    lambda e,n : ( (e + 0.5)*(n*(n-1))/2.0, (n - 0.5)*(e*(e+1))/2.0, 0.0),
+    lambda e,n : ( (e + 0.5)*(n*(n+1))/2.0, (n + 0.5)*(e*(e+1))/2.0, 0.0),
+    lambda e,n : ( (e - 0.5)*(n*(n+1))/2.0, (n + 0.5)*(e*(e-1))/2.0, 0.0),
+    lambda e,n : ( -e*(n*(n-1)), (n - 0.5)*(1-(e*e)), 0.0),
+    lambda e,n : ( (e + 0.5)*(1-(n*n)), -n*(e*(e+1)), 0.0),
+    lambda e,n : ( -e*(n*(n+1)), (n + 0.5)*(1-(e*e)), 0.0),
+    lambda e,n : ( (e - 0.5)*(1-(n*n)), -n*(e*(e-1)), 0.0),
+    lambda e,n : ( -2.0*e*(1-(n*n)), -2.0*n*(1-(e*e)), 0.0)
+    )
 
 for elm_indx, elm in enumerate(IEN):
     for node_indx, node in enumerate(elm):
@@ -105,14 +128,10 @@ for elm_indx, elm in enumerate(IEN):
                 #should never reach her
                 raise(RuntimeError)
 
-            #print elm_indx, node_indx, dim_indx, ":",dim
-
-matplotlib.pyplot.scatter(elm_x, elm_y)
-
-labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
-
-for label, x, y in zip(labels, elm_x, elm_y):
-    matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
-        textcoords = 'offset points', ha = 'left', va = 'bottom')
-
-matplotlib.pyplot.show()
+#UNCOMMENT below to visually check mesh node numberings
+# matplotlib.pyplot.scatter(elm_x, elm_y)
+# labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
+# for label, x, y in zip(labels, elm_x, elm_y):
+#     matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
+#         textcoords = 'offset points', ha = 'left', va = 'bottom')
+# matplotlib.pyplot.show()
