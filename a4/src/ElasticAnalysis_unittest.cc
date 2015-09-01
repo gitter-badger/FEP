@@ -47,7 +47,7 @@ apf::Vector3 LinearLoad_X(apf::Vector3 const & p)
 }
 
 TEST_F(ElasticAnalysisTest, AppRunTest) {
-	mesh_builder->build2DRectQuadMesh(this->mesh, 6, 3, 0.0, 0.0, 2.0, 1.0);
+	mesh_builder->build2DRectQuadMesh(this->mesh, 2, 1, 0.0, 0.0, 2.0, 1.0);
 	// mesh_builder->build2DRectTriMesh(this->mesh, 4, 2, 0.0, 0.0, 2.0, 1.0);
 	EXPECT_TRUE(this->mesh != NULL);
 	//apf::changeMeshShape(mesh, apf::getSerendipity());
@@ -55,7 +55,7 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	/*physical parameters*/
 	double E, Nu;
 	E = YOUNGS_MODULUS;
-	//Nu = POISSONS_RATIO;
+	// Nu = POISSONS_RATIO;
 	Nu = 0.0;
 	uint32_t integration_order = 4;
 	bool reorder_flag = true;
@@ -66,7 +66,8 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 	cnstr_ptr = &zeroDisplacementX_2D;
 	geo_map->addDircheletMapping(LEFT_EDGE, cnstr_ptr);
 	cnstr_ptr = &zeroDisplacementY_2D;
-	//geo_map->addDircheletMapping(TOP_EDGE, cnstr_ptr);
+	geo_map->addDircheletMapping(TOP_EDGE, cnstr_ptr);
+	//geo_map->addDircheletMapping(BOT_EDGE, cnstr_ptr);
 
 	apf::Vector3 (*traction_ptr)(apf::Vector3 const &);
 	traction_ptr = &LinearLoad_X;
@@ -88,7 +89,7 @@ TEST_F(ElasticAnalysisTest, AppRunTest) {
 
 	// MatView(tmp.linsys->K, PETSC_VIEWER_STDOUT_WORLD);
 
-	//VecView(tmp.linsys->d, PETSC_VIEWER_STDOUT_WORLD);
+	VecView(tmp.linsys->F, PETSC_VIEWER_STDOUT_WORLD);
 
 
 	EXPECT_EQ(0, tmp.solve());

@@ -186,7 +186,12 @@ uint32_t ElasticAnalysis2D::makeStiffnessContributor(apf::MeshEntity* e)
 		/*we want to make sure that our guess for the vector was the right size
 		* so we know how many degress of freedom our nodes have*/
 		assert(tmp_sz == n_l_dofs);
+
+		std::cout << stiff.ke << std::endl;
+		std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << std::endl;
+
 		this->linsys->assemble(stiff.ke, node_mapping, tmp_sz);
+		std::cout << "---------------------------------" << std::endl;
 
 	} else {
 		/*only accepts faces, so indicate improper input*/
