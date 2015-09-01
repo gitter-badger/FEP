@@ -91,15 +91,16 @@ coordinates = (
             (x_offset+1,5*cell_size, y_offset+cell_size/2)
         )
     )
-
+#find the total number of dofs
+nGlobalDOFs = sum([sum([len(node) for node in elm]) for elm in IEN])
 
 #prepare the shape functions and setup
 for elm in IEN:
     for node in elm:
         for dim in node:
-            
+            pass 
 
-N = 2
-K = numpy.zeros((N,N))
 
-print
+K = numpy.zeros((nGlobalDOFs,nGlobalDOFs))
+
+print K
