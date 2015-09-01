@@ -66,7 +66,6 @@ IEN=(
 #the location of each element is given nodewise
 x_offset = 3.0
 y_offset = 4.0
-
 cell_size = 1.0
 
 coordinates = (x_offset+cell_size*2,    y_offset+cell_size,
@@ -109,4 +108,11 @@ for elm_indx, elm in enumerate(IEN):
             #print elm_indx, node_indx, dim_indx, ":",dim
 
 matplotlib.pyplot.scatter(elm_x, elm_y)
+
+labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
+
+for label, x, y in zip(labels, elm_x, elm_y):
+    matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
+        textcoords = 'offset points', ha = 'left', va = 'bottom')
+
 matplotlib.pyplot.show()
