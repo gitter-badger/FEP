@@ -128,10 +128,10 @@ for elm_indx, elm in enumerate(IEN):
                 #should never reach her
                 raise(RuntimeError)
 
-#UNCOMMENT below to visually check mesh node numberings
-# matplotlib.pyplot.scatter(elm_x, elm_y)
-# labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
-# for label, x, y in zip(labels, elm_x, elm_y):
-#     matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
-#         textcoords = 'offset points', ha = 'left', va = 'bottom')
-# matplotlib.pyplot.show()
+UNCOMMENT below to visually check mesh node numberings
+matplotlib.pyplot.scatter(elm_x, elm_y)
+labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
+for label, x, y in zip(labels, elm_x, elm_y):
+    matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
+        textcoords = 'offset points', ha = 'left', va = 'bottom')
+matplotlib.pyplot.show()
