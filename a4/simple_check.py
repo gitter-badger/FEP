@@ -116,7 +116,11 @@ shapeGrads = (
     lambda e,n : ( -2.0*e*(1-(n*n)), -2.0*n*(1-(e*e)), 0.0)
     )
 
+K = numpy.zeros(shape = (nGlobalDOFs,nGlobalDOFs))
+
 for elm_indx, elm in enumerate(IEN):
+    elm_sz = len(elm)
+    ke = numpy.zeros(shape =(elm_sz, elm_sz))
     for node_indx, node in enumerate(elm):
         for dim_indx, dim in enumerate(node):
             #convention assumes that first dimension is x
@@ -128,10 +132,11 @@ for elm_indx, elm in enumerate(IEN):
                 #should never reach her
                 raise(RuntimeError)
 
-UNCOMMENT below to visually check mesh node numberings
-matplotlib.pyplot.scatter(elm_x, elm_y)
-labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
-for label, x, y in zip(labels, elm_x, elm_y):
-    matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
-        textcoords = 'offset points', ha = 'left', va = 'bottom')
-matplotlib.pyplot.show()
+# UNCOMMENT below to visually check mesh node numberings
+# matplotlib.pyplot.scatter(elm_x, elm_y)
+# labels = ['({0},{1})'.format(ii,ii+1) for ii in range(0, nGlobalDOFs,2)]
+# for label, x, y in zip(labels, elm_x, elm_y):
+#     matplotlib.pyplot.annotate(label, xy = (x,y), xytext = (15,15),
+#         textcoords = 'offset points', ha = 'left', va = 'bottom')
+# matplotlib.pyplot.show()
+
